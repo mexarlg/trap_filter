@@ -2,6 +2,13 @@
 build/*
 !build/README.me
 
+# Python virtual environment
+venv/
+.venv/
+
+vscode/
+.vscode
+
 # logs and dumps
 *.gdb_history
 *.log
@@ -14,17 +21,14 @@ build/*
 *.tmp
 ~*
 
-# generated documentation stuff
+# documentation
 /docs/doxygen_build/
 /docs/public/
+docs/
 
-# =========================
 # Vivado generated files
-# =========================
-
 *.jou
 *.str
-
 .cache/
 .hw/
 .ip_user_files/
@@ -37,24 +41,18 @@ build/*
 *.xpr
 *.xsa
 *.ltx
-
 # Bitstreams / hardware outputs
 *.bit
 *.bin
-
 # Reports
 *.rpt
 *.pb
-
 # compilation
 **/build/
 *.elf
 
-# ==============================================================================
 # ModelSim generated files
-# ==============================================================================
 sim/modelsim/work/
-sim/modelsim/neorv32/
 sim/modelsim/transcript
 sim/modelsim/vsim.wlf
 sim/modelsim/wlft*
