@@ -1,0 +1,65 @@
+# build artifacts
+build/*
+!build/README.me
+
+# logs and dumps
+*.gdb_history
+*.log
+*.vcd
+*.fst
+*.ghw
+
+# temporary files and folders
+*.bak
+*.tmp
+~*
+
+# generated documentation stuff
+/docs/doxygen_build/
+/docs/public/
+
+# =========================
+# Vivado generated files
+# =========================
+
+*.jou
+*.str
+
+.cache/
+.hw/
+.ip_user_files/
+.runs/
+.sim/
+.gen/
+.srcs/
+
+# Vivado project files (generated)
+*.xpr
+*.xsa
+*.ltx
+
+# Bitstreams / hardware outputs
+*.bit
+*.bin
+
+# Reports
+*.rpt
+*.pb
+
+# compilation
+**/build/
+*.elf
+
+# ==============================================================================
+# ModelSim generated files
+# ==============================================================================
+sim/modelsim/work/
+sim/modelsim/neorv32/
+sim/modelsim/transcript
+sim/modelsim/vsim.wlf
+sim/modelsim/wlft*
+sim/modelsim/*.wlf
+sim/modelsim/*.vstf
+sim/modelsim/*.ucdb
+sim/modelsim/modelsim.ini
+sim/modelsim/_lock
