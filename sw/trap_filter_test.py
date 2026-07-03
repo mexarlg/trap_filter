@@ -45,20 +45,23 @@ from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 # ----------------------------------------------------------------------
 ADC_BITS   = 14                     # unsigned ADC resolution
 ADC_MAX    = (1 << ADC_BITS) - 1    # Max ADC value -> 16383
-M_FRAC     = 4                      # fractional bits of the M coefficient
-D_BITS     = 18                     # signed width of d (delayed diff)
-P_BITS     = 25                     # signed width of p (1st accumulator)
-S_BITS     = 36                     # signed width of s (2nd accumulator)
-D_SAT      = (1 << (D_BITS - 1)) - 1  # saturation limit for d before DSP
+M_FRAC     = 4                      # fractional bits of the M coefficient from Jordanov
+D_BITS     = 18                     # signed width of d (delayed diff) from Jordanov
+P_BITS     = 25                     # signed width of p (1st accumulator) from Jordanov
+S_BITS     = 36                     # signed width of s (2nd accumulator) from Jordanov
+D_SAT      = (1 << (D_BITS - 1)) - 1  # saturation limit for d before DSP from Jordanov
+# Moving average
+MA_DIFF_BITS = 16     # v[n] - v[n-d] from moving average
+MA_ACC_BITS  = 25     # accumulator, sized for d up to 1024 from moving average
 
-
+# Checks if a value fits on a signed bit width
 def _fits_signed(val, bits):
     """True if val fits in a signed 'bits' wide 2 complement register."""
     lo = -(1 << (bits - 1))
     hi = (1 << (bits - 1)) - 1
     return lo <= val <= hi
 
-
+# From continuous to discrete
 def quantize_adc(analog):
     """Quantize an analog waveform to unsigned 14-bit ADC codes (0 .. ADC_MAX)."""
     return np.clip(np.round(analog), 0, ADC_MAX).astype(np.int64)
@@ -69,7 +72,7 @@ def quantize_adc(analog):
 # ----------------------------------------------------------------------
 def generate_input(n_samples = 1048,
                    fs = 100e6,           # sampling rate [Hz]
-                   t0_frac = 0.15,       # pulse start as timespan fraction
+                   t0_frac = 0.25,       # pulse start as timespan fraction
                    amplitude = 300.0,    # pulse amplitude
                    tau_rise_s = 8e-8,    # rise time constant [s]
                    tau_decay_s = 2e-5,   # preamp decay time constant [s]
@@ -197,6 +200,82 @@ def jordanov_trapezoidal(v, k, m, M, out_shift=None, check_overflow=False):
 
     return s
 
+# ----------------------------------------------------------------------
+# Recursive Moving Average
+# ----------------------------------------------------------------------
+# Fixed-point widths (14b unsign ADC or 15 bit signed shaper as inputs):
+#   diff = v[n] - v[n-d]  : 14 + log2(2) + 1 (sign) = 16 bits signed
+#   acc  = acc + diff     : 14 + log2(d) + sign  (= 25 bits)
+#   output = acc >> log2(d) : normalization (/d)
+
+def moving_average(v, d, out_shift=None, check_overflow=False, signed_input=False):
+    """
+    Recursive moving average, fixed-point. Handles both input 15b sign / 14b unsign
+        - signed_input=False : unsigned 14-bit ADC
+        - signed_input=True  : signed  15-bit ADC
+
+    Equations:
+        acc[n] = acc[n-1] + v[n] - v[n-d]     (running sum)
+        y[n]   = acc[n] >> log2(d)            (/d normalization at output)
+
+    Parameters
+    ----------
+    v : ndarray   input samples (unsigned 14b codes, or signed 15b codes)
+    d : int       window length in samples (use a power of two for a clean >>)
+    out_shift : int or None   final right-shift; if None, uses log2(d)
+    check_overflow : bool      raise if any register exceeds its planned width
+    signed_input : bool        False = unsigned 14b ADC, True = signed 15b ADC
+
+    Returns
+    -------
+    s : ndarray   averaged output (int)
+    """
+
+    # Precheck and preallocation
+    d = int(d)
+    N = len(v)
+    s = np.zeros(N, dtype=np.int64)
+
+    # input as exact integers
+    v = v.astype(np.int64)
+
+    # State registers
+    acc_prev = 0     # single accumulator acc[n-1]
+
+    # Delay line as circular buffer (single DP BRAM: 1 rd + 1 wr)
+    for n in range(N):
+
+        # PIPELINE STAGES:
+
+        # input signal and delay (unsigned -> zero-extend, signed -> as-is)
+        vn = int(v[n])
+        v_d = int(v[n - d]) if n - d >= 0 else 0
+
+        # delayed difference (2 terms -> +1 bit; +1 sign -> 16 bits signed)
+        diff = vn - v_d
+
+        # single accumulator: running sum of diff (14 + log2(d) bits)
+        acc = acc_prev + diff
+        s[n] = acc
+
+        # optional overflow check (diff, acc)
+        if check_overflow:
+            if not _fits_signed(diff, MA_DIFF_BITS):
+                raise OverflowError(f"diff overflow at n={n}: {diff} exceeds {MA_DIFF_BITS}b")
+            if not _fits_signed(int(acc), MA_ACC_BITS):
+                raise OverflowError(f"acc overflow at n={n}: {acc} exceeds {MA_ACC_BITS}b")
+
+        # update next iteration
+        acc_prev = acc
+
+    # final output rescale (/d normalization), arithmetic shift
+    if out_shift is None:
+        out_shift = int(round(np.log2(d)))
+    if out_shift > 0:
+        rnd_o = 1 << (out_shift - 1)
+        s = np.where(s >= 0, (s + rnd_o) >> out_shift, -((-s + rnd_o) >> out_shift))
+
+    return s
 
 def M_from_tau(tau_decay_s=2e-6, Tclk = 1.0/125e6):
     """Pole zero decay compensation factor for a given decay constant."""
@@ -230,6 +309,7 @@ def main():
     tau_rise_s = tau_r_max_s        # selected rise time for simulation [s]
     noise_offset = int(0.1*amplitude)    # offset of baseline
     noise_sigma = int(0.1*amplitude)     # white noise std dev
+    SHAPER_SELECT = 1               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
     # ------------------------------------------------------------------------
     # Jordanov parameters in n samples (k, m, M)
     k0, m0 = 105, 84
@@ -237,6 +317,11 @@ def main():
     M0 = 2496.61                        # similar M to allow k*M as power of 2 for easy shift
     out_shift0 = 18 # Gain is selected as k*M -> k and M have to be power of 2 as to allow shifting -> with these params -> shift 18 bits from a 36b output
     # ------------------------------------------------------------------------
+    # Moving average parameters in n samples
+    delay = 128                 # delay of moving average (Number of points, must be power of 2^n)
+    shifter = 7                 # shift required for (1/N division), delay must be multiple of 2^n
+    # ------------------------------------------------------------------------
+
 
     # Jordanov parameters analysis:
     # k is limited by slower rise time, for this case a k = 128 seems conservative enough for noise levels of 30%
@@ -290,7 +375,14 @@ def main():
     # Plot and computation of output y[n]
     # ------------------------------------------------------------------------
 
-    y0 = jordanov_trapezoidal(noisy, k0, m0, M0, out_shift=out_shift0)
+    # select shaper:
+    if SHAPER_SELECT == 1:
+        y0 = jordanov_trapezoidal(noisy, k0, m0, M0, out_shift=out_shift0)
+        # To view the mov average filter applied to the top of the Jordanov output signal
+        # y0 = moving_average(y0, 32, out_shift=5, signed_input=True)
+    else:
+        y0 = moving_average(noisy, delay, out_shift=shifter)
+
     (line_out,) = ax_out.plot(
         t_us, y0,
         lw=1.0,
@@ -303,7 +395,7 @@ def main():
     ax_out.set_xlabel('Time [µs]')
     ax_out.set_ylabel('Shaper Output [15b sign]')
     ax_out.set_title(
-        rf'Fixed-Point Jordanov Output ($k={k0}$, $m={m0}$, $M={M0:.1f}$)'
+        rf'Fixed-Point Shaper Output ($k={k0}$, $m={m0}$, $M={M0:.1f}$)'
     )
     ax_out.set_ylim(y_min, y_max)         # fixed y-axis (same scale as input)
 
@@ -343,12 +435,15 @@ def main():
         m = int(s_m.val)
         M = s_M.val
 
-        # recompute jordanov output
-        y = jordanov_trapezoidal(state['noisy'], k, m, M, out_shift=out_shift0)
+        # select shaper algorithm
+        if SHAPER_SELECT == 1:
+            y0 = jordanov_trapezoidal(noisy, k0, m0, M0, out_shift=out_shift0)
+        else:
+            y0 = moving_average(noisy, delay, out_shift=shifter)
 
         # update graph
         line_out.set_ydata(y)
-        ax_out.set_title(f'Fixed-Point Jordanov output  (k={k}, m={m}, M={M:.1f})')
+        ax_out.set_title(f'Fixed-Point Shaper output  (k={k}, m={m}, M={M:.1f})')
         ax_out.set_ylim(y_min, y_max)
         fig.canvas.draw_idle()
 
