@@ -23,12 +23,46 @@ Filter design:
         k  = rise time of trapezoid (samples)    -> ramp length
         m  = flat top length (l = k + m)         -> so l-k = m
         M  = decay time compensation (pole-zero) ->  M = 1/(exp(Tclk/tau_decay)-1)
+
+FPGA fixed point model:
+    The input signal is quantized to a 14-bit unsigned ADC and the filter runs in the
+    same integer widths. Datapath is signed 2-complement and storage is unsigned.
+
+    Target widths (14b unsigned ADC, 18x18 DSP, k around 128, m around 84, M_frac=4):
+        delay word : 14b unsigned     d          : 18b signed
+        p          : 25b signed       M coeff    : 17b signed
+        M*d prod   : 35b signed       M*d scaled : 31b signed 
+        r          : 32b signed       s          : 36b signed
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 from matplotlib.ticker import MultipleLocator, AutoMinorLocator
+
+# ----------------------------------------------------------------------
+# Fixed-point parameters
+# ----------------------------------------------------------------------
+ADC_BITS   = 14                     # unsigned ADC resolution
+ADC_MAX    = (1 << ADC_BITS) - 1    # Max ADC value -> 16383
+M_FRAC     = 4                      # fractional bits of the M coefficient
+D_BITS     = 18                     # signed width of d (delayed diff)
+P_BITS     = 25                     # signed width of p (1st accumulator)
+S_BITS     = 36                     # signed width of s (2nd accumulator)
+D_SAT      = (1 << (D_BITS - 1)) - 1  # saturation limit for d before DSP
+
+
+def _fits_signed(val, bits):
+    """True if val fits in a signed 'bits' wide 2 complement register."""
+    lo = -(1 << (bits - 1))
+    hi = (1 << (bits - 1)) - 1
+    return lo <= val <= hi
+
+
+def quantize_adc(analog):
+    """Quantize an analog waveform to unsigned 14-bit ADC codes (0 .. ADC_MAX)."""
+    return np.clip(np.round(analog), 0, ADC_MAX).astype(np.int64)
+
 
 # ----------------------------------------------------------------------
 # Input pulse generation
@@ -42,7 +76,8 @@ def generate_input(n_samples = 1048,
                    noise_offset = 1,     # offset of baseline due noise (P0)
                    noise_sigma = 30,     # white noise std dev
                    seed = 0):            # seed for noise randomness
-    """Return (t, clean, noisy) arrays of pulse signal."""
+    """Return (t, clean, noisy) arrays of the pulse signal (14 bits).
+    """
 
     # timespan
     Tclk = 1.0 / fs
@@ -63,27 +98,35 @@ def generate_input(n_samples = 1048,
     rng = np.random.default_rng(seed)
     noisy = clean + noise_offset + rng.normal(0.0, noise_sigma, n_samples)
 
+    # discretize to 14 bit unsigned ADC
+    clean = quantize_adc(clean)
+    noisy = quantize_adc(noisy)
+
     return t, clean, noisy, Tclk
 
 
 # ----------------------------------------------------------------------
 # Recursive Jordanov trapezoidal
 # ----------------------------------------------------------------------
-def jordanov_trapezoidal(v, k, m, M):
+def jordanov_trapezoidal(v, k, m, M, out_shift=None, check_overflow=False):
     """
-    Recursive Jordanov trapezoidal filter.
+    Recursive Jordanov trapezoidal filter (signed, fixed-point).
+    Storage is unsigned 14-bit and the pipeline is signed 2-complement.
+    M is quantized to a scaled integer and applied as (M_scaled * d) >> M_FRAC. 
 
     Parameters
     ----------
-    v : ndarray   input samples
+    v : ndarray   input samples (unsigned 14-bit ADC)
     k : int       ramp length (in samples)
     m : int       flat top width (in samples) (l = k + m)
     M : float     decay compensation factor
                   M = 1/(exp(Tclk/tau_decay)-1); (can be approx).
+    out_shift : int or None   final right-shift for output scaling
+    check_overflow : bool      raise if any register exceeds its planned width
 
     Returns
     -------
-    s : ndarray   shaped output
+    s : ndarray   shaped output (int)
     """
 
     # Precheck and preallocation
@@ -91,31 +134,66 @@ def jordanov_trapezoidal(v, k, m, M):
     m = int(m)
     l = k + m
     N = len(v)
-    s = np.zeros(N)
+    s = np.zeros(N, dtype=np.int64)
+
+    # Quantize M to a scaled integer coefficient
+    M_scaled = int(round(M * (1 << M_FRAC)))
+    rnd_m = 1 << (M_FRAC - 1)
+
+    # input as exact integers (unsigned storage, sign in math)
+    v = v.astype(np.int64)
 
     # State registers
-    p_prev = 0.0     # accumulator p[n-1]
-    s_prev = 0.0     # accumulator s[n-1]
+    p_prev = 0     # accumulator p[n-1]
+    s_prev = 0     # accumulator s[n-1]
 
-    # Delay lines as circular buffers
+    # Delay lines as circular buffers of 14 unsigned bits (x2 DP BRAM)
     for n in range(N):
 
-        # input signal and delays
-        vn = v[n]
-        v_k = v[n - k] if n - k >= 0 else 0.0
-        v_l = v[n - l] if n - l >= 0 else 0.0
-        v_kl = v[n - k - l] if n - k - l >= 0 else 0.0
+        # PIPELINE STAGES:
 
-        # accumulator, pole zero, output (normalization)
-        d = (vn - v_k - v_l + v_kl)/(k) # double delayed difference d^{k,l}
-        p = p_prev + d                  # first accumulator
-        r = (p + M * d)/M               # pole zero corrected
-        #r = p + M * d                  # pole zero corrected
-        s[n] = s_prev + r               # final accumulator (output)
+        # input signal and delays (14 bit unsigned from adc, 15 bit signed for pipeline)
+        vn = int(v[n])
+        v_k = int(v[n - k]) if n - k >= 0 else 0
+        v_l = int(v[n - l]) if n - l >= 0 else 0
+        v_kl = int(v[n - k - l]) if n - k - l >= 0 else 0
+
+        # delayed difference (4 additions -> 2 extra bits -> N bits = 14 mag bits + 2 extra bits + 1 sign bit + 1 guard bit = 18 bits = d)
+        d = vn - v_k - v_l + v_kl               # d^{k,l}
+
+        # saturate d (if overflow, make sure it doesnt wrap, but rather keep its maximum value)
+        d = max(-D_SAT - 1, min(D_SAT, d))      # make sure d stays on 18 bits
+
+        # first accumulator over k (log2(k <= 256) = 8 bits -> N bits (p) = 14 mag bits + 8 bits + 1 bit sign + 2 guard bits = 25 bits = p)
+        p = p_prev + d                          # first accumulator
+
+        # Multiplication (M = 12 mag bits + 4 fraction bits + 1 sign bit = 17 bits) (d = 18 bits) -> (Md = 17 + 18 = 35 = Md) 
+        Md_full = M_scaled * d                  # DSP product
+
+        # M scaled back (from 35 bits minus the fraction bits) -> (Md = 35 bits - 4 bits = 31 bits = Md)
+        Md = (Md_full + (rnd_m if Md_full >= 0 else -rnd_m)) >> M_FRAC
+
+        # addition (p = 25 bits) + (M = 31 bits) -> (N bits of r = 31 + 1 = 32 bits = r)
+        r = p + Md                              # pole zero corrected
+
+        # Second accumulator over k = 128 bits -> log2(k) = 8 (if 128 < k < 256) -> (32 bits + 8 bits = 40 bits = s) or (s = 36 if assumming M domination)
+        s[n] = s_prev + r                       # final accumulator (output)
+
+        # optional overflow check for accumulators (p, s)
+        if check_overflow:
+            if not _fits_signed(p, P_BITS):
+                raise OverflowError(f"p overflow at n={n}: {p} exceeds {P_BITS}b")
+            if not _fits_signed(int(s[n]), S_BITS):
+                raise OverflowError(f"s overflow at n={n}: {s[n]} exceeds {S_BITS}b")
 
         # update next iteration
         p_prev = p
         s_prev = s[n]
+
+    # final output rescale view to 15 bits signed (iteration over)
+    if out_shift is not None and out_shift > 0:
+        rnd_o = 1 << (out_shift - 1)
+        s = np.where(s >= 0, (s + rnd_o) >> out_shift, -((-s + rnd_o) >> out_shift))
 
     return s
 
@@ -142,20 +220,22 @@ def main():
 
     # Configurable parameters to generate input signal with noise
     # ------------------------------------------------------------------------
-    n_samples = 1024            # number of samples at fs
-    fs = 125e6                  # sample freq [hz]
-    Tclk = 1.0 / fs             # sample period [8 ns for 125 Mhz]
-    amplitude = 700             # pulse amplitude
-    tau_decay_s = 2e-5          # nominal decay time constant [s]
-    tau_r_min_s = 5e-8          # min nominal rise time constant for high energy (50 ns) [s]
-    tau_r_max_s = 25e-8         # max nominal rise time constant for high energy (250 ns) [s]
-    tau_rise_s = tau_r_max_s    # selected rise time for simulation [s]
-    noise_offset = 0            # offset of baseline
-    noise_sigma = 40            # white noise std dev
+    n_samples = 1024                # number of samples at fs
+    fs = 125e6                      # sample freq [hz]
+    Tclk = 1.0 / fs                 # sample period [8 ns for 125 Mhz]
+    amplitude = int(0.6*ADC_MAX)    # pulse amplitude as percentage of ADC max value
+    tau_decay_s = 2e-5              # nominal decay time constant [s]
+    tau_r_min_s = 5e-8              # min nominal rise time constant for high energy (50 ns) [s]
+    tau_r_max_s = 25e-8             # max nominal rise time constant for high energy (250 ns) [s]
+    tau_rise_s = tau_r_max_s        # selected rise time for simulation [s]
+    noise_offset = int(0.1*amplitude)    # offset of baseline
+    noise_sigma = int(0.1*amplitude)     # white noise std dev
     # ------------------------------------------------------------------------
     # Jordanov parameters in n samples (k, m, M)
-    k0, m0 = 128, 84
-    M0 = M_from_tau(tau_decay_s, Tclk)
+    k0, m0 = 105, 84
+    M0 = M_from_tau(tau_decay_s, Tclk)  # ideal M
+    M0 = 2496.61                        # similar M to allow k*M as power of 2 for easy shift
+    out_shift0 = 18 # Gain is selected as k*M -> k and M have to be power of 2 as to allow shifting -> with these params -> shift 18 bits from a 36b output
     # ------------------------------------------------------------------------
 
     # Jordanov parameters analysis:
@@ -171,16 +251,23 @@ def main():
                                         noise_offset=noise_offset, noise_sigma=noise_sigma)
     t_us = t * 1e6  # time in microseconds
 
+    # ------------------------------------------------------------------------
     # Plot of clean and noisy input signal v[n]
     # ------------------------------------------------------------------------
+
+    # Plot axis (reality input is 14b unsigned, output 15 bit signed) -> Allow only discretized input pulse + its noise as top limit
+    y_min = 0 
+    y_max = amplitude + noise_offset + noise_sigma
+
     fig, (ax_in, ax_out) = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
     plt.subplots_adjust(left=0.1, bottom=0.32, hspace=0.25)
     ax_in.plot(t_us, noisy, lw=0.7, color='0.6', marker = '.',markersize=3, label='Noisy pulse')
     ax_in.plot(t_us, clean, lw=1.2, color='tab:blue', marker = '.', markersize=3, label='Clean pulse')
-    ax_in.set_ylabel('Pulse Amplitude []')
+    ax_in.set_ylabel('Pulse Amplitude [14b usign]')
     ax_in.set_title(
         rf'Input Pulse '
-        rf'($f_s={fs/(1e6):.0f}$ MHz, '
+        rf'($ADC={ADC_BITS}$ bits, '
+        rf'$f_s={fs/(1e6):.0f}$ MHz, '
         rf'$n={n_samples}$, '
         rf'$A_0={amplitude}$, '
         rf'$\tau_c={tau_decay_s}$ s, '
@@ -188,6 +275,7 @@ def main():
         rf'$\sigma_n={noise_sigma}$)'
     )
     ax_in.legend(loc='upper right')
+    ax_in.set_ylim(y_min, y_max)          # fixed y-axis (shared scale with output)
 
     # Input axes ticks and grid
     ax_in.xaxis.set_major_locator(MultipleLocator(1.0))   
@@ -198,9 +286,11 @@ def main():
     ax_in.grid(which='major', linewidth=1.0, alpha=0.35)
     ax_in.grid(which='minor', linewidth=0.5, alpha=0.15)
 
+    # ------------------------------------------------------------------------
     # Plot and computation of output y[n]
     # ------------------------------------------------------------------------
-    y0 = jordanov_trapezoidal(noisy, k0, m0, M0)
+
+    y0 = jordanov_trapezoidal(noisy, k0, m0, M0, out_shift=out_shift0)
     (line_out,) = ax_out.plot(
         t_us, y0,
         lw=1.0,
@@ -211,10 +301,11 @@ def main():
         markeredgecolor='k'
     )
     ax_out.set_xlabel('Time [µs]')
-    ax_out.set_ylabel('Shaper Output []')
+    ax_out.set_ylabel('Shaper Output [15b sign]')
     ax_out.set_title(
-        rf'Normalized Jordanov Output ($k={k0}$, $m={m0}$, $M={M0:.1f}$)'
+        rf'Fixed-Point Jordanov Output ($k={k0}$, $m={m0}$, $M={M0:.1f}$)'
     )
+    ax_out.set_ylim(y_min, y_max)         # fixed y-axis (same scale as input)
 
     # Grid
     ax_out.xaxis.set_major_locator(MultipleLocator(1.0))
@@ -253,12 +344,12 @@ def main():
         M = s_M.val
 
         # recompute jordanov output
-        y = jordanov_trapezoidal(state['noisy'], k, m, M)
+        y = jordanov_trapezoidal(state['noisy'], k, m, M, out_shift=out_shift0)
 
         # update graph
         line_out.set_ydata(y)
-        ax_out.set_title(f'Normalized Jordanov output  (k={k}, m={m}, M={M:.1f})')
-        ax_out.relim(); ax_out.autoscale_view(scaley=True)
+        ax_out.set_title(f'Fixed-Point Jordanov output  (k={k}, m={m}, M={M:.1f})')
+        ax_out.set_ylim(y_min, y_max)
         fig.canvas.draw_idle()
 
     # helper function to recompute noise of input pulse
