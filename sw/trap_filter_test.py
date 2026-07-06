@@ -281,6 +281,30 @@ def M_from_tau(tau_decay_s=2e-6, Tclk = 1.0/125e6):
     """Pole zero decay compensation factor for a given decay constant."""
     return 1.0 / (np.exp(Tclk / tau_decay_s) - 1.0)
 
+def export_for_vhdl(noisy, y_ref, data_width=14, out_width=15,
+                    in_signed=False, out_signed=True,
+                    filename="stimulus.txt"):
+    """
+    Dump input samples + ideal output for the VHDL testbench.
+    """
+    def clamp(v, width, signed):
+        v = int(round(v))
+        if signed:
+            lo, hi = -(1 << (width-1)), (1 << (width-1)) - 1
+        else:
+            lo, hi = 0, (1 << width) - 1
+        return max(lo, min(hi, v))
+
+    n = min(len(noisy), len(y_ref))
+    with open(filename, "w") as f:
+        # optional header line the TB can skip/parse
+        f.write(f"# n={n} in_w={data_width} out_w={out_width} "
+                f"in_signed={int(in_signed)} out_signed={int(out_signed)}\n")
+        for i in range(n):
+            xi = clamp(noisy[i], data_width, in_signed)
+            yi = clamp(y_ref[i], out_width,  out_signed)
+            f.write(f"{xi} {yi}\n")
+    print(f"wrote {n} samples to {filename}")
 
 def main():
     
@@ -468,6 +492,12 @@ def main():
     s_M.on_changed(recompute)
     s_ns.on_changed(regen_noise)
     btn_pz.on_clicked(set_ideal_M)
+
+    # Export discrete signals to vhdl
+    export_for_vhdl(noisy, y0,
+                data_width=14, out_width=14,
+                in_signed=False, out_signed=False,
+                filename="stimulus.txt")
 
     plt.show()
 
