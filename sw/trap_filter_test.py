@@ -258,6 +258,9 @@ def moving_average(v, d, out_shift=None, check_overflow=False, signed_input=Fals
         acc = acc_prev + diff
         s[n] = acc
 
+        if n < 8:
+            print(s[n])
+
         # optional overflow check (diff, acc)
         if check_overflow:
             if not _fits_signed(diff, MA_DIFF_BITS):
@@ -268,13 +271,11 @@ def moving_average(v, d, out_shift=None, check_overflow=False, signed_input=Fals
         # update next iteration
         acc_prev = acc
 
-    # final output rescale (/d normalization), arithmetic shift
+    # Truncation to match VHDL shift_right
     if out_shift is None:
         out_shift = int(round(np.log2(d)))
     if out_shift > 0:
-        rnd_o = 1 << (out_shift - 1)
-        s = np.where(s >= 0, (s + rnd_o) >> out_shift, -((-s + rnd_o) >> out_shift))
-
+        s = s >> out_shift
     return s
 
 def M_from_tau(tau_decay_s=2e-6, Tclk = 1.0/125e6):
@@ -283,28 +284,34 @@ def M_from_tau(tau_decay_s=2e-6, Tclk = 1.0/125e6):
 
 def export_for_vhdl(noisy, y_ref, data_width=14, out_width=15,
                     in_signed=False, out_signed=True,
-                    filename="stimulus.txt"):
+                    sync_indices=None, filename="stimulus.txt"):
     """
-    Dump input samples + ideal output for the VHDL testbench.
+    Dump input samples + ideal output + a 1-bit sync pulse for the VHDL testbench.
     """
     def clamp(v, width, signed):
         v = int(round(v))
         if signed:
-            lo, hi = -(1 << (width-1)), (1 << (width-1)) - 1
+            lo, hi = -(1 << (width - 1)), (1 << (width - 1)) - 1
         else:
             lo, hi = 0, (1 << width) - 1
         return max(lo, min(hi, v))
 
     n = min(len(noisy), len(y_ref))
+
+    # Give a pulse on selected index for synchronization
+    if sync_indices is None:
+        sync_indices = [0]
+    sync_set = {i for i in sync_indices if 0 <= i < n}
+
     with open(filename, "w") as f:
-        # optional header line the TB can skip/parse
         f.write(f"# n={n} in_w={data_width} out_w={out_width} "
                 f"in_signed={int(in_signed)} out_signed={int(out_signed)}\n")
         for i in range(n):
-            xi = clamp(noisy[i], data_width, in_signed)
-            yi = clamp(y_ref[i], out_width,  out_signed)
-            f.write(f"{xi} {yi}\n")
-    print(f"wrote {n} samples to {filename}")
+            xi   = clamp(noisy[i], data_width, in_signed)
+            yi   = clamp(y_ref[i], out_width,  out_signed)
+            sync = 1 if i in sync_set else 0
+            f.write(f"{xi} {yi} {sync}\n")
+    print(f"wrote {n} samples to {filename} ")
 
 def main():
     
@@ -342,8 +349,8 @@ def main():
     out_shift0 = 18 # Gain is selected as k*M -> k and M have to be power of 2 as to allow shifting -> with these params -> shift 18 bits from a 36b output
     # ------------------------------------------------------------------------
     # Moving average parameters in n samples
-    delay = 128                 # delay of moving average (Number of points, must be power of 2^n)
-    shifter = 7                 # shift required for (1/N division), delay must be multiple of 2^n
+    delay = 8                 # delay of moving average (Number of points, must be power of 2^n)
+    shifter = 3                 # shift required for (1/N division), delay must be multiple of 2^n
     # ------------------------------------------------------------------------
 
 
@@ -358,6 +365,7 @@ def main():
 
     t, clean, noisy, Tclk = generate_input(n_samples=n_samples, fs=fs, amplitude=amplitude, tau_rise_s=tau_rise_s, tau_decay_s=tau_decay_s,
                                         noise_offset=noise_offset, noise_sigma=noise_sigma)
+    noisy_signed = -1 * noisy
     t_us = t * 1e6  # time in microseconds
 
     # ------------------------------------------------------------------------
@@ -405,7 +413,8 @@ def main():
         # To view the mov average filter applied to the top of the Jordanov output signal
         # y0 = moving_average(y0, 32, out_shift=5, signed_input=True)
     else:
-        y0 = moving_average(noisy, delay, out_shift=shifter)
+        y0 = moving_average(noisy, delay, out_shift=shifter, signed_input= False)
+        y0_signed = moving_average(noisy_signed, delay, out_shift=shifter, signed_input= True)
 
     (line_out,) = ax_out.plot(
         t_us, y0,
@@ -493,8 +502,13 @@ def main():
     s_ns.on_changed(regen_noise)
     btn_pz.on_clicked(set_ideal_M)
 
-    # Export discrete signals to vhdl
-    export_for_vhdl(-1*noisy, -1*y0,
+    # Export unsigned discrete signals to vhdl
+    export_for_vhdl(noisy, y0,
+                data_width=14, out_width=14,
+                in_signed=False, out_signed=False,
+                filename="noisy_pulse_14b_unsigned.txt")
+    # Export signed discrete signals to vhdl
+    export_for_vhdl(noisy_signed, y0_signed,
                 data_width=15, out_width=15,
                 in_signed=True, out_signed=True,
                 filename="noisy_pulse_15b_signed.txt")

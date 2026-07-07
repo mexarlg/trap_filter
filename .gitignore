@@ -61,3 +61,8 @@ sim/modelsim/*.vstf
 sim/modelsim/*.ucdb
 sim/modelsim/modelsim.ini
 sim/modelsim/_lock
+*.wlf
+*.qdb
+*.qpg
+*.qtl
+_info
