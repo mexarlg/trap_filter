@@ -10,7 +10,7 @@ z2
 cModel Technology
 Z0 dC:/Users/aldor/Desktop/irap/trap_filter/trap_filter/sim/modelsim
 Emov_avg_filter
-Z1 w1783348633
+Z1 w1783415903
 Z2 DPx11 trap_filter 15 trap_filter_pkg 0 22 RHNk<j?=GLRXTo5Oh^Moi3
 Z3 DPx4 ieee 11 numeric_std 0 22 aU^R8eGcicLcUFIaBQSL>3
 Z4 DPx3 std 6 textio 0 22 zE1`LPoLg^DX3Oz^4Fj1K3
@@ -21,13 +21,13 @@ Z6 8../../src/rtl/mov_avg_filter.vhd
 Z7 F../../src/rtl/mov_avg_filter.vhd
 l0
 L32 1
-VllU`IYjl_EK[>z?Z45JGN1
-!s100 N]jD7WAN0TCAK@SjWM@^g1
+VKaMNXfVzEKm1AMiZLh6Fg0
+!s100 5LM84D^TF3N0j1k`L?<eA0
 Z8 OV;C;2020.1;71
 33
-Z9 !s110 1783348854
+Z9 !s110 1783421104
 !i10b 1
-Z10 !s108 1783348854.000000
+Z10 !s108 1783421104.000000
 Z11 !s90 -reportprogress|300|-2008|-work|trap_filter|../../src/rtl/mov_avg_filter.vhd|
 Z12 !s107 ../../src/rtl/mov_avg_filter.vhd|
 !i113 1
@@ -38,12 +38,12 @@ R2
 R3
 R4
 R5
-DEx4 work 14 mov_avg_filter 0 22 llU`IYjl_EK[>z?Z45JGN1
+DEx4 work 14 mov_avg_filter 0 22 KaMNXfVzEKm1AMiZLh6Fg0
 !i122 1
 l94
 L63 136
-V5kHeQGE;SgSYd;ZIg>`2g1
-!s100 D0fa5X>HQXJ_::_0]^@6O0
+V;QRh?03eRggjE0d5138^G3
+!s100 ZiWjTC69_39XF9j61zHOg0
 R8
 33
 R9
@@ -55,8 +55,8 @@ R12
 R13
 R14
 Etb_mov_avg_filter
-Z15 w1783348850
-Z16 DPx11 trap_filter 21 tb_mov_avg_filter_pkg 0 22 477T]<DeHVB=`@i<_HMSL3
+Z15 w1783421100
+Z16 DPx11 trap_filter 21 tb_mov_avg_filter_pkg 0 22 Km6?UT^R[[:Y]QZH0KR1A2
 R2
 R3
 R4
@@ -66,9 +66,9 @@ R0
 Z17 8../tb/tb_mov_avg_filter.vhd
 Z18 F../tb/tb_mov_avg_filter.vhd
 l0
-L15 1
-VMTMgML]m1TK:hMoco869Z0
-!s100 Mg?L<eJEZjGVOMGedm;QL1
+L16 1
+VT@RALc24^[5J<RBdR=LXH2
+!s100 75]CM@VP9H@=mALFITXOZ1
 R8
 33
 R9
@@ -80,18 +80,18 @@ Z19 !s90 -reportprogress|300|-2008|-work|trap_filter|../tb/tb_mov_avg_filter.vhd
 R13
 R14
 Atb
-DEx11 trap_filter 14 mov_avg_filter 0 22 llU`IYjl_EK[>z?Z45JGN1
+DEx11 trap_filter 14 mov_avg_filter 0 22 KaMNXfVzEKm1AMiZLh6Fg0
 R16
 R2
 R3
 R4
 R5
-DEx4 work 17 tb_mov_avg_filter 0 22 MTMgML]m1TK:hMoco869Z0
+DEx4 work 17 tb_mov_avg_filter 0 22 T@RALc24^[5J<RBdR=LXH2
 !i122 3
-l60
-L18 187
-V18adaJTOCMGTYNPX?zU3I1
-!s100 laOREhHT8Cfa]C6AjS;PV1
+l72
+L19 229
+V`i?N`4ClemnI<aFNNN3YL0
+!s100 ]T?[<<8dY]XgPn0gz9zCo1
 R8
 33
 R9
@@ -107,14 +107,14 @@ R3
 R4
 R5
 !i122 2
-Z21 w1783348654
+Z21 w1783349556
 R0
 Z22 8../tb/tb_mov_avg_filter_pkg.vhd
 Z23 F../tb/tb_mov_avg_filter_pkg.vhd
 l0
-L10 1
-V477T]<DeHVB=`@i<_HMSL3
-!s100 <aN?9<lac9aY6dYOc3RIo0
+L11 1
+VKm6?UT^R[[:Y]QZH0KR1A2
+!s100 NgWXD8jFEelm@P;h2VHlg1
 R8
 33
 b1
@@ -127,15 +127,15 @@ Z25 !s107 ../tb/tb_mov_avg_filter_pkg.vhd|
 R13
 R14
 Bbody
-DPx4 work 21 tb_mov_avg_filter_pkg 0 22 477T]<DeHVB=`@i<_HMSL3
+DPx4 work 21 tb_mov_avg_filter_pkg 0 22 Km6?UT^R[[:Y]QZH0KR1A2
 R3
 R4
 R5
 !i122 2
 l0
-L27 1
-Vm8Q@HaV2945;Wjl;0bb`S3
-!s100 9Q5?i7nGcOL5In5nP_d;o0
+L28 1
+V`6nVSK7zH0gE`PYk5hFfV0
+!s100 >2YZdEm]d7^Q`iBTKcmAh2
 R8
 33
 R9

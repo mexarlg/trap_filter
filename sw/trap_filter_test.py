@@ -333,7 +333,7 @@ def main():
     tau_rise_s = tau_r_max_s        # selected rise time for simulation [s]
     noise_offset = int(0.1*amplitude)    # offset of baseline
     noise_sigma = int(0.1*amplitude)     # white noise std dev
-    SHAPER_SELECT = 1               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
+    SHAPER_SELECT = 0               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
     # ------------------------------------------------------------------------
     # Jordanov parameters in n samples (k, m, M)
     k0, m0 = 105, 84
@@ -494,10 +494,10 @@ def main():
     btn_pz.on_clicked(set_ideal_M)
 
     # Export discrete signals to vhdl
-    export_for_vhdl(noisy, y0,
-                data_width=14, out_width=14,
-                in_signed=False, out_signed=False,
-                filename="stimulus.txt")
+    export_for_vhdl(-1*noisy, -1*y0,
+                data_width=15, out_width=15,
+                in_signed=True, out_signed=True,
+                filename="noisy_pulse_15b_signed.txt")
 
     plt.show()
 

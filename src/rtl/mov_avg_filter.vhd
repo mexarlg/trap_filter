@@ -31,10 +31,10 @@ use trap_filter.trap_filter_pkg.all;
 
 entity mov_avg_filter is
     generic (
-        G_DATA_WIDTH      : integer := 14; -- Width of incoming data stream (adc magnitude resolution)
+        G_DATA_WIDTH      : integer := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         G_DELAY_WIDTH     : integer := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_ACC_MARGIN_BITS : integer := 1;  -- Width of margin given to the accumulator
-        G_DATA_SIGNED     : integer := 0   -- Data signed (1) or unsigned (0)
+        G_DATA_SIGNED     : integer := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (
         ------------------------------------------------------------------------
@@ -45,18 +45,18 @@ entity mov_avg_filter is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I          : in std_logic;                                   -- Chip enable of moving average filter
-        DATA_N_I      : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input data at sample N
-        DATA_D_I      : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input delayed data at sample (N - delay)
-        DELAY_READY   : in std_logic;                                   -- Enough samples stored in delayed/memory module
-        SAMPLE_TRIG_I : in std_logic;                                   -- Trigger to register a filtered data sample as output (will capture at + 1 cycle)
+        CE_I          : in std_logic;                                                   -- Chip enable of moving average filter
+        DATA_N_I      : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input data at sample N
+        DATA_D_I      : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input delayed data at sample (N - delay)
+        DELAY_READY   : in std_logic;                                                   -- Enough samples stored in delayed/memory module
+        SAMPLE_TRIG_I : in std_logic;                                                   -- Trigger to register a filtered data sample as output (will capture at + 1 cycle)
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        FILT_DATA_O     : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Output filtered data stream (delay cycles + 1 latency cycle)
-        CAPTURED_DATA_O : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Latched output data sample (delay cycles + 1 latency cycle + 1 reg cycle)
-        CAPTURED_TRIG_O : out std_logic;                                   -- Indicates an output data has been registered
-        READY_O         : out std_logic                                    -- Filter is ready (delay cycles + 1 cycle of latency for output)
+        FILT_DATA_O           : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Output filtered data stream (delay cycles + 1 latency cycle)
+        CAPTURED_DATA_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Latched output data sample (delay cycles + 1 latency cycle + 1 reg cycle)
+        CAPTURED_DATA_VALID_O : out std_logic;                                                   -- Indicates an output data has been registered
+        READY_O               : out std_logic                                                    -- Filter is ready (delay cycles + 1 cycle of latency for output)
     );
 end entity mov_avg_filter;
 
@@ -84,9 +84,9 @@ architecture rtl of mov_avg_filter is
     signal acc_reg : std_logic_vector(C_ACC_WIDTH - 1 downto 0);
 
     -- Output signals
-    signal filt_data     : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal captured_data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal captured_trig : std_logic;
+    signal filt_data           : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    signal captured_data       : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    signal captured_data_valid : std_logic;
 
     -- latency = delay cycles + 1 cycle
     signal ready : std_logic;
@@ -96,10 +96,10 @@ begin
     ----------------------------------------------------------------------------
     -- Output assignments
     ----------------------------------------------------------------------------
-    FILT_DATA_O     <= filt_data;
-    CAPTURED_DATA_O <= captured_data;
-    CAPTURED_TRIG_O <= captured_trig;
-    READY_O         <= ready;
+    FILT_DATA_O           <= filt_data;
+    CAPTURED_DATA_O       <= captured_data;
+    CAPTURED_DATA_VALID_O <= captured_data_valid;
+    READY_O               <= ready;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -153,9 +153,11 @@ begin
                 -- Only output if delays have been fullfilled
                 if (DELAY_READY = '1') then
                     if G_DATA_SIGNED = 1 then
+                        -- arithmetic shift
                         filt_data <= std_logic_vector(
                             resize(shift_right(signed(acc_reg), C_SHIFT), filt_data'length));
                     else
+                        -- logic shift
                         filt_data <= std_logic_vector(
                             resize(shift_right(unsigned(acc_reg), C_SHIFT), filt_data'length));
                     end if;
@@ -169,15 +171,13 @@ begin
     begin
         if rising_edge(CLK_I) then
             if (RST_N = '0') then
-                captured_data <= (others => '0');
-                captured_trig <= '0';
+                captured_data       <= (others => '0');
+                captured_data_valid <= '0';
             elsif (CE_I = '1') then
-                captured_trig <= '0';
-
                 -- capture data if trigger and delays are ready
                 if (SAMPLE_TRIG_I = '1') and (DELAY_READY = '1') then
-                    captured_data <= filt_data;
-                    captured_trig <= '1';
+                    captured_data       <= filt_data;
+                    captured_data_valid <= '1';
                 end if;
             end if;
         end if;

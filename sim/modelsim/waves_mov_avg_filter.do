@@ -23,10 +23,10 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_ce
 # Mov_avg_filter IN
 #===========================================================================
 add wave -divider " MOV_AVG_FILTER IN"
-add wave -color white -format Analog-Step -radix unsigned sim:/tb_mov_avg_filter/tb_data_n
-add wave -color white -radix unsigned sim:/tb_mov_avg_filter/tb_data_n
-add wave -color green  -format Analog-Step -radix unsigned sim:/tb_mov_avg_filter/tb_data_d
-add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/tb_data_d
+add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_n
+add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_data_n
+# add wave -color green  -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_d
+add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_data_d
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_delay_ready
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_sample_trig
 
@@ -41,10 +41,18 @@ add wave -color green  -radix hex sim:/tb_mov_avg_filter/dut/acc_reg
 #===========================================================================
 add wave -divider " MOV_AVG_FILTER OUT"
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_ready
-add wave -color white -format Analog-Step -radix unsigned sim:/tb_mov_avg_filter/tb_filt_data
-add wave -color white -radix unsigned sim:/tb_mov_avg_filter/tb_filt_data
-add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/tb_captured_data
-add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_captured_trig
+add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_filt_data
+add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_filt_data
+add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_captured_data
+add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_captured_data_valid
+
+#===========================================================================
+# Mov_avg_filter EXPECTED
+#===========================================================================
+add wave -divider " MOV_AVG_FILTER EXPECTED"
+add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_ref
+add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_data_diff
+
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS
