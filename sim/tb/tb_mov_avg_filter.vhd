@@ -25,7 +25,7 @@ architecture tb of tb_mov_avg_filter is
     -- Moving average configuration
     constant C_DELAY_WIDTH     : natural := 3;                  -- Bit width of delay
     constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
-    constant C_ACC_MARGIN_BITS : natural := 1;                  -- Margin bits for accumulator signal
+    constant C_ACC_MARGIN_BITS : natural := 2;                  -- Margin bits for accumulator signal (at worst case, 1MB holds 7 extra cycles, 2 MB holds 15 extra cycles)
     constant C_WINDOW          : natural := 2 ** C_DELAY_WIDTH; -- Value of the delay (all bits => '1')
 
     -- Sign of input pulse -> Needs to be changed in waveform
@@ -36,6 +36,9 @@ architecture tb of tb_mov_avg_filter is
     -- Chosen maximum (at sight in waveform) to generate a trigger to capture
     constant C_MAX_TRIGGER : integer := 8924;
 
+    -- Max value of ADC data for overflow check on accumulator
+    constant C_MAX_VAL  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := std_logic_vector(to_signed(2 ** C_ADC_WIDTH - 1, C_ADC_WIDTH + C_DATA_SIGNED));
+    constant C_ZERO_VAL : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     ----------------------------------------------------------------------------
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -246,7 +249,8 @@ begin
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
                 else
-                    tb_data_n   <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_n <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    --tb_data_n   <= C_MAX_VAL; -- for cont overflow test
                     tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;

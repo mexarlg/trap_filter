@@ -24,7 +24,6 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_ce
 #===========================================================================
 add wave -divider " MOV_AVG_FILTER IN"
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_n
-add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_data_n
 add wave -color green -radix binary sim:/tb_mov_avg_filter/tb_sync_pulse
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_data_d
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_data_d_valid
@@ -37,13 +36,14 @@ add wave -divider " MOV_AVG_FILTER INTERNAL"
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/dut/acc_reg
 add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/cnt_del
 add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/data_d_valid_trig
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/data_d_error_cond
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/acc_oflow_error_cond
 
 #===========================================================================
 # Mov_avg_filter OUT
 #===========================================================================
 add wave -divider " MOV_AVG_FILTER OUT"
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_filt_data
-add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_filt_data
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_filt_data_valid
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_capture_data
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_capture_data_valid
@@ -55,7 +55,6 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_stat_error
 add wave -divider " MOV_AVG_FILTER EXPECTED"
 # python data is delayed 2 cycles to compare it with the filter (2 cycles latency)
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_ref_q1
-add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_data_ref_q1
 add wave -color white -radix signed sim:/tb_mov_avg_filter/p_diff/v_diff
 
 

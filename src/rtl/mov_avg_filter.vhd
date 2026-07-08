@@ -35,7 +35,7 @@ entity mov_avg_filter is
     generic (
         G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         G_DELAY_WIDTH     : natural range 0 to 10 := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
-        G_ACC_MARGIN_BITS : natural range 1 to 5  := 1;  -- Width of margin given to the accumulator
+        G_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Width of margin given to the accumulator
         G_DATA_SIGNED     : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (
@@ -86,10 +86,19 @@ architecture rtl of mov_avg_filter is
     constant C_CNT_DEL_ONE  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_DELAY_WIDTH));
     constant C_CNT_DEL_ZERO : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '0');
 
-    constant C_STAT_NO_ERROR    : std_logic_vector(3 downto 0) := "0000";
-    constant C_STAT_DELAY_ERROR : std_logic_vector(3 downto 0) := "1010";
-    constant C_STAT_OFLOW_ERROR : std_logic_vector(3 downto 0) := "1100";
-    constant C_STAT_SEU_ERROR   : std_logic_vector(3 downto 0) := "1001";
+    -- Limits for accumulator overflow error at the last (top) margin bit
+    constant C_OFLOW_TOP_BIT : natural := G_DATA_WIDTH + G_DELAY_WIDTH + G_ACC_MARGIN_BITS - 1;
+
+    -- Signed and unsigned positive and negative limits
+    constant C_OFLOW_PLIM_U : unsigned(C_ACC_WIDTH - 1 downto 0) := to_unsigned(2 ** C_OFLOW_TOP_BIT, C_ACC_WIDTH);
+    constant C_OFLOW_PLIM_S : signed(C_ACC_WIDTH - 1 downto 0)   := to_signed(2 ** C_OFLOW_TOP_BIT, C_ACC_WIDTH);
+    constant C_OFLOW_NLIM_S : signed(C_ACC_WIDTH - 1 downto 0)   := to_signed( - (2 ** C_OFLOW_TOP_BIT), C_ACC_WIDTH);
+
+    -- Error types
+    constant C_STAT_NO_ERROR    : std_logic_vector(3 downto 0) := "0000"; -- no error
+    constant C_STAT_DELAY_ERROR : std_logic_vector(3 downto 0) := "1010"; -- delayed data not synchronized
+    constant C_STAT_OFLOW_ERROR : std_logic_vector(3 downto 0) := "1100"; -- accumulator about to overflow
+    constant C_STAT_SEU_ERROR   : std_logic_vector(3 downto 0) := "1001"; -- seu?
 
     ----------------------------------------------------------------------------
     -- Types
@@ -111,12 +120,15 @@ architecture rtl of mov_avg_filter is
     signal filt_data_valid    : std_logic;
     signal filt_data_valid_q0 : std_logic;
 
-    -- counter for expected delay
+    -- Delay error synchronization signals
     signal cnt_del           : std_logic_vector(G_DELAY_WIDTH - 1 downto 0);
     signal data_d_valid_trig : std_logic;
     signal data_d_error_cond : std_logic;
 
-    -- error signal -> bit3 (general error), bit2 (type overflow), bit1 (type delay), bit0(type seu)
+    -- Overflow error signals
+    signal acc_oflow_error_cond : std_logic;
+
+    -- output error signal -> bit3 (general error), bit2 (type overflow), bit1 (type delay), bit0(type seu)
     signal stat_error : std_logic_vector(3 downto 0);
 
 begin
@@ -242,6 +254,23 @@ begin
         end if;
     end process p_ready;
 
+    -- status error flags
+    p_err : process (CLK_I, RST_N_I)
+    begin
+        if RST_N_I = '0' then
+            stat_error <= C_STAT_NO_ERROR;
+        elsif rising_edge(CLK_I) then
+            -- data_d_valid latched sync error
+            if data_d_error_cond = '1' then
+                stat_error <= stat_error or C_STAT_DELAY_ERROR;
+            end if;
+            -- accumulator overflow prevention latched error
+            if acc_oflow_error_cond = '1' then
+                stat_error <= stat_error or C_STAT_OFLOW_ERROR;
+            end if;
+        end if;
+    end process p_err;
+
     ----------------------------------------------------------------------------
     -- Error status: Delay not sync
     ----------------------------------------------------------------------------
@@ -249,6 +278,7 @@ begin
     -- Assert internal delay valid in case external DATA_D_VALID is not properly asserted
     data_d_valid_trig <= '1' when cnt_del = C_CNT_DEL_MAX else
         '0';
+    -- Delay sync error condition (when both data_valid are different)
     data_d_error_cond <= '1' when (data_d_valid_trig /= DATA_D_VALID_I) and (CE_I = '1') else
         '0';
 
@@ -266,22 +296,28 @@ begin
         end if;
     end process p_cnt;
 
-    -- Delay error flag: data_d_valid was not asserted on time
-    p_err : process (CLK_I, RST_N_I)
-    begin
-        if RST_N_I = '0' then
-            stat_error <= (others => '0');
-        elsif rising_edge(CLK_I) then
-            if (data_d_error_cond) then
-                stat_error <= C_STAT_DELAY_ERROR; -- delay error occured
-            else
-                stat_error <= C_STAT_NO_ERROR;
-            end if;
-        end if;
-    end process p_err;
-
     ----------------------------------------------------------------------------
     -- Error status: Overflow
     ----------------------------------------------------------------------------
+
+    -- raise overflow flag when margin bits are being used
+    p_margin : process (CLK_I, RST_N_I)
+    begin
+        if RST_N_I = '0' then
+            acc_oflow_error_cond <= '0';
+        elsif rising_edge(CLK_I) then
+            if CE_I = '1' then
+                if G_DATA_SIGNED = 1 then
+                    if (signed(acc_reg) >= C_OFLOW_PLIM_S) or (signed(acc_reg) <= C_OFLOW_NLIM_S) then
+                        acc_oflow_error_cond                                       <= '1';
+                    end if;
+                else
+                    if unsigned(acc_reg) >= C_OFLOW_PLIM_U then
+                        acc_oflow_error_cond <= '1';
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;
 
 end architecture rtl;
