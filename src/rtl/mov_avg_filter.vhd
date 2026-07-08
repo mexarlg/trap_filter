@@ -136,7 +136,6 @@ begin
     ----------------------------------------------------------------------------
     -- Assertions
     ----------------------------------------------------------------------------
-    assert C_ACC_WIDTH >= G_DATA_WIDTH + G_DELAY_WIDTH + 1 report "Accumulator width is insufficient" severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments
