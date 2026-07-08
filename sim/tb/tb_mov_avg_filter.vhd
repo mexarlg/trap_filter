@@ -23,13 +23,13 @@ architecture tb of tb_mov_avg_filter is
     ----------------------------------------------------------------------------
 
     -- Moving average configuration
-    constant C_DELAY_WIDTH     : integer := 3;                  -- Bit width of delay
-    constant C_ADC_WIDTH       : integer := 14;                 -- Bit width of adc (magnitude)
-    constant C_ACC_MARGIN_BITS : integer := 1;                  -- Margin bits for accumulator signal
-    constant C_WINDOW          : integer := 2 ** C_DELAY_WIDTH; -- Value of the delay (all bits => '1')
+    constant C_DELAY_WIDTH     : natural := 3;                  -- Bit width of delay
+    constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
+    constant C_ACC_MARGIN_BITS : natural := 1;                  -- Margin bits for accumulator signal
+    constant C_WINDOW          : natural := 2 ** C_DELAY_WIDTH; -- Value of the delay (all bits => '1')
 
     -- Sign of input pulse -> Needs to be changed in waveform
-    constant C_DATA_SIGNED         : integer := 1;                              -- '1' if signed, '0' if unsigned
+    constant C_DATA_SIGNED         : natural := 1;                              -- '1' if signed, '0' if unsigned
     constant C_UNSIGNED_PULSE_FILE : string  := "noisy_pulse_14b_unsigned.txt"; -- Name of unsigned input pulse file (and mov avg ref) from python
     constant C_SIGNED_PULSE_FILE   : string  := "noisy_pulse_15b_signed.txt";   -- Name of signed input pulse file (and mov avg ref) from python
 
@@ -45,17 +45,20 @@ architecture tb of tb_mov_avg_filter is
     signal tb_rst_n : std_logic := '0';
 
     -- tb input signals of mov_avg_filter
-    signal tb_ce          : std_logic                                                  := '0';
-    signal tb_data_n      : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_d      : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_delay_ready : std_logic                                                  := '0';
-    signal tb_sample_trig : std_logic                                                  := '0';
+    signal tb_ce                : std_logic                                                  := '0';
+    signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d_valid      : std_logic                                                  := '0';
+    signal tb_capture_data_trig : std_logic                                                  := '0';
 
     -- tb output signals of mov_avg_filter
-    signal tb_filt_data           : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_filt_data_valid     : std_logic                                                  := '0';
-    signal tb_captured_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_captured_data_valid : std_logic                                                  := '0';
+    signal tb_filt_data          : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_filt_data_valid    : std_logic                                                  := '0';
+    signal tb_capture_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_capture_data_valid : std_logic                                                  := '0';
+
+    -- tb status
+    signal tb_stat_error : std_logic_vector(3 downto 0) := (others => '0');
 
     -- verification and synchronization of python pulse
     signal tb_sample_valid : std_logic                                                      := '0';             -- valid flag for delayed simulation of data
@@ -121,18 +124,22 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I          => tb_ce,
-            DATA_N_I      => tb_data_n,
-            DATA_D_I      => tb_data_d,
-            DELAY_READY_I => tb_delay_ready,
-            SAMPLE_TRIG_I => tb_sample_trig,
+            CE_I                => tb_ce,
+            DATA_N_I            => tb_data_n,
+            DATA_D_I            => tb_data_d,
+            DATA_D_VALID_I      => tb_data_d_valid,
+            CAPTURE_DATA_TRIG_I => tb_capture_data_trig,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            FILT_DATA_O           => tb_filt_data,          -- (delay_cycles + 2 cycles)
-            FILT_DATA_VALID_O     => tb_filt_data_valid,    -- (delay_cycles + 2 cycles)
-            CAPTURED_DATA_O       => tb_captured_data,      -- (delay_cycles + 3 cycles)
-            CAPTURED_DATA_VALID_O => tb_captured_data_valid -- (delay_cycles + 3 cycles)
+            FILT_DATA_O          => tb_filt_data,          -- (delay_cycles + 2 cycles)
+            FILT_DATA_VALID_O    => tb_filt_data_valid,    -- (delay_cycles + 2 cycles)
+            CAPTURE_DATA_O       => tb_capture_data,       -- (delay_cycles + 3 cycles)
+            CAPTURE_DATA_VALID_O => tb_capture_data_valid, -- (delay_cycles + 3 cycles)
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            STAT_ERROR_O => tb_stat_error -- error signal
         );
 
     ----------------------------------------------------------------------------
@@ -148,8 +155,8 @@ begin
     begin
         if rising_edge(tb_clk) then
             if (tb_rst_n = '0') then
-                delay_line     <= (others => (others => '0'));
-                tb_delay_ready <= '0';
+                delay_line      <= (others => (others => '0'));
+                tb_data_d_valid <= '0';
                 fill_count := 0;
             elsif (tb_ce = '1' and tb_sample_valid = '1') then
 
@@ -157,13 +164,13 @@ begin
                 delay_line(1 to C_WINDOW - 1) <= delay_line(0 to C_WINDOW - 2);
                 delay_line(0)                 <= tb_data_n;
 
-                -- detection of filled delays for tb_delay_ready
+                -- detection of filled delays for tb_data_d_valid
                 if fill_count < C_WINDOW then
                     fill_count := fill_count + 1;
                 end if;
                 -- issue trigger at moment last delayed data is stored so it is available at next cycle
                 if fill_count >= C_WINDOW - 1 then
-                    tb_delay_ready <= '1';
+                    tb_data_d_valid <= '1';
                 end if;
             end if;
         end if;
@@ -175,9 +182,9 @@ begin
         if rising_edge(tb_clk) then
             -- 1 sample before the maximum (either signed or unsigned data, the conversion will make it work)
             if (unsigned(tb_data_n) = to_unsigned(C_MAX_TRIGGER, tb_data_n'length)) then
-                tb_sample_trig <= '1';
+                tb_capture_data_trig <= '1';
             else
-                tb_sample_trig <= '0';
+                tb_capture_data_trig <= '0';
             end if;
         end if;
     end process p_capture_trigg;
