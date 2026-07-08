@@ -226,7 +226,8 @@ begin
                 -- always capture data if trigger (but capture_data_valid is only asserted if no errors)
                 if (CAPTURE_DATA_TRIG_I = '1') then
                     capture_data <= filt_data;
-                    if (stat_error = C_STAT_NO_ERROR) then
+                    -- Need both no errors, and filtered data valid. Can happen we are at no erros, but latency is still not finished (not valid)
+                    if ((stat_error = C_STAT_NO_ERROR) and (filt_data_valid_q0 = '1')) then
                         capture_data_valid <= '1';
                     end if;
                 end if;
@@ -242,11 +243,12 @@ begin
             filt_data_valid_q0 <= '0';
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
-                -- Output data even if error (valid not asserted)
+                -- Output data even if error (but valid not asserted)
                 if (stat_error = C_STAT_NO_ERROR) then
                     filt_data_valid    <= data_d_valid_trig;
                     filt_data_valid_q0 <= filt_data_valid;
                 else
+                    filt_data_valid    <= '0';
                     filt_data_valid_q0 <= '0';
                 end if;
             end if;
