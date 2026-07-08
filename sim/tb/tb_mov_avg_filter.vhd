@@ -53,7 +53,7 @@ architecture tb of tb_mov_avg_filter is
 
     -- tb output signals of mov_avg_filter
     signal tb_filt_data           : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_filt_data_ready     : std_logic                                                  := '0';
+    signal tb_filt_data_valid     : std_logic                                                  := '0';
     signal tb_captured_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_captured_data_valid : std_logic                                                  := '0';
 
@@ -116,8 +116,8 @@ begin
             ------------------------------------------------------------------------
             -- Clock / Reset
             ------------------------------------------------------------------------
-            CLK_I => tb_clk,
-            RST_N => tb_rst_n,
+            CLK_I   => tb_clk,
+            RST_N_I => tb_rst_n,
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
@@ -130,7 +130,7 @@ begin
             -- Outputs
             ------------------------------------------------------------------------
             FILT_DATA_O           => tb_filt_data,          -- (delay_cycles + 2 cycles)
-            FILT_DATA_READY_O     => tb_filt_data_ready,    -- (delay_cycles + 2 cycles)
+            FILT_DATA_VALID_O     => tb_filt_data_valid,    -- (delay_cycles + 2 cycles)
             CAPTURED_DATA_O       => tb_captured_data,      -- (delay_cycles + 3 cycles)
             CAPTURED_DATA_VALID_O => tb_captured_data_valid -- (delay_cycles + 3 cycles)
         );

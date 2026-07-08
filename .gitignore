@@ -66,3 +66,9 @@ sim/modelsim/_lock
 *.qpg
 *.qtl
 _info
+
+# Python cache
+*.pyc
+
+# Generated pulse waves
+*.txt
