@@ -113,12 +113,12 @@ begin
     ----------------------------------------------------------------------------
 
     -- Accumulator: acc[n] <= acc[n-1] + x[n] - x[n-delay]
-    p_acc : process (CLK_I)
+    p_acc : process (CLK_I, RST_N_I)
     begin
-        if rising_edge(CLK_I) then
-            if (RST_N_I = '0') then
-                acc_reg <= (others => '0');
-            elsif (CE_I = '1') then
+        if (RST_N_I = '0') then
+            acc_reg <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
                 -- the accumulator runs at 'CE' + 1 cycle of registering the accumulator
                 if G_DATA_SIGNED = 1 then
                     if (DELAY_READY_I = '1') then
@@ -148,12 +148,12 @@ begin
     end process p_acc;
 
     -- Divide by N (arithmetic or logical shift since N is proportional to 2^N)
-    p_output : process (CLK_I)
+    p_output : process (CLK_I, RST_N_I)
     begin
-        if rising_edge(CLK_I) then
-            if (RST_N_I = '0') then
-                filt_data <= (others => '0');
-            elsif (CE_I = '1') then
+        if (RST_N_I = '0') then
+            filt_data <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
                 -- shifter runs at 'CE' + 1 cycle of accumulator + 1 cycle of registering the shift
                 if G_DATA_SIGNED = 1 then
                     -- arithmetic shift
@@ -169,15 +169,15 @@ begin
     end process p_output;
 
     -- Latch a filtered sample on trigger (delay_cycles + 2 cycles latency + 1 reg cycle)
-    p_capture : process (CLK_I)
+    p_capture : process (CLK_I, RST_N_I)
     begin
-        if rising_edge(CLK_I) then
-            if (RST_N_I = '0') then
-                captured_data       <= (others => '0');
+        if (RST_N_I = '0') then
+            captured_data       <= (others => '0');
+            captured_data_valid <= '0';
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
                 captured_data_valid <= '0';
-            elsif (CE_I = '1') then
-                captured_data_valid <= '0';
-                -- capture data if trigger and delays are filt_data_valid
+                -- capture data if trigger and delays are ready
                 if (SAMPLE_TRIG_I = '1') and (filt_data_valid_q0 = '1') then
                     captured_data       <= filt_data;
                     captured_data_valid <= '1';
@@ -186,18 +186,18 @@ begin
         end if;
     end process p_capture;
 
-    -- Filter data is filt_data_valid once the delay storing is completed + 2 cycles
-    p_filt_data_valid : process (CLK_I)
+    -- Filter data is ready once the delay storing is completed + 2 cycles
+    p_ready : process (CLK_I, RST_N_I)
     begin
-        if rising_edge(CLK_I) then
-            if (RST_N_I = '0') then
-                filt_data_valid    <= '0';
-                filt_data_valid_q0 <= '0';
-            elsif (CE_I = '1') then
+        if (RST_N_I = '0') then
+            filt_data_valid    <= '0';
+            filt_data_valid_q0 <= '0';
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
                 filt_data_valid    <= DELAY_READY_I;
                 filt_data_valid_q0 <= filt_data_valid;
             end if;
         end if;
-    end process p_filt_data_valid;
+    end process p_ready;
 
 end architecture rtl;

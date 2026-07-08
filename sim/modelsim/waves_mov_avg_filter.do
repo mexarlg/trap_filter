@@ -42,7 +42,7 @@ add wave -color green  -radix signed sim:/tb_mov_avg_filter/dut/acc_reg
 add wave -divider " MOV_AVG_FILTER OUT"
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_filt_data
 add wave -color white -radix signed sim:/tb_mov_avg_filter/tb_filt_data
-add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_filt_data_ready
+add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_filt_data_valid
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_captured_data
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_captured_data_valid
 
