@@ -10,6 +10,8 @@
 #
 # Author: Aldo Lupio
 # Date:   09/07/2026
+#
+# cd /Users/aldor/Desktop/irap/trap_filter/trap_filter/scripts
 #==============================================================================
 
 #------------------------------------------------------------------------------
@@ -17,7 +19,16 @@
 #------------------------------------------------------------------------------
 
 set PROJECT_NAME    "trap_filter"
-set PROJECT_DIR     "./build"
+
+set SCRIPT_PATH [info script]
+if {$SCRIPT_PATH eq ""} {
+    error "Cannot resolve script location. Run as: radiantc [file join scripts build_trap_filter.tcl]"
+}
+
+set SCRIPT_DIR  [file dirname [file normalize $SCRIPT_PATH]]
+set PROJECT_DIR [file normalize "$SCRIPT_DIR/../build/radiant"]
+set RTL_DIR     [file normalize "$SCRIPT_DIR/../src/rtl"]
+set CONST_DIR   [file normalize "$SCRIPT_DIR/../constraints"]
 
 #------------------------------------------------------------------------------
 # FPGA Selection: CertusPro-NX LFCPNX-100
@@ -52,6 +63,10 @@ if {[file exists $PROJECT_FILE]} {
 file mkdir $PROJECT_DIR
 puts "INFO: Creating project '$PROJECT_NAME' for part $DEV_PART"
 
+set OLD_PWD [pwd]
+cd $PROJECT_DIR
+puts "INFO: Creating project in [pwd]"
+
 prj_create \
     -name        $PROJECT_NAME \
     -dev         $DEV_PART \
@@ -59,6 +74,8 @@ prj_create \
     -synthesis   $SYNTHESIS_TOOL \
     -impl        "impl1" \
     -impl_dir    "impl1"
+
+prj_set_impl_opt -impl "impl1" "VHDL_2008" "True"
 
 #------------------------------------------------------------------------------
 # NEXT STEPS
@@ -68,7 +85,7 @@ prj_create \
 # Add RTL Source Files
 #------------------------------------------------------------------------------
 
-# prj_add_source "./rtl/mov_avg_filter.vhd"
+# prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
 
 #------------------------------------------------------------------------------
 # Add RTL Top Wrapper
@@ -80,24 +97,25 @@ prj_create \
 # Add Constraints (Physical / Timing)
 #------------------------------------------------------------------------------
 
-# prj_add_source "./constraints/trap_filter.pdc"
-# prj_add_source "./constraints/trap_filter.ldc"
+# prj_add_source [file join $CONST_DIR "trap_filter.pdc"]
+# prj_add_source [file join $CONST_DIR "trap_filter.ldc"]
 
 #------------------------------------------------------------------------------
 # Add IP Sources
 #------------------------------------------------------------------------------
 
-# prj_add_source "./ip/fifo_delay/fifo_delay.ipx"
+# prj_add_source [file join $SCRIPT_DIR ".." "ip" "fifo_delay" "fifo_delay.ipx"]
 
 #------------------------------------------------------------------------------
 # Add Simulation TB
 #------------------------------------------------------------------------------
 
-# prj_add_source -simulate_only "./sim/tb_delay_unit.v"
+# prj_add_source -simulate_only [file join $SCRIPT_DIR ".." "sim" "tb_delay_unit.v"]
 
 #------------------------------------------------------------------------------
 # Save and report
 #------------------------------------------------------------------------------
 
 prj_save
+cd $OLD_PWD
 puts "INFO: Project created at $PROJECT_FILE"
