@@ -24,7 +24,6 @@ vscode/
 # documentation
 /docs/doxygen_build/
 /docs/public/
-docs/
 
 # Vivado generated files
 *.jou
