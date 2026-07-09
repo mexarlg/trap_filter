@@ -221,12 +221,12 @@ begin
             capture_data       <= (others => '0');
             capture_data_valid <= '0';
         elsif rising_edge(CLK_I) then
+            capture_data_valid <= '0'; -- capture_data_valid is a strobe
             if (CE_I = '1') then
-                capture_data_valid <= '0'; -- capture_data_valid is a strobe
                 -- always capture data if trigger (but capture_data_valid is only asserted if no errors)
                 if (CAPTURE_DATA_TRIG_I = '1') then
                     capture_data <= filt_data;
-                    -- Need both no errors, and filtered data valid. Can happen we are at no erros, but latency is still not finished (not valid)
+                    -- Need both no errors, and filtered data valid. Can happen we are at no errors, but latency is still not finished (not valid)
                     if ((stat_error = C_STAT_NO_ERROR) and (filt_data_valid_q0 = '1')) then
                         capture_data_valid <= '1';
                     end if;
@@ -242,9 +242,12 @@ begin
             filt_data_valid    <= '0';
             filt_data_valid_q0 <= '0';
         elsif rising_edge(CLK_I) then
+            filt_data_valid    <= '0';
+            filt_data_valid_q0 <= '0';
             if (CE_I = '1') then
-                -- Output data even if error (but valid not asserted)
+                -- data is output even if there is an error (but valid is not asserted)
                 if (stat_error = C_STAT_NO_ERROR) then
+                    -- we ensure 2 cycle delay valid for latency at start and after a CE restart (although a 2 cycle delay is not req for CE restart)
                     filt_data_valid    <= data_d_valid_trig;
                     filt_data_valid_q0 <= filt_data_valid;
                 else
@@ -277,7 +280,7 @@ begin
     ----------------------------------------------------------------------------
 
     -- Assert internal delay valid in case external DATA_D_VALID is not properly asserted
-    data_d_valid_trig <= '1' when cnt_del = C_CNT_DEL_MAX else
+    data_d_valid_trig <= '1' when (cnt_del = C_CNT_DEL_MAX) and (CE_I = '1') else
         '0';
     -- Delay sync error condition (when both data_valid are different)
     data_d_error_cond <= '1' when (data_d_valid_trig /= DATA_D_VALID_I) and (CE_I = '1') else

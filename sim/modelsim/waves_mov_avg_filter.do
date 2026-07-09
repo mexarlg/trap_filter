@@ -22,7 +22,7 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_ce
 #===========================================================================
 # Mov_avg_filter IN
 #===========================================================================
-add wave -divider " MOV_AVG_FILTER IN"
+add wave -divider " MOV_AVG_FILTER INPUTS"
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_n
 add wave -color green -radix binary sim:/tb_mov_avg_filter/tb_sync_pulse
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_data_d
@@ -33,16 +33,21 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_capture_data_trig
 # Mov_avg_filter Internal
 #===========================================================================
 add wave -divider " MOV_AVG_FILTER INTERNAL"
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/C_ACC_WIDTH
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/C_DELAY_VALUE
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/C_SHIFT
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/C_OFLOW_PLIM_S
+add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/C_OFLOW_NLIM_S
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/dut/acc_reg
 add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/cnt_del
-add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/data_d_valid_trig
-add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/data_d_error_cond
-add wave -color green  -radix unsigned sim:/tb_mov_avg_filter/dut/acc_oflow_error_cond
+add wave -color green  -radix binary sim:/tb_mov_avg_filter/dut/data_d_valid_trig
+add wave -color green  -radix binary sim:/tb_mov_avg_filter/dut/data_d_error_cond
+add wave -color green  -radix binary sim:/tb_mov_avg_filter/dut/acc_oflow_error_cond
 
 #===========================================================================
 # Mov_avg_filter OUT
 #===========================================================================
-add wave -divider " MOV_AVG_FILTER OUT"
+add wave -divider " MOV_AVG_FILTER OUTPUTS"
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_filt_data
 add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_filt_data_valid
 add wave -color green  -radix signed sim:/tb_mov_avg_filter/tb_capture_data
@@ -52,7 +57,7 @@ add wave -color green  -radix binary sim:/tb_mov_avg_filter/tb_stat_error
 #===========================================================================
 # Mov_avg_filter EXPECTED
 #===========================================================================
-add wave -divider " MOV_AVG_FILTER EXPECTED"
+add wave -divider " MOV_AVG_FILTER VALIDATION"
 # python data is delayed 2 cycles to compare it with the filter (2 cycles latency)
 add wave -color white -format Analog-Step -radix signed sim:/tb_mov_avg_filter/tb_data_ref_q1
 add wave -color white -radix signed sim:/tb_mov_avg_filter/p_diff/v_diff
