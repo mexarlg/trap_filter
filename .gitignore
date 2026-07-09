@@ -21,6 +21,10 @@ vscode/
 *.tmp
 ~*
 
+# script generated files
+scripts/*
+!scripts/.tcl
+
 # documentation
 /docs/doxygen_build/
 /docs/public/
