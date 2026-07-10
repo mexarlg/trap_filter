@@ -34,7 +34,7 @@ use trap_filter.trap_filter_pkg.all;
 entity mov_avg_filter is
     generic (
         G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_WIDTH     : natural range 0 to 10 := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_DELAY_WIDTH     : natural range 0 to 8  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Width of margin given to the accumulator
         G_DATA_SIGNED     : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
@@ -78,10 +78,7 @@ architecture rtl of mov_avg_filter is
     -- Amount of bits to shift for division of (1/N)
     constant C_SHIFT : natural := G_DELAY_WIDTH;
 
-    -- Value of delay in clk samples
-    constant C_DELAY_VALUE : integer := 2 ** G_DELAY_WIDTH;
-
-    -- Expected limits for a possible delay count saveguard (1 bit more of delay width)
+    -- Expected limits for inner delay valid trigger
     constant C_CNT_DEL_MAX  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '1');
     constant C_CNT_DEL_ONE  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_DELAY_WIDTH));
     constant C_CNT_DEL_ZERO : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '0');
@@ -264,13 +261,15 @@ begin
         if RST_N_I = '0' then
             stat_error <= C_STAT_NO_ERROR;
         elsif rising_edge(CLK_I) then
-            -- data_d_valid latched sync error
-            if data_d_error_cond = '1' then
-                stat_error <= stat_error or C_STAT_DELAY_ERROR;
-            end if;
-            -- accumulator overflow prevention latched error
-            if acc_oflow_error_cond = '1' then
-                stat_error <= stat_error or C_STAT_OFLOW_ERROR;
+            if (CE_I = '1') then
+                -- data_d_valid latched sync error
+                if data_d_error_cond = '1' then
+                    stat_error <= stat_error or C_STAT_DELAY_ERROR;
+                end if;
+                -- accumulator overflow prevention latched error
+                if acc_oflow_error_cond = '1' then
+                    stat_error <= stat_error or C_STAT_OFLOW_ERROR;
+                end if;
             end if;
         end if;
     end process p_err;
@@ -280,8 +279,19 @@ begin
     ----------------------------------------------------------------------------
 
     -- Assert internal delay valid in case external DATA_D_VALID is not properly asserted
-    data_d_valid_trig <= '1' when (cnt_del = C_CNT_DEL_MAX) and (CE_I = '1') else
-        '0';
+    p_valid_trig : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            data_d_valid_trig <= '0';
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
+                if (cnt_del = C_CNT_DEL_MAX) then
+                    data_d_valid_trig <= '1';
+                end if;
+            end if;
+        end if;
+    end process p_valid_trig;
+
     -- Delay sync error condition (when both data_valid are different)
     data_d_error_cond <= '1' when (data_d_valid_trig /= DATA_D_VALID_I) and (CE_I = '1') else
         '0';

@@ -50,6 +50,7 @@ architecture tb of tb_mov_avg_filter is
     -- tb input signals of mov_avg_filter
     signal tb_ce                : std_logic                                                  := '0';
     signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_n_reg        : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d_valid      : std_logic                                                  := '0';
     signal tb_capture_data_trig : std_logic                                                  := '0';
@@ -107,7 +108,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I                => tb_ce,
-            DATA_N_I            => tb_data_n,
+            DATA_N_I            => tb_data_n_reg,
             DATA_D_I            => tb_data_d,
             DATA_D_VALID_I      => tb_data_d_valid,
             CAPTURE_DATA_TRIG_I => tb_capture_data_trig,
@@ -128,7 +129,6 @@ begin
     -- Delay model
     ----------------------------------------------------------------------------
 
-    -- delay is instantaneous from our simulated shift register
     tb_data_d <= delay_line(C_WINDOW - 1);
 
     -- Shift registers, simulates the delay
@@ -140,18 +140,20 @@ begin
                 delay_line      <= (others => (others => '0'));
                 tb_data_d_valid <= '0';
                 fill_count := 0;
+
             elsif (tb_ce = '1' and tb_sample_valid = '1') then
 
                 -- update delay line from current sample
                 delay_line(1 to C_WINDOW - 1) <= delay_line(0 to C_WINDOW - 2);
-                delay_line(0)                 <= tb_data_n;
+                delay_line(0)                 <= tb_data_n_reg;
 
-                -- detection of filled delays for tb_data_d_valid
+                -- detection of filled delays
                 if fill_count < C_WINDOW then
                     fill_count := fill_count + 1;
                 end if;
-                -- issue trigger at moment last delayed data is stored so it is available at next cycle
-                if fill_count >= C_WINDOW - 1 then
+
+                -- one extra cycle delay for valid
+                if fill_count >= C_WINDOW then
                     tb_data_d_valid <= '1';
                 end if;
             end if;
@@ -247,13 +249,15 @@ begin
             read(ln, v_sync, good); -- line value, second element value (sync pulse), success flag
             if good then
                 if C_DATA_SIGNED = 0 then
-                    tb_data_n   <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
-                    tb_data_ref <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_n     <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_n_reg <= tb_data_n;
+                    tb_data_ref   <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
                 else
-                    tb_data_n <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_n     <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_n_reg <= tb_data_n;
                     --tb_data_n   <= C_MAX_VAL; -- for cont overflow test
                     tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
