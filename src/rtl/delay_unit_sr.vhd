@@ -116,11 +116,13 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    -- shift register inferred for delay
+    -- shift register inferred for delay (should avoid rst to infer sr?)
     p_sr : process (CLK_I)
     begin
         if rising_edge(CLK_I) then
-            if wr_en = '1' then
+            if RST_N_I = '0' then
+                sr <= (others => (others => '0'));
+            elsif wr_en = '1' then
                 sr <= data_n & sr(0 to C_DELAY_DEPTH - 2);
             end if;
         end if;

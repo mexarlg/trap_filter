@@ -47,10 +47,12 @@ architecture tb of tb_mov_avg_filter is
     signal tb_clk   : std_logic := '0';
     signal tb_rst_n : std_logic := '0';
 
+    -- input signal to shift register
+    signal tb_ce     : std_logic                                                  := '0';
+    signal tb_data_i : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+
     -- tb input signals of mov_avg_filter
-    signal tb_ce                : std_logic                                                  := '0';
     signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_n_reg        : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d_valid      : std_logic                                                  := '0';
     signal tb_capture_data_trig : std_logic                                                  := '0';
@@ -60,24 +62,14 @@ architecture tb of tb_mov_avg_filter is
     signal tb_filt_data_valid    : std_logic                                                  := '0';
     signal tb_capture_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_capture_data_valid : std_logic                                                  := '0';
+    signal tb_stat_error         : std_logic_vector(3 downto 0)                               := (others => '0');
 
-    -- tb status
-    signal tb_stat_error : std_logic_vector(3 downto 0) := (others => '0');
-
-    -- verification and synchronization of python pulse
-    signal tb_sample_valid : std_logic                                                      := '0';             -- valid flag for delayed simulation of data
-    signal tb_data_ref     : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output
-    signal tb_data_ref_q0  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +1 cycles    
-    signal tb_data_ref_q1  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +2 cycles     
-    signal tb_data_diff    : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED + 1 - 1 downto 0) := (others => '0'); -- error between (delayed +2 cycles) python and filtered output
-    signal tb_sync_pulse   : std_logic                                                      := '0';             -- pulse indicating first current sample at n
-
-    ----------------------------------------------------------------------------
-    -- Delay line model
-    ----------------------------------------------------------------------------
-    type t_delay_line is array (0 to C_WINDOW - 1) of
-    std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0);
-    signal delay_line : t_delay_line := (others => (others => '0'));
+    -- validation signals between python output and filtered data by mov_avg_filter (sync the latency etc)
+    signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output
+    signal tb_data_ref_q0 : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +1 cycles    
+    signal tb_data_ref_q1 : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +2 cycles     
+    signal tb_data_diff   : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED + 1 - 1 downto 0) := (others => '0'); -- error between (delayed +2 cycles) python and filtered output
+    signal tb_sync_pulse  : std_logic                                                      := '0';             -- pulse indicating first current sample at n from data_i
 
 begin
 
@@ -108,57 +100,47 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I                => tb_ce,
-            DATA_N_I            => tb_data_n_reg,
+            DATA_N_I            => tb_data_n,
             DATA_D_I            => tb_data_d,
             DATA_D_VALID_I      => tb_data_d_valid,
             CAPTURE_DATA_TRIG_I => tb_capture_data_trig,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            FILT_DATA_O          => tb_filt_data,          -- (delay_cycles + 2 cycles)
-            FILT_DATA_VALID_O    => tb_filt_data_valid,    -- (delay_cycles + 2 cycles)
-            CAPTURE_DATA_O       => tb_capture_data,       -- (delay_cycles + 3 cycles)
-            CAPTURE_DATA_VALID_O => tb_capture_data_valid, -- (delay_cycles + 3 cycles)
+            FILT_DATA_O          => tb_filt_data,
+            FILT_DATA_VALID_O    => tb_filt_data_valid,
+            CAPTURE_DATA_O       => tb_capture_data,
+            CAPTURE_DATA_VALID_O => tb_capture_data_valid,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            STAT_ERROR_O => tb_stat_error -- error signal
+            STAT_ERROR_O => tb_stat_error
         );
 
-    ----------------------------------------------------------------------------
-    -- Delay model
-    ----------------------------------------------------------------------------
-
-    tb_data_d <= delay_line(C_WINDOW - 1);
-
-    -- Shift registers, simulates the delay
-    p_delay_line : process (tb_clk)
-        variable fill_count : integer := 0;
-    begin
-        if rising_edge(tb_clk) then
-            if (tb_rst_n = '0') then
-                delay_line      <= (others => (others => '0'));
-                tb_data_d_valid <= '0';
-                fill_count := 0;
-
-            elsif (tb_ce = '1' and tb_sample_valid = '1') then
-
-                -- update delay line from current sample
-                delay_line(1 to C_WINDOW - 1) <= delay_line(0 to C_WINDOW - 2);
-                delay_line(0)                 <= tb_data_n_reg;
-
-                -- detection of filled delays
-                if fill_count < C_WINDOW then
-                    fill_count := fill_count + 1;
-                end if;
-
-                -- one extra cycle delay for valid
-                if fill_count >= C_WINDOW then
-                    tb_data_d_valid <= '1';
-                end if;
-            end if;
-        end if;
-    end process p_delay_line;
+    sr : entity trap_filter.delay_unit_sr
+        generic map(
+            G_DATA_WIDTH  => C_ADC_WIDTH,
+            G_DELAY_WIDTH => C_DELAY_WIDTH,
+            G_DATA_SIGNED => C_DATA_SIGNED
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => tb_clk,
+            RST_N_I => tb_rst_n,
+            ------------------------------------------------------------------------
+            -- Control Inputs
+            ------------------------------------------------------------------------
+            CE_I   => tb_ce,
+            DATA_I => tb_data_i,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            DATA_N_O       => tb_data_n,
+            DATA_D_O       => tb_data_d,
+            DATA_D_VALID_O => tb_data_d_valid
+        );
 
     ----------------------------------------------------------------------------
     -- Reference vs output validation
@@ -212,12 +194,13 @@ begin
         variable v_ref  : integer;
         variable v_sync : integer;
     begin
+
         ------------------------------------------------------------------------
         -- Reset / CE
         ------------------------------------------------------------------------
-        tb_ce           <= '0';
-        tb_sample_valid <= '0';
-        tb_rst_n        <= '0';
+
+        tb_ce    <= '0';
+        tb_rst_n <= '0';
         wait for 50 ns;
         tb_rst_n <= '1';
 
@@ -244,42 +227,38 @@ begin
         ------------------------------------------------------------------------
         while not endfile(fin) loop
             readline(fin, ln);      -- read line
-            read(ln, v_in, good);   -- line value, first element value (input pulse), success flag
+            read(ln, v_in, good);   -- line value, second element value (input pulse), success flag
             read(ln, v_ref, good);  -- line value, second element value (reference pulse), success flag
             read(ln, v_sync, good); -- line value, second element value (sync pulse), success flag
             if good then
                 if C_DATA_SIGNED = 0 then
-                    tb_data_n     <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
-                    tb_data_n_reg <= tb_data_n;
-                    tb_data_ref   <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
+                    -- give data_i to shift register
+                    tb_data_i   <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_ref <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
                 else
-                    tb_data_n     <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
-                    tb_data_n_reg <= tb_data_n;
-                    --tb_data_n   <= C_MAX_VAL; -- for cont overflow test
+                    -- give data_i to shift register
+                    tb_data_i   <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
                     tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
                 end if;
-                -- pulse triggered when first data is sampled (data_n, not delayed version or data_d)
                 tb_sync_pulse <= '1' when v_sync = 1 else
                     '0';
-                tb_sample_valid <= '1';
                 wait until rising_edge(tb_clk);
             end if;
         end loop;
 
-        tb_sample_valid <= '0';
         file_close(fin);
 
         -- toggle of CE
         tb_ce <= '0';
-        wait for 50 ns;
+        wait for 80 ns;
         tb_ce <= '1';
-        wait for 50 ns;
+        wait for 80 ns;
         tb_ce <= '0';
 
         ------------------------------------------------------------------------

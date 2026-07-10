@@ -40,6 +40,7 @@ vmap trap_filter trap_filter
 echo "Compiling RTL..."
 
 vcom -2008 -work trap_filter ../../src/pkg/trap_filter_pkg.vhd
+vcom -2008 -work trap_filter ../../src/rtl/delay_unit_sr.vhd
 vcom -2008 -work trap_filter ../../src/rtl/mov_avg_filter.vhd
 
 
