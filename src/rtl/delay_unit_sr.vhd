@@ -6,10 +6,15 @@
 --  Last Modified: 
 --
 --  Description:
---  Delay unit that implements shift register logic for the mov_avg_filter delay
+--  Delay unit that implements shift register logic for the mov_avg_filter delay.
+--  For a delay of DEPTH = 8 (DELAY_WIDTH = 3), the following timing sequence is issued:
+--  At cycle 0 (CE just asserted) -> Input data is registered
+--  At cycle 1 -> Data #1 is introduced onto shift register
+--  At cycle 8 -> Data #8 is introduced onto shift register (fullfilled!) and data_d_valid is high
+--  At cycle 9 (DEPTH + 1) -> Data #9 is introduced onto shift register, Delay #1 (= Data #1) is output along Data #9
 --
 --  Dependencies:
---  None
+--  CE asserted high while data is fed sync
 -- 
 --==============================================================================
 
@@ -23,7 +28,7 @@ use trap_filter.trap_filter_pkg.all;
 entity delay_unit_sr is
     generic (
         G_DATA_WIDTH  : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_WIDTH : natural range 0 to 10 := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_DELAY_WIDTH : natural range 0 to 8  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_DATA_SIGNED : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (
@@ -35,14 +40,14 @@ entity delay_unit_sr is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I     : in std_logic;                                                   -- Chip enable of delay unit
-        DATA_N_I : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input data at sample N
+        CE_I   : in std_logic;                                                   -- Chip enable
+        DATA_I : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input data sync with CE
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_N_O             : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Output data at sample N
-        DATA_DELAYED_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Output delayed data for current data_n
-        DATA_DELAYED_VALID_O : out std_logic                                                    -- Delayed data is valid (completely filled)
+        DATA_N_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Data at sample N
+        DATA_D_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Delayed Data for sample N
+        DATA_D_VALID_O : out std_logic                                                    -- Valid flag when delayed data is ready (shift reg is full, asserted on last cycle)
     );
 end entity delay_unit_sr;
 
@@ -52,13 +57,14 @@ architecture rtl of delay_unit_sr is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Value of delay in clk samples
-    constant C_DELAY_VALUE : integer := 2 ** G_DELAY_WIDTH;
+    -- Value of delay depth (if delay_width = 4 -> Depth = 16)
+    constant C_DELAY_DEPTH : integer := 2 ** G_DELAY_WIDTH;
 
-    -- Expected limits for a possible delay count saveguard (1 bit more of delay width)
-    constant C_CNT_DEL_MAX  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '1');
-    constant C_CNT_DEL_ONE  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_DELAY_WIDTH));
-    constant C_CNT_DEL_ZERO : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '0');
+    -- Limits for delay valid counter (Need counter flag high on counter = DEPTH (since cycle 0 is not valid) 
+    -- so CNT_D_VALID = DELAY_DEPTH - 1 = 15 so flag can be asserted on cycle 16, and delay arrives at cycle 17)
+    constant C_CNT_D_VALID : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_DELAY_DEPTH - 1, G_DELAY_WIDTH));
+    constant C_CNT_D_ONE   : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_DELAY_WIDTH));
+    constant C_CNT_D_ZERO  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
     -- Types
@@ -68,10 +74,22 @@ architecture rtl of delay_unit_sr is
     -- Signals
     ----------------------------------------------------------------------------
 
+    -- shift register array
+    type sr_t is array (0 to C_DELAY_DEPTH - 1) of std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    signal sr : sr_t;
+
+    -- shift register write enable
+    signal wr_en : std_logic;
+
+    -- shift register data input
+    signal data_n : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+
     -- Output signals
-    signal data_n             : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
-    signal data_delayed       : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
-    signal data_delayed_valid : std_logic;
+    signal data_d       : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    signal data_d_valid : std_logic;
+
+    -- counter for delayed data valid
+    signal cnt_data_d : std_logic_vector(G_DELAY_WIDTH - 1 downto 0);
 
 begin
 
@@ -83,16 +101,81 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    DATA_N_O             <= data_n;
-    DATA_DELAYED_O       <= data_delayed;
-    DATA_DELAYED_VALID_O <= data_delayed_valid;
+    DATA_N_O       <= data_n;
+    DATA_D_O       <= data_d;
+    DATA_D_VALID_O <= data_d_valid;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
+    -- shift register last tap (data_d)
+    data_d <= sr(C_DELAY_DEPTH - 1);
+
     ----------------------------------------------------------------------------
     -- Main sequential process
     ----------------------------------------------------------------------------
+
+    -- shift register inferred for delay
+    p_sr : process (CLK_I)
+    begin
+        if rising_edge(CLK_I) then
+            if wr_en = '1' then
+                sr <= data_n & sr(0 to C_DELAY_DEPTH - 2);
+            end if;
+        end if;
+    end process p_sr;
+
+    -- registers input data
+    p_reg : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            data_n <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
+                data_n <= DATA_I;
+            end if;
+        end if;
+    end process p_reg;
+
+    -- asserts write into sr when CE is high (1 cycle delay)
+    p_wr : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            wr_en <= '0';
+        elsif rising_edge(CLK_I) then
+            wr_en <= CE_I;
+        end if;
+    end process p_wr;
+
+    -- counter for data_d valid (shift reg has been filled)
+    p_cnt : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            cnt_data_d <= C_CNT_D_ZERO;
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
+                -- Count until DEPTH - 1 (For DEPTH = 16 -> Count until 15, valid aserted on cycle 16, and data_d available on 17)
+                if (unsigned(cnt_data_d) < unsigned(C_CNT_D_VALID)) then
+                    cnt_data_d <= std_logic_vector(unsigned(cnt_data_d) + unsigned(C_CNT_D_ONE));
+                end if;
+            end if;
+        end if;
+    end process p_cnt;
+
+    -- data is valid when CE is high and counter is latched at DEPTH - 1 (asserted at + 1 cycle)
+    p_valid : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            data_d_valid <= '0';
+        elsif rising_edge(CLK_I) then
+            data_d_valid <= '0';
+            if (CE_I = '1') then
+                if (cnt_data_d = C_CNT_D_VALID) then
+                    data_d_valid <= '1';
+                end if;
+            end if;
+        end if;
+    end process p_valid;
 
 end architecture rtl;
