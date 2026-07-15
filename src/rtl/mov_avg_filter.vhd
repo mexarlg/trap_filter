@@ -36,7 +36,7 @@ entity mov_avg_filter is
         G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         G_DELAY_WIDTH     : natural range 0 to 8  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Width of margin given to the accumulator
-        G_DATA_SIGNED     : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
+        G_DATA_I_SIGNED   : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_I_SIGNED
     );
     port (
         ------------------------------------------------------------------------
@@ -47,18 +47,18 @@ entity mov_avg_filter is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I                : in std_logic;                                                   -- Chip enable of moving average filter
-        DATA_N_I            : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input data at sample N
-        DATA_D_I            : in std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Input delayed data at sample (N - delay)
-        DATA_D_VALID_I      : in std_logic;                                                   -- Enough samples stored flag in delayed/memory module (asserted when filled)
-        CAPTURE_DATA_TRIG_I : in std_logic;                                                   -- Trigger to register a filtered data sample as output (will capture at + 1 cycle)
+        CE_I                : in std_logic;                                                     -- Chip enable of moving average filter
+        DATA_N_I            : in std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Input data at sample N
+        DATA_D_I            : in std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Input delayed data at sample (N - delay)
+        DATA_D_VALID_I      : in std_logic;                                                     -- Enough samples stored flag in delayed/memory module (asserted when filled)
+        CAPTURE_DATA_TRIG_I : in std_logic;                                                     -- Trigger to register a filtered data sample as output (will capture at + 1 cycle)
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        FILT_DATA_O          : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Output filtered data stream (delay cycles + 2 latency cycle)
-        FILT_DATA_VALID_O    : out std_logic;                                                   -- Filter output is filt_data_valid (delay cycles + 2 latency cycle)
-        CAPTURE_DATA_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Latched output data sample (delay cycles + 2 latency cycle + 1 reg cycle)
-        CAPTURE_DATA_VALID_O : out std_logic;                                                   -- Indicates an output data has been latched
+        FILT_DATA_O          : out std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Output filtered data stream (delay cycles + 2 latency cycle)
+        FILT_DATA_VALID_O    : out std_logic;                                                     -- Filter output is filt_data_valid (delay cycles + 2 latency cycle)
+        CAPTURE_DATA_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Latched output data sample (delay cycles + 2 latency cycle + 1 reg cycle)
+        CAPTURE_DATA_VALID_O : out std_logic;                                                     -- Indicates an output data has been latched
         ------------------------------------------------------------------------
         -- Status
         ------------------------------------------------------------------------
@@ -73,7 +73,7 @@ architecture rtl of mov_avg_filter is
     ----------------------------------------------------------------------------
 
     -- Accumulator signal width = sign + data + log2(delay) + margin
-    constant C_ACC_WIDTH : natural := G_DATA_SIGNED + G_DATA_WIDTH + G_DELAY_WIDTH + G_ACC_MARGIN_BITS;
+    constant C_ACC_WIDTH : natural := G_DATA_I_SIGNED + G_DATA_WIDTH + G_DELAY_WIDTH + G_ACC_MARGIN_BITS;
 
     -- Amount of bits to shift for division of (1/N)
     constant C_SHIFT : natural := G_DELAY_WIDTH;
@@ -109,8 +109,8 @@ architecture rtl of mov_avg_filter is
     signal acc_reg : std_logic_vector(C_ACC_WIDTH - 1 downto 0);
 
     -- Output signals
-    signal filt_data          : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
-    signal capture_data       : std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    signal filt_data          : std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0);
+    signal capture_data       : std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0);
     signal capture_data_valid : std_logic;
 
     -- latency = delay cycles + 2 cycle
@@ -163,7 +163,7 @@ begin
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
                 -- the accumulator runs at 'CE' + 1 cycle of registering the accumulator
-                if G_DATA_SIGNED = 1 then
+                if G_DATA_I_SIGNED = 1 then
                     if (data_d_valid_trig = '1') then
                         -- nominal, add the delayed data substraction
                         acc_reg <= std_logic_vector(signed(acc_reg)
@@ -198,7 +198,7 @@ begin
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
                 -- shifter runs at 'CE' + 1 cycle of accumulator + 1 cycle of registering the shift
-                if G_DATA_SIGNED = 1 then
+                if G_DATA_I_SIGNED = 1 then
                     -- arithmetic shift
                     filt_data <= std_logic_vector(
                         resize(shift_right(signed(acc_reg), C_SHIFT), filt_data'length));
@@ -321,7 +321,7 @@ begin
             acc_oflow_error_cond <= '0';
         elsif rising_edge(CLK_I) then
             if CE_I = '1' then
-                if G_DATA_SIGNED = 1 then
+                if G_DATA_I_SIGNED = 1 then
                     if (signed(acc_reg) >= C_OFLOW_PLIM_S) or (signed(acc_reg) <= C_OFLOW_NLIM_S) then
                         acc_oflow_error_cond                                       <= '1';
                     end if;
