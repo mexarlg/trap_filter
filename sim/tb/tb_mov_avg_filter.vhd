@@ -24,21 +24,22 @@ architecture tb of tb_mov_avg_filter is
 
     -- Moving average configuration
     constant C_DELAY_WIDTH     : natural := 3;                  -- Bit width of delay
+    constant C_DELAY_VALUE     : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
     constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
     constant C_ACC_MARGIN_BITS : natural := 2;                  -- Margin bits for accumulator signal (at worst case, 1MB holds 7 extra cycles, 2 MB holds 15 extra cycles)
     constant C_WINDOW          : natural := 2 ** C_DELAY_WIDTH; -- Value of the delay (all bits of DELAY_WIDTH => '1')
 
     -- Sign configuration of input pulse -> Needs to be changed in waveform
-    constant C_DATA_SIGNED         : natural := 1;                              -- '1' if signed, '0' if unsigned
+    constant C_DATA_I_SIGNED       : natural := 1;                              -- '1' if signed, '0' if unsigned
     constant C_UNSIGNED_PULSE_FILE : string  := "noisy_pulse_14b_unsigned.txt"; -- Name of unsigned input pulse file (and mov avg ref) from python
     constant C_SIGNED_PULSE_FILE   : string  := "noisy_pulse_15b_signed.txt";   -- Name of signed input pulse file (and mov avg ref) from python
 
     -- Chosen maximum (at sight in waveform) to generate a trigger to capture
-    constant C_MAX_TRIGGER : signed := to_signed(-309, C_ADC_WIDTH + C_DATA_SIGNED);
+    constant C_MAX_TRIGGER : signed := to_signed(-309, C_ADC_WIDTH + C_DATA_I_SIGNED);
 
     -- Max value of ADC data for overflow check on accumulator (max value of data_n, 0 value of data_d -> addition on each cycle)
-    constant C_MAX_VAL  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := std_logic_vector(to_signed(2 ** C_ADC_WIDTH - 1, C_ADC_WIDTH + C_DATA_SIGNED)); -- to give to data_n
-    constant C_ZERO_VAL : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');                                                                -- to give to data_d
+    constant C_MAX_VAL  : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := std_logic_vector(to_signed(2 ** C_ADC_WIDTH - 1, C_ADC_WIDTH + C_DATA_I_SIGNED)); -- to give to data_n
+    constant C_ZERO_VAL : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');                                                                  -- to give to data_d
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -48,28 +49,28 @@ architecture tb of tb_mov_avg_filter is
     signal tb_rst_n : std_logic := '0';
 
     -- input signal to shift register
-    signal tb_ce     : std_logic                                                  := '0';
-    signal tb_data_i : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_ce     : std_logic                                                    := '0';
+    signal tb_data_i : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
 
     -- tb input signals of mov_avg_filter
-    signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_d_valid      : std_logic                                                  := '0';
-    signal tb_capture_data_trig : std_logic                                                  := '0';
+    signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d_valid      : std_logic                                                    := '0';
+    signal tb_capture_data_trig : std_logic                                                    := '0';
 
     -- tb output signals of mov_avg_filter
-    signal tb_filt_data          : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_filt_data_valid    : std_logic                                                  := '0';
-    signal tb_capture_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_capture_data_valid : std_logic                                                  := '0';
-    signal tb_stat_error         : std_logic_vector(3 downto 0)                               := (others => '0');
+    signal tb_filt_data          : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_filt_data_valid    : std_logic                                                    := '0';
+    signal tb_capture_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_capture_data_valid : std_logic                                                    := '0';
+    signal tb_stat_error         : std_logic_vector(3 downto 0)                                 := (others => '0');
 
     -- validation signals between python output and filtered data by mov_avg_filter (sync the latency etc)
-    signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output
-    signal tb_data_ref_q0 : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +1 cycles    
-    signal tb_data_ref_q1 : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +2 cycles     
-    signal tb_data_diff   : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED + 1 - 1 downto 0) := (others => '0'); -- error between (delayed +2 cycles) python and filtered output
-    signal tb_sync_pulse  : std_logic                                                      := '0';             -- pulse indicating first current sample at n from data_i
+    signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output
+    signal tb_data_ref_q0 : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +1 cycles    
+    signal tb_data_ref_q1 : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output delayed +2 cycles     
+    signal tb_data_diff   : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED + 1 - 1 downto 0) := (others => '0'); -- error between (delayed +2 cycles) python and filtered output
+    signal tb_sync_pulse  : std_logic                                                        := '0';             -- pulse indicating first current sample at n from data_i
 
 begin
 
@@ -88,7 +89,7 @@ begin
             G_DATA_WIDTH      => C_ADC_WIDTH,       -- Width of incoming data stream
             G_DELAY_WIDTH     => C_DELAY_WIDTH,     -- Width of delay signal (4b-> delay of 16 samples, 5b->32 and so on)
             G_ACC_MARGIN_BITS => C_ACC_MARGIN_BITS, -- Number of margin bits given to the accumulator
-            G_DATA_SIGNED     => C_DATA_SIGNED      -- Data signed (1) or unsigned (0)
+            G_DATA_I_SIGNED   => C_DATA_I_SIGNED    -- Data signed (1) or unsigned (0)
         )
         port map(
             ------------------------------------------------------------------------
@@ -120,8 +121,8 @@ begin
     sr : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_DELAY_WIDTH => C_DELAY_WIDTH,
-            G_DATA_SIGNED => C_DATA_SIGNED
+            G_DELAY_VALUE => C_DELAY_VALUE,
+            G_DATA_SIGNED => C_DATA_I_SIGNED
         )
         port map(
             ------------------------------------------------------------------------
@@ -153,7 +154,7 @@ begin
         variable v_diff : signed(tb_data_diff'length - 1 downto 0);
     begin
         if rising_edge(tb_clk) then
-            if C_DATA_SIGNED = 1 then
+            if C_DATA_I_SIGNED = 1 then
                 v_diff :=
                     resize(signed(tb_data_ref_q1), v_diff'length) -
                     resize(signed(tb_filt_data), v_diff'length);
@@ -211,7 +212,7 @@ begin
         ------------------------------------------------------------------------
         -- Open the stimulus input pulse file
         ------------------------------------------------------------------------
-        if integer(C_DATA_SIGNED) = 1 then
+        if integer(C_DATA_I_SIGNED) = 1 then
             file_open(status, fin, C_SIGNED_PULSE_FILE, read_mode);
         else
             file_open(status, fin, C_UNSIGNED_PULSE_FILE, read_mode);
@@ -231,17 +232,17 @@ begin
             read(ln, v_ref, good);  -- line value, second element value (reference pulse), success flag
             read(ln, v_sync, good); -- line value, second element value (sync pulse), success flag
             if good then
-                if C_DATA_SIGNED = 0 then
+                if C_DATA_I_SIGNED = 0 then
                     -- give data_i to shift register
-                    tb_data_i   <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
-                    tb_data_ref <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_i   <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH + C_DATA_I_SIGNED));
+                    tb_data_ref <= std_logic_vector(to_unsigned(v_ref, C_ADC_WIDTH + C_DATA_I_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
                 else
                     -- give data_i to shift register
-                    tb_data_i   <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_SIGNED));
-                    tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + C_DATA_SIGNED));
+                    tb_data_i   <= std_logic_vector(to_signed(v_in, C_ADC_WIDTH + C_DATA_I_SIGNED));
+                    tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + C_DATA_I_SIGNED));
                     -- Added 2 cycle delay to ref output, filter has 2 cycle latency
                     tb_data_ref_q0 <= tb_data_ref;
                     tb_data_ref_q1 <= tb_data_ref_q0;
