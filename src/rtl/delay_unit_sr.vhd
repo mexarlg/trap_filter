@@ -28,7 +28,7 @@ use trap_filter.trap_filter_pkg.all;
 entity delay_unit_sr is
     generic (
         G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_VALUE : natural range 1 to 1023 := 8;  -- Value of actual delayed (10 bit max width)
+        G_DELAY_VALUE : natural range 1 to 1024 := 8;  -- Value of actual delayed (10 bit max width)
         G_DATA_SIGNED : natural range 0 to 1    := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (

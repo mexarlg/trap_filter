@@ -26,16 +26,17 @@ def main():
     tau_r_min_s = 5e-8              # min nominal rise time constant for high energy (50 ns) [s]
     tau_r_max_s = 25e-8             # max nominal rise time constant for high energy (250 ns) [s]
     tau_rise_s = tau_r_max_s        # selected rise time for simulation [s]
-    noise_offset = int(0.1*amplitude)    # offset of baseline
-    noise_sigma = int(0.1*amplitude)     # white noise std dev
+    noise_offset = int(0*amplitude)    # offset of baseline
+    noise_sigma = int(0*amplitude)     # white noise std dev
 
     # ------------------------------------------------------------------------
     # Jordanov parameters in n samples (k, m, M)
     # ------------------------------------------------------------------------
-    k0, m0 = 105, 84
+    k0, m0 = 256, 256
     M0 = M_from_tau(tau_decay_s, Tclk)  # ideal M
+    print(M0)
     M0 = 2496.61                        # similar M to allow k*M as power of 2 for easy shift
-    out_shift0 = 18 # Gain is selected as k*M -> k and M have to be power of 2 as to allow shifting -> with these params -> shift 18 bits from a 36b output
+    out_shift0 = 8 # Gain is selected as k*M -> k and M have to be power of 2 as to allow shifting -> with these params -> shift 18 bits from a 36b output
     
     # ------------------------------------------------------------------------
     # Moving average parameters in n samples
@@ -46,7 +47,7 @@ def main():
     # ------------------------------------------------------------------------
     # Filter selection
     # ------------------------------------------------------------------------
-    SHAPER_SELECT = 0               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
+    SHAPER_SELECT = 1               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
     PLOT_ENABLE = 1                 # plot what we are exporting
 
     # ------------------------------------------------------------------------
@@ -54,7 +55,7 @@ def main():
     # ------------------------------------------------------------------------
     t, clean, noisy, Tclk = generate_input(n_samples=n_samples, fs=fs, amplitude=amplitude, tau_rise_s=tau_rise_s, tau_decay_s=tau_decay_s,
                                         noise_offset=noise_offset, noise_sigma=noise_sigma)
-    noisy_signed = -1 * noisy
+    noisy_signed = noisy
 
     # select shaper:
     if SHAPER_SELECT == 1:
@@ -66,15 +67,15 @@ def main():
 
     # Export unsigned discrete signals to vhdl
     export_for_vhdl(noisy, y0,
-                data_width=14, out_width=14,
-                in_signed=False, out_signed=False,
-                filename="noisy_pulse_14b_unsigned.txt")
+                data_width=14, out_width=15,
+                in_signed=False, out_signed=True,
+                filename="noisy_pulse_14b_unsigned_jord.txt")
     
     # Export signed discrete signals to vhdl
-    export_for_vhdl(noisy_signed, y0_signed,
-                data_width=15, out_width=15,
-                in_signed=True, out_signed=True,
-                filename="noisy_pulse_15b_signed.txt")
+    #export_for_vhdl(noisy_signed, y0_signed,
+    #            data_width=15, out_width=15,
+    #            in_signed=True, out_signed=True,
+    #            filename="noisy_pulse_15b_signed.txt")
     
     # ------------------------------------------------------------------------
     # Quick plot 
