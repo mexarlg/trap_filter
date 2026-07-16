@@ -24,14 +24,13 @@ add wave -color green  -radix binary sim:/tb_delay_unit_sr/tb_rst_n
 add wave -divider " DELAY_UNIT_SR INPUTS"
 add wave -color green  -radix binary sim:/tb_delay_unit_sr/tb_ce
 add wave -color white -format Analog-Step -radix signed sim:/tb_delay_unit_sr/tb_data_i
-add wave -color white -radix signed sim:/tb_delay_unit_sr/tb_data_i
 add wave -color green -radix binary sim:/tb_delay_unit_sr/tb_sync_pulse
 
 #===========================================================================
 # delay_unit_sr Internal
 #===========================================================================
 add wave -divider " DELAY_UNIT_SR INTERNAL"
-add wave -color green  -radix unsigned sim:/tb_delay_unit_sr/dut/C_CNT_D_VALID
+add wave -color green  -radix unsigned sim:/tb_delay_unit_sr/dut/C_CNT_D_MAX
 add wave -color green  -radix signed sim:/tb_delay_unit_sr/dut/data_n
 add wave -color white  -radix unsigned sim:/tb_delay_unit_sr/dut/cnt_data_d
 

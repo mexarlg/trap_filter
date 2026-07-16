@@ -25,8 +25,9 @@ architecture tb of tb_delay_unit_sr is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Moving average configuration
-    constant C_DELAY_WIDTH : natural := 3;  -- Bit width of delay
-    constant C_ADC_WIDTH   : natural := 14; -- Bit width of adc (magnitude)
+    constant C_DELAY_WIDTH : natural := 3;                  -- Bit width of delay
+    constant C_DELAY_VALUE : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
+    constant C_ADC_WIDTH   : natural := 14;                 -- Bit width of adc (magnitude)
 
     -- Sign configuration of input pulse -> Needs to be changed in waveform
     constant C_DATA_SIGNED         : natural := 1;                              -- '1' if signed, '0' if unsigned
@@ -66,7 +67,7 @@ begin
     dut : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_DELAY_WIDTH => C_DELAY_WIDTH,
+            G_DELAY_VALUE => C_DELAY_VALUE,
             G_DATA_SIGNED => C_DATA_SIGNED
         )
         port map(

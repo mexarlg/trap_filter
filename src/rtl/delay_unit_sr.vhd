@@ -7,7 +7,7 @@
 --
 --  Description:
 --  Delay unit that implements shift register logic for the mov_avg_filter delay.
---  For a delay of DEPTH = 8 (DELAY_WIDTH = 3), the following timing sequence is issued:
+--  For a delay value of = 8 (DELAY_WIDTH = 3), the following timing sequence is issued:
 --  At cycle 0 (CE just asserted) -> Input data is registered
 --  At cycle 1 -> Data #1 is introduced onto shift register
 --  At cycle 8 -> Data #8 is introduced onto shift register (fullfilled!) and data_d_valid is high
@@ -27,9 +27,9 @@ use trap_filter.trap_filter_pkg.all;
 
 entity delay_unit_sr is
     generic (
-        G_DATA_WIDTH  : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_WIDTH : natural range 0 to 9  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
-        G_DATA_SIGNED : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
+        G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream (ADC Magnitude resolution)
+        G_DELAY_VALUE : natural range 1 to 1023 := 8;  -- Value of actual delayed (10 bit max width)
+        G_DATA_SIGNED : natural range 0 to 1    := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (
         ------------------------------------------------------------------------
@@ -54,17 +54,34 @@ end entity delay_unit_sr;
 architecture rtl of delay_unit_sr is
 
     ----------------------------------------------------------------------------
+    -- Functions
+    ----------------------------------------------------------------------------
+
+    -- Used to extract the required bits needed to represent an unsigned value
+    function clog2 (n : natural) return natural is
+        variable r        : natural := 0;
+        variable v        : natural := n;
+    begin
+        while v > 0 loop
+            v := v / 2;
+            r := r + 1;
+        end loop;
+        return r;
+    end function;
+
+    ----------------------------------------------------------------------------
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Value of delay depth (if delay_width = 4 -> Depth = 16)
-    constant C_DELAY_DEPTH : integer := 2 ** G_DELAY_WIDTH;
+    -- Value of the delay and its required bit width (to represent 2^N samples, or 0 to 2^N - 1)
+    constant C_DELAY_DEPTH : integer := G_DELAY_VALUE;
+    constant C_DELAY_WIDTH : natural := clog2(G_DELAY_VALUE - 1);
 
     -- Limits for delay valid counter (Need counter flag high on counter = DEPTH (since cycle 0 is not valid) 
     -- so CNT_D_VALID = DELAY_DEPTH - 1 = 15 so flag can be asserted on cycle 16, and delay arrives at cycle 17)
-    constant C_CNT_D_VALID : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_DELAY_DEPTH - 1, G_DELAY_WIDTH));
-    constant C_CNT_D_ONE   : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_DELAY_WIDTH));
-    constant C_CNT_D_ZERO  : std_logic_vector(G_DELAY_WIDTH - 1 downto 0) := (others => '0');
+    constant C_CNT_D_MAX  : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_DELAY_DEPTH - 1, C_DELAY_WIDTH));
+    constant C_CNT_D_ONE  : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_DELAY_WIDTH));
+    constant C_CNT_D_ZERO : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
     -- Types
@@ -89,7 +106,7 @@ architecture rtl of delay_unit_sr is
     signal data_d_valid : std_logic;
 
     -- counter for delayed data valid
-    signal cnt_data_d : std_logic_vector(G_DELAY_WIDTH - 1 downto 0);
+    signal cnt_data_d : std_logic_vector(C_DELAY_WIDTH - 1 downto 0);
 
 begin
 
@@ -158,7 +175,7 @@ begin
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
                 -- Count until DEPTH - 1 (For DEPTH = 16 -> Count until 15, valid aserted on cycle 16, and data_d available on 17)
-                if (unsigned(cnt_data_d) < unsigned(C_CNT_D_VALID)) then
+                if (unsigned(cnt_data_d) < unsigned(C_CNT_D_MAX)) then
                     cnt_data_d <= std_logic_vector(unsigned(cnt_data_d) + unsigned(C_CNT_D_ONE));
                 end if;
             end if;
@@ -173,7 +190,7 @@ begin
         elsif rising_edge(CLK_I) then
             data_d_valid <= '0';
             if (CE_I = '1') then
-                if (cnt_data_d = C_CNT_D_VALID) then
+                if (cnt_data_d = C_CNT_D_MAX) then
                     data_d_valid <= '1';
                 end if;
             end if;
