@@ -35,30 +35,20 @@ add wave -color green -radix binary sim:/tb_jordanov_filter/tb_sync_pulse
 add wave -divider "JORDANOV_FILTER INPUTS"
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_n
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_k
-add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_data_k_valid
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_l
-add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_data_l_valid
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_kl
-add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_data_kl_valid
 
 #===========================================================================
 # jordanov_filter Internal
 #===========================================================================
-add wave -divider "JORDANOV_FILTER INTERNAL"
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/diff_reg
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc1_reg_q1
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff_reg
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff_scaled_reg
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc2_reg
-add wave -color green -radix binary sim:/tb_jordanov_filter/dut/stat_error
-
-
-#===========================================================================
-# jordanov_filter OUT
-#===========================================================================
-add wave -divider "JORDANOV_FILTER OUTPUTS"
-add wave -color white -format Analog-Step -radix signed sim:/tb_jordanov_filter/tb_filt_data
-add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_filt_data_valid
+add wave -divider "JORDANOV_FILTER"
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/diff
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc1_q1
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff_scaled
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc2
+add wave -color green -radix binary sim:/tb_jordanov_filter/dut/error_oflow
+add wave -color white -format Analog-Step -radix signed sim:/tb_jordanov_filter/tb_data_filtered
 
 #===========================================================================
 # jordanov_filter EXPECTED

@@ -65,9 +65,9 @@ architecture tb of tb_jordanov_filter is
     signal tb_capture_data_trig : std_logic := '0';
 
     -- tb output signals of mov_avg_filter
-    signal tb_filt_data       : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
-    signal tb_filt_data_valid : std_logic                              := '0';
-    signal tb_stat_error      : std_logic_vector(3 downto 0)           := (others => '0');
+    signal tb_data_filtered       : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
+    signal tb_data_filtered_valid : std_logic                              := '0';
+    signal tb_error_oflow         : std_logic_vector(1 downto 0)           := (others => '0');
 
     -- validation signals between python output and filtered data by mov_avg_filter (sync the latency etc)
     signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output
@@ -116,23 +116,19 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I            => tb_ce,
-            DATA_N_I        => tb_data_n,
-            DATA_K_I        => tb_data_k,
-            DATA_L_I        => tb_data_l,
-            DATA_KL_I       => tb_data_kl,
-            DATA_K_VALID_I  => tb_data_k_valid,
-            DATA_L_VALID_I  => tb_data_l_valid,
-            DATA_KL_VALID_I => tb_data_kl_valid,
+            CE_I      => tb_ce,
+            DATA_N_I  => tb_data_n,
+            DATA_K_I  => tb_data_k,
+            DATA_L_I  => tb_data_l,
+            DATA_KL_I => tb_data_kl,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            FILT_DATA_O       => tb_filt_data,
-            FILT_DATA_VALID_O => tb_filt_data_valid,
+            DATA_FILTERED_O => tb_data_filtered,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            STAT_ERROR_O => tb_stat_error
+            ERROR_OFLOW_O => tb_error_oflow
         );
 
     sr_k : entity trap_filter.delay_unit_sr
@@ -220,7 +216,7 @@ begin
         if rising_edge(tb_clk) then
             v_diff :=
                 signed(resize(unsigned(tb_data_ref_q1), v_diff'length)) -
-                signed(resize(unsigned(tb_filt_data), v_diff'length));
+                signed(resize(unsigned(tb_data_filtered), v_diff'length));
             tb_data_diff <= std_logic_vector(v_diff);
         end if;
     end process p_diff;
