@@ -128,7 +128,7 @@ begin
             ERROR_OFLOW_O => tb_error_oflow
         );
 
-    u_synchronizer : entity trap_filter.synchronizer
+    u_synchronizer : entity trap_filter.valid_tracker
         generic map(
             G_JORD_LATENCY => 6,
             G_JORD_K_WIDTH => C_K_RISE_WIDTH,

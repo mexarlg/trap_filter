@@ -118,6 +118,10 @@ architecture rtl of jordanov_filter is
     constant C_OFLOW2_PLIM_S  : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '0', others => '1');
     constant C_OFLOW2_NLIM_S  : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '1', others => '0');
 
+    -- overflow error types
+    constant C_ERROR_OFLOW_CORRECT : std_logic_vector(1 downto 0) := "00";
+    constant C_ERROR_OFLOW_ACC1    : std_logic_vector(1 downto 0) := "10";
+    constant C_ERROR_OFLOW_ACC2    : std_logic_vector(1 downto 0) := "01";
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -275,16 +279,16 @@ begin
     p_oflow : process (CLK_I, RST_N_I)
     begin
         if RST_N_I = '0' then
-            error_oflow <= (others => '0');
+            error_oflow <= C_ERROR_OFLOW_CORRECT;
         elsif rising_edge(CLK_I) then
             if CE_I = '1' then
                 -- Accumulator 1
                 if (signed(acc1) >= C_OFLOW1_PLIM_S) or (signed(acc1) <= C_OFLOW1_NLIM_S) then
-                    error_oflow(1)                                        <= '1';
+                    error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC1;
                 end if;
                 -- Accumulator 2
                 if (signed(acc2) >= C_OFLOW2_PLIM_S) or (signed(acc2) <= C_OFLOW2_NLIM_S) then
-                    error_oflow(0)                                        <= '1';
+                    error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC2;
                 end if;
             end if;
         end if;

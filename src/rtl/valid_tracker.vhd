@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        synchronizer.vhd
+--  Module:        valid_tracker.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       17/07/2026
@@ -23,7 +23,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity synchronizer is
+entity valid_tracker is
     generic (
         -- Jordanov parameters
         G_JORD_LATENCY : natural range 6 to 10 := 6; -- Latency of Jordanov filter in cycles
@@ -48,13 +48,13 @@ entity synchronizer is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_JORD_VALID_O : out std_logic; -- Filter Jordanov output is valid (delay cycles + N latency cycle)
-        DATA_MOV_VALID_O  : out std_logic; -- Filter Mov avg output is valid (delay cycles + N latency cycle)
-        ERROR_SYNC_O      : out std_logic_vector(1 downto 0)
+        DATA_JORD_VALID_O : out std_logic;                   -- Filter Jordanov output is valid (delay cycles + N latency cycle)
+        DATA_MOV_VALID_O  : out std_logic;                   -- Filter Mov avg output is valid (delay cycles + N latency cycle)
+        ERROR_SYNC_O      : out std_logic_vector(1 downto 0) -- Synchronization disagreement between delays
     );
-end entity synchronizer;
+end entity valid_tracker;
 
-architecture rtl of synchronizer is
+architecture rtl of valid_tracker is
 
     ----------------------------------------------------------------------------
     -- Functions
