@@ -57,17 +57,14 @@ architecture tb of tb_jordanov_filter is
     signal tb_data_l  : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
     signal tb_data_kl : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
-    -- tb input valid signal of delay for jordanov_filter
-    signal tb_data_k_valid  : std_logic := '0';
-    signal tb_data_l_valid  : std_logic := '0';
-    signal tb_data_kl_valid : std_logic := '0';
-
-    signal tb_capture_data_trig : std_logic := '0';
+    -- tb signals of synchronizer
+    signal tb_delay_jord_ready : std_logic_vector(2 downto 0) := (others => '0');
+    signal tb_data_jord_valid  : std_logic                    := '0';
+    signal tb_error_sync       : std_logic_vector(1 downto 0) := (others => '0');
 
     -- tb output signals of mov_avg_filter
-    signal tb_data_filtered       : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
-    signal tb_data_filtered_valid : std_logic                              := '0';
-    signal tb_error_oflow         : std_logic_vector(1 downto 0)           := (others => '0');
+    signal tb_data_filtered : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
+    signal tb_error_oflow   : std_logic_vector(1 downto 0)           := (others => '0');
 
     -- validation signals between python output and filtered data by mov_avg_filter (sync the latency etc)
     signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output
@@ -131,6 +128,25 @@ begin
             ERROR_OFLOW_O => tb_error_oflow
         );
 
+    u_synchronizer : entity trap_filter.synchronizer
+        generic map(
+            G_JORD_LATENCY => 6,
+            G_JORD_K_WIDTH => C_K_RISE_WIDTH,
+            G_JORD_M_WIDTH => C_M_FLAT_WIDTH,
+            G_MOV_LATENCY  => 2,
+            G_MOV_D_WIDTH  => 4
+        )
+        port map(
+            CLK_I              => tb_clk,
+            RST_N_I            => tb_rst_n,
+            CE_I               => tb_ce,
+            DELAY_JORD_READY_I => tb_delay_jord_ready,
+            DELAY_MOV_READY_I  => '0',
+            DATA_JORD_VALID_O  => tb_data_jord_valid,
+            DATA_MOV_VALID_O   => open,
+            ERROR_SYNC_O       => tb_error_sync
+        );
+
     sr_k : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
@@ -153,7 +169,7 @@ begin
             ------------------------------------------------------------------------
             DATA_N_O       => open,
             DATA_D_O       => tb_data_k,
-            DATA_D_VALID_O => tb_data_k_valid
+            DATA_D_VALID_O => tb_delay_jord_ready(2)
         );
 
     sr_l : entity trap_filter.delay_unit_sr
@@ -178,7 +194,7 @@ begin
             ------------------------------------------------------------------------
             DATA_N_O       => open,
             DATA_D_O       => tb_data_l,
-            DATA_D_VALID_O => tb_data_l_valid
+            DATA_D_VALID_O => tb_delay_jord_ready(1)
         );
 
     sr_kl : entity trap_filter.delay_unit_sr
@@ -203,7 +219,7 @@ begin
             ------------------------------------------------------------------------
             DATA_N_O       => tb_data_n,
             DATA_D_O       => tb_data_kl,
-            DATA_D_VALID_O => tb_data_kl_valid
+            DATA_D_VALID_O => tb_delay_jord_ready(0)
         );
 
     ----------------------------------------------------------------------------

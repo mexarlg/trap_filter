@@ -19,7 +19,7 @@ add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_clk
 add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_rst_n
 
 #===========================================================================
-# SHIFT_REGISTER IN
+# SHIFT_REGISTER
 #===========================================================================
 add wave -divider " SHIFT REG INPUTS"
 add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_ce
@@ -30,13 +30,21 @@ add wave -color white -format Analog-Step -radix unsigned sim:/tb_jordanov_filte
 add wave -color green -radix binary sim:/tb_jordanov_filter/tb_sync_pulse
 
 #===========================================================================
-# jordanov_filter IN
+# SHIFT REG OUTPUTS
 #===========================================================================
-add wave -divider "JORDANOV_FILTER INPUTS"
+add wave -divider "SHIFT REG OUTPUTS"
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_n
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_k
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_l
 add wave -color green  -radix unsigned sim:/tb_jordanov_filter/tb_data_kl
+
+#===========================================================================
+# SYNCHRONIZER OUTPUTS
+#===========================================================================
+add wave -divider "SYNCHRONIZER OUTPUTS"
+add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_delay_jord_ready
+add wave -color green  -radix binary sim:/tb_jordanov_filter/tb_error_sync
+add wave -color green -radix binary sim:/tb_jordanov_filter/tb_data_jord_valid
 
 #===========================================================================
 # jordanov_filter Internal
