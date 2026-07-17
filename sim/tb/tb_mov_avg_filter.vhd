@@ -23,7 +23,7 @@ architecture tb of tb_mov_avg_filter is
     ----------------------------------------------------------------------------
 
     -- Moving average configuration
-    constant C_DELAY_WIDTH     : natural := 3;                  -- Bit width of delay
+    constant C_DELAY_WIDTH     : natural := 6;                  -- Bit width of delay
     constant C_DELAY_VALUE     : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
     constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
     constant C_ACC_MARGIN_BITS : natural := 2;                  -- Margin bits for accumulator signal (at worst case, 1MB holds 7 extra cycles, 2 MB holds 15 extra cycles)
@@ -53,17 +53,13 @@ architecture tb of tb_mov_avg_filter is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
 
     -- tb input signals of mov_avg_filter
-    signal tb_data_n            : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_d            : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_d_valid      : std_logic                                                    := '0';
-    signal tb_capture_data_trig : std_logic                                                    := '0';
+    signal tb_data_n       : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d       : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_data_d_valid : std_logic                                                    := '0';
 
     -- tb output signals of mov_avg_filter
-    signal tb_filt_data          : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_filt_data_valid    : std_logic                                                    := '0';
-    signal tb_capture_data       : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_capture_data_valid : std_logic                                                    := '0';
-    signal tb_stat_error         : std_logic_vector(3 downto 0)                                 := (others => '0');
+    signal tb_data_filtered : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0) := (others => '0');
+    signal tb_error_oflow   : std_logic                                                    := '0';
 
     -- validation signals between python output and filtered data by mov_avg_filter (sync the latency etc)
     signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH + C_DATA_I_SIGNED - 1 downto 0)     := (others => '0'); -- python filtered output
@@ -100,22 +96,14 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I                => tb_ce,
-            DATA_N_I            => tb_data_n,
-            DATA_D_I            => tb_data_d,
-            DATA_D_VALID_I      => tb_data_d_valid,
-            CAPTURE_DATA_TRIG_I => tb_capture_data_trig,
+            CE_I     => tb_ce,
+            DATA_N_I => tb_data_n,
+            DATA_D_I => tb_data_d,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            FILT_DATA_O          => tb_filt_data,
-            FILT_DATA_VALID_O    => tb_filt_data_valid,
-            CAPTURE_DATA_O       => tb_capture_data,
-            CAPTURE_DATA_VALID_O => tb_capture_data_valid,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            STAT_ERROR_O => tb_stat_error
+            DATA_FILTERED_O => tb_data_filtered,
+            ERROR_OFLOW_O   => tb_error_oflow
         );
 
     sr : entity trap_filter.delay_unit_sr
@@ -157,29 +145,16 @@ begin
             if C_DATA_I_SIGNED = 1 then
                 v_diff :=
                     resize(signed(tb_data_ref_q1), v_diff'length) -
-                    resize(signed(tb_filt_data), v_diff'length);
+                    resize(signed(tb_data_filtered), v_diff'length);
             else
                 v_diff :=
                     signed(resize(unsigned(tb_data_ref_q1), v_diff'length)) -
-                    signed(resize(unsigned(tb_filt_data), v_diff'length));
+                    signed(resize(unsigned(tb_data_filtered), v_diff'length));
             end if;
 
             tb_data_diff <= std_logic_vector(v_diff);
         end if;
     end process p_diff;
-
-    -- Generate a trigger at the maximum (chosen value at sight) of the input signal (has 1 cycle of latency)
-    p_capture_trigg : process (tb_clk)
-    begin
-        if rising_edge(tb_clk) then
-            -- 1 sample before the maximum (either signed or unsigned data, the conversion will make it work)
-            if (signed(tb_data_n) = C_MAX_TRIGGER) then
-                tb_capture_data_trig <= '1';
-            else
-                tb_capture_data_trig <= '0';
-            end if;
-        end if;
-    end process p_capture_trigg;
 
     ----------------------------------------------------------------------------
     -- Stimulus: reset, enable, then stream samples from the file per clock.
