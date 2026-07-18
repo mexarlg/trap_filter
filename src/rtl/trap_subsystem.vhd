@@ -24,18 +24,20 @@ entity trap_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Jordanov params
-        G_K_RISE_WIDTH : natural range 2 to 8     := 8;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
-        G_M_FLAT_WIDTH : natural range 2 to 8     := 8;     -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
-        G_M_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
-        G_M_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
+        G_JORD_K_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
+        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
+        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
+        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
         -- Jordanov fixed point params
-        G_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference
-        G_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator
-        G_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator
-        G_OUT_SHIFT        : natural range 0 to 24 := 1; -- Width of margin given to the 2nd accumulator
+        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference
+        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator
+        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator
+        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 1; -- Width of margin given to the 2nd accumulator
         -- Moving average params
-        G_DELAY_WIDTH     : natural range 0 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
-        G_ACC_MARGIN_BITS : natural range 2 to 5 := 2  -- Width of margin given to the accumulator
+        G_MOV_D_WIDTH         : natural range 0 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Width of margin given to the accumulator
+        -- Detection params
+        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 4 -- Width of delay given from pulse detection subsystem
     );
     port (
         ------------------------------------------------------------------------
@@ -69,11 +71,12 @@ architecture rtl of trap_subsystem is
     ----------------------------------------------------------------------------
 
     -- Delay values
-    constant C_K_RISE_DELAY : natural := 2 ** G_K_RISE_WIDTH;             -- k  = 2^K_RISE_WIDTH
-    constant C_M_FLAT_DELAY : natural := 2 ** G_M_FLAT_WIDTH;             -- m  = 2^M_FLAT_WIDTH
+    constant C_K_RISE_DELAY : natural := 2 ** G_JORD_K_WIDTH;             -- k  = 2^K_RISE_WIDTH
+    constant C_M_FLAT_DELAY : natural := 2 ** G_JORD_M_WIDTH;             -- m  = 2^M_FLAT_WIDTH
     constant C_L_DELAY      : natural := C_K_RISE_DELAY + C_M_FLAT_DELAY; -- l  = k + m
     constant C_KL_DELAY     : natural := C_K_RISE_DELAY + C_L_DELAY;      -- k + l = 2k + m
-    constant C_D_DELAY      : natural := 2 ** G_DELAY_WIDTH;              -- Value of delay
+    constant C_D_DELAY      : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
+    constant C_PULSE_DELAY  : natural := 2 ** G_PULSE_DELAY_WIDTH;        -- Value of delay for both paths
 
     ----------------------------------------------------------------------------
     -- Types
@@ -89,11 +92,12 @@ architecture rtl of trap_subsystem is
     signal stat_error          : std_logic_vector(5 downto 0);            -- error status
 
     -- intermidiate data after delays
-    signal data_n       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_k  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_l  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_kl : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_mov_d   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_n         : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_n_delayed : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_k    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_l    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_kl   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_mov_d     : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
     -- intermidiate data after jordanov and mov avg filters
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
@@ -143,10 +147,35 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
+    sr_n_i : entity trap_filter.delay_unit_sr
+        generic map(
+            G_DATA_WIDTH  => G_DATA_WIDTH,
+            G_DELAY_VALUE => C_PULSE_DELAY,
+            G_DATA_SIGNED => 0
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Control Inputs
+            ------------------------------------------------------------------------
+            CE_I   => CE_I,
+            DATA_I => DATA_I,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            DATA_N_O       => open,
+            DATA_D_O       => data_n,
+            DATA_D_VALID_O => open
+        );
+
     sr_d_i : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_D_DELAY,
+            G_DELAY_VALUE => C_D_DELAY + C_PULSE_DELAY,
             G_DATA_SIGNED => 0
         )
         port map(
@@ -171,7 +200,7 @@ begin
     sr_k : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_K_RISE_DELAY,
+            G_DELAY_VALUE => C_K_RISE_DELAY + C_PULSE_DELAY,
             G_DATA_SIGNED => 0
         )
         port map(
@@ -196,7 +225,7 @@ begin
     sr_l : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_L_DELAY,
+            G_DELAY_VALUE => C_L_DELAY + C_PULSE_DELAY,
             G_DATA_SIGNED => 0
         )
         port map(
@@ -221,7 +250,7 @@ begin
     sr_kl : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_KL_DELAY,
+            G_DELAY_VALUE => C_KL_DELAY + C_PULSE_DELAY,
             G_DATA_SIGNED => 0
         )
         port map(
@@ -238,18 +267,19 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_N_O       => data_n,
+            DATA_N_O       => open,
             DATA_D_O       => data_jord_kl,
             DATA_D_VALID_O => delay_jord_ready(0)
         );
 
     u_valid_i : entity trap_filter.valid_tracker
         generic map(
-            G_JORD_LATENCY => 6,
-            G_JORD_K_WIDTH => G_K_RISE_WIDTH,
-            G_JORD_M_WIDTH => G_M_FLAT_WIDTH,
-            G_MOV_LATENCY  => 2,
-            G_MOV_D_WIDTH  => G_DELAY_WIDTH
+            G_JORD_LATENCY      => 6,
+            G_JORD_K_WIDTH      => G_JORD_K_WIDTH,
+            G_JORD_M_WIDTH      => G_JORD_M_WIDTH,
+            G_MOV_LATENCY       => 2,
+            G_MOV_D_WIDTH       => G_MOV_D_WIDTH,
+            G_PULSE_DELAY_WIDTH => G_PULSE_DELAY_WIDTH
         )
         port map(
             CLK_I              => CLK_I,
@@ -265,8 +295,8 @@ begin
     mov_avg_i : entity trap_filter.mov_avg_filter
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
-            G_DELAY_WIDTH     => G_DELAY_WIDTH,
-            G_ACC_MARGIN_BITS => G_ACC_MARGIN_BITS,
+            G_DELAY_WIDTH     => G_MOV_D_WIDTH,
+            G_ACC_MARGIN_BITS => G_MOV_ACC_MARGIN_BITS,
             G_DATA_I_SIGNED   => 0
         )
         port map(
@@ -292,16 +322,16 @@ begin
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_K_RISE_WIDTH => G_K_RISE_WIDTH,
-            G_M_FLAT_WIDTH => G_M_FLAT_WIDTH,
+            G_K_RISE_WIDTH => G_JORD_K_WIDTH,
+            G_M_FLAT_WIDTH => G_JORD_M_WIDTH,
             -- Exponential decay
-            G_M_VALUE      => G_M_VALUE,
-            G_M_FRAC_WIDTH => G_M_FRAC_WIDTH,
+            G_M_VALUE      => G_JORD_M_EXP_VALUE,
+            G_M_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,
             -- Fixed point params
-            G_DIFF_MARGIN_BITS => G_DIFF_MARGIN_BITS,
-            G_ACC1_MARGIN_BITS => G_ACC1_MARGIN_BITS,
-            G_ACC2_MARGIN_BITS => G_ACC2_MARGIN_BITS,
-            G_OUT_SHIFT        => G_OUT_SHIFT
+            G_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
+            G_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
+            G_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS,
+            G_OUT_SHIFT        => G_JORD_OUT_SHIFT_BITS
         )
         port map(
             ------------------------------------------------------------------------

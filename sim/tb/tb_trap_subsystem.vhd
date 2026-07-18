@@ -27,6 +27,7 @@ architecture tb of tb_trap_subsystem is
     constant C_ADC_WIDTH    : natural := 14;
     constant C_K_RISE_WIDTH : natural := 6; -- k  = 2^K_RISE_WIDTH
     constant C_M_FLAT_WIDTH : natural := 7; -- m  = 2^M_FLAT_WIDTH
+    constant C_DELAY_WIDTH  : natural := 3; -- d  = 2^C_DELAY_WIDTH
 
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
@@ -73,18 +74,19 @@ begin
             -- Data parameters
             G_DATA_WIDTH => C_ADC_WIDTH,
             -- Jordanov params
-            G_K_RISE_WIDTH => C_K_RISE_WIDTH,
-            G_M_FLAT_WIDTH => C_M_FLAT_WIDTH,
-            G_M_VALUE      => C_M_EXP_VALUE,
-            G_M_FRAC_WIDTH => 4,
+            G_JORD_K_WIDTH          => C_K_RISE_WIDTH,
+            G_JORD_M_WIDTH          => C_M_FLAT_WIDTH,
+            G_JORD_M_EXP_VALUE      => C_M_EXP_VALUE,
+            G_JORD_M_EXP_FRAC_WIDTH => 4,
             -- Jordanov fixed point params
-            G_DIFF_MARGIN_BITS => 3,
-            G_ACC1_MARGIN_BITS => 2,
-            G_ACC2_MARGIN_BITS => 1,
-            G_OUT_SHIFT        => 17,
+            G_JORD_DIFF_MARGIN_BITS => 3,
+            G_JORD_ACC1_MARGIN_BITS => 2,
+            G_JORD_ACC2_MARGIN_BITS => 1,
+            G_JORD_OUT_SHIFT_BITS   => 17,
             -- Moving average params
-            G_DELAY_WIDTH     => 4,
-            G_ACC_MARGIN_BITS => 2
+            G_MOV_D_WIDTH         => C_DELAY_WIDTH,
+            G_MOV_ACC_MARGIN_BITS => 2,
+            G_PULSE_DELAY_WIDTH   => 4
         )
         port map(
             ------------------------------------------------------------------------

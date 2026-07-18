@@ -8,12 +8,11 @@
 --  Description:
 --  Module that tracks the required number of samples for the delays of both jordanov
 --  and moving average filters. If the ready signal of the delays do not agree, a
---  synchronization is asserted. Once the delays are ready, the latency is tracked to
+--  synchronization error is asserted. Once the delays are ready, the latency is tracked to
 --  issue the validity of the filtered data for both filters.
 --
 --  Dependencies:
 --  Delay ready signal has to arrive when memory is fullfilled (count starts at 'CE' + 1)
---  for incorrect error assertion
 --==============================================================================
 
 library ieee;
@@ -30,8 +29,9 @@ entity valid_tracker is
         G_JORD_K_WIDTH : natural range 2 to 8  := 8; -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
         G_JORD_M_WIDTH : natural range 2 to 8  := 8; -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
         -- Mov avg parameters
-        G_MOV_LATENCY : natural range 2 to 4 := 2; -- Latency of Moving average filter in cycles
-        G_MOV_D_WIDTH : natural range 2 to 8 := 4  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_MOV_LATENCY       : natural range 2 to 4 := 2; -- Latency of Moving average filter in cycles
+        G_MOV_D_WIDTH       : natural range 2 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 4  -- Width of delay given from pulse detection subsystem (D = 2^N)
     );
     port (
         ------------------------------------------------------------------------
@@ -82,6 +82,9 @@ architecture rtl of valid_tracker is
     constant C_JORD_KL_VALUE : natural := C_JORD_L_VALUE + C_JORD_K_VALUE;
     constant C_MOV_D_VALUE   : natural := 2 ** G_MOV_D_WIDTH;
 
+    -- Pulse detection delay (common to both filters)
+    constant C_PULSE_DELAY_VALUE : natural := 2 ** G_PULSE_DELAY_WIDTH;
+
     -- Expected limits for Jordanov delays counter (max delay of the 3 is KL)
     constant C_JORD_CNT_WIDTH  : natural                                         := clog2(C_JORD_KL_VALUE);
     constant C_JORD_CNT_ONE    : std_logic_vector(C_JORD_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_JORD_CNT_WIDTH));
@@ -94,6 +97,12 @@ architecture rtl of valid_tracker is
     constant C_MOV_CNT_D_MAX  : std_logic_vector(G_MOV_D_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_MOV_D_VALUE - 1, G_MOV_D_WIDTH));
     constant C_MOV_CNT_D_ONE  : std_logic_vector(G_MOV_D_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_MOV_D_WIDTH));
     constant C_MOV_CNT_D_ZERO : std_logic_vector(G_MOV_D_WIDTH - 1 downto 0) := (others => '0');
+
+    -- Arming counter limits (common pulse detection delay before counting)
+    constant C_ARM_CNT_WIDTH : natural                                        := G_PULSE_DELAY_WIDTH + 1;
+    constant C_ARM_CNT_MAX   : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_PULSE_DELAY_VALUE - 1, C_ARM_CNT_WIDTH));
+    constant C_ARM_CNT_ONE   : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_ARM_CNT_WIDTH));
+    constant C_ARM_CNT_ZERO  : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := (others => '0');
 
     -- Error synchronization types
     constant C_ERROR_SYNC_CORRECT : std_logic_vector(1 downto 0) := "00";
@@ -114,6 +123,10 @@ architecture rtl of valid_tracker is
 
     -- output error signal -> bit1 (Jordanov), bit0 (Mov avg)
     signal error_sync : std_logic_vector(1 downto 0);
+
+    -- Gate the filter counters until the pulse detection delay line has filled
+    signal cnt_arm : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0);
+    signal armed   : std_logic;
 
     -- Jordanov counter
     signal cnt_delay_jord : std_logic_vector(C_JORD_CNT_WIDTH - 1 downto 0);
@@ -159,6 +172,27 @@ begin
     ----------------------------------------------------------------------------
     -- Main sequential process
     ----------------------------------------------------------------------------
+
+    ----------------------------------------------------------------------------
+    -- Arming: absorb the common pulse-detection delay before counting
+    ----------------------------------------------------------------------------
+
+    -- Pulse detection delay
+    p_arm : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            cnt_arm <= C_ARM_CNT_ZERO;
+            armed   <= '0';
+        elsif rising_edge(CLK_I) then
+            if (CE_I = '1') then
+                if (unsigned(cnt_arm) < unsigned(C_ARM_CNT_MAX)) then
+                    cnt_arm <= std_logic_vector(unsigned(cnt_arm) + unsigned(C_ARM_CNT_ONE));
+                else
+                    armed <= '1';
+                end if;
+            end if;
+        end if;
+    end process p_arm;
 
     ----------------------------------------------------------------------------
     -- Validity filtered data
@@ -211,13 +245,13 @@ begin
         end if;
     end process p_mov_ready;
 
-    -- counter that times-out at maximum (when data_d_valid should be triggered)
+    -- counter that times-out at maximum (when data_d_valid should be triggered) -> gated by arming
     p_mov_cnt : process (CLK_I, RST_N_I)
     begin
         if RST_N_I = '0' then
             cnt_delay_mov <= C_MOV_CNT_D_ZERO;
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
+            if (CE_I = '1' and armed = '1') then
                 if (unsigned(cnt_delay_mov) < unsigned(C_MOV_CNT_D_MAX)) then
                     cnt_delay_mov <= std_logic_vector(unsigned(cnt_delay_mov) + unsigned(C_MOV_CNT_D_ONE));
                 end if;
@@ -233,13 +267,13 @@ begin
     -- Jordanov filter sync error
     ----------------------------------------------------------------------------
 
-    -- counters that time-out at maximum of each of the delays
+    -- counters that time-out at maximum of each of the delays -> gated by arming
     p_jord_cnt : process (CLK_I, RST_N_I)
     begin
         if RST_N_I = '0' then
             cnt_delay_jord <= C_JORD_CNT_ZERO;
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
+            if (CE_I = '1' and armed = '1') then
                 if (unsigned(cnt_delay_jord) < unsigned(C_JORD_CNT_KL_MAX)) then
                     cnt_delay_jord <= std_logic_vector(unsigned(cnt_delay_jord) + unsigned(C_JORD_CNT_ONE));
                 end if;
