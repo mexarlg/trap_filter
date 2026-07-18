@@ -53,6 +53,10 @@ add wave -color green -radix binary sim:/tb_trap_subsystem/dut/data_mov_valid
 #===========================================================================
 add wave -divider " BASELINE RESTORER "
 add wave -color white -format Analog-Step -radix signed sim:/tb_trap_subsystem/dut/data_jord_filt
+add wave -color green -radix signed sim:/tb_trap_subsystem/dut/jord_i/diff
+add wave -color green -radix signed sim:/tb_trap_subsystem/dut/jord_i/acc1
+add wave -color green -radix signed sim:/tb_trap_subsystem/dut/jord_i/Mdiff_scaled
+add wave -color green -radix signed sim:/tb_trap_subsystem/dut/jord_i/acc2
 add wave -color white -format Analog-Step -radix unsigned sim:/tb_trap_subsystem/dut/data_mov_filt
 add wave -color green -radix binary sim:/tb_trap_subsystem/tb_baseline_trig
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/baseline_i/baseline_held
