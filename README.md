@@ -1,5 +1,13 @@
 # Trapezoidal Pulse Shaping Filter
+Real time trapezoidal pulse shaping filter based on the Jordanov recursive algorithm, for digital energy measurement of ionizing radiation. 
+Implemented in VHDL for Lattice Radiant FPGAs.
 
-Project aimed at developing a trapezoidal filter with the Jordanov algorithm in real time for the calculation of energy from ionized particles.
+## Overview
+
+System block diagram:
+
+![Trapezoidal filter block diagram](docs/trap_bd.png)
+
+---
 
 Author: Aldo Lupio
