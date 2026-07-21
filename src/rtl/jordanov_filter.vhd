@@ -38,7 +38,6 @@ entity jordanov_filter is
         -- Jordanov parameters
         G_DATA_WIDTH   : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         G_K_RISE_WIDTH : natural range 2 to 8  := 8;  -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
-        G_M_FLAT_WIDTH : natural range 2 to 8  := 8;  -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
         -- Exponential decay
         G_M_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
         G_M_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
@@ -76,17 +75,6 @@ architecture rtl of jordanov_filter is
     -- Functions
     ----------------------------------------------------------------------------
 
-    function clog2(n : natural) return natural is
-        variable r       : natural := 0;
-        variable v       : natural := n;
-    begin
-        while v > 0 loop
-            v := v / 2;
-            r := r + 1;
-        end loop;
-        return r;
-    end function;
-
     ----------------------------------------------------------------------------
     -- Constants
     ----------------------------------------------------------------------------
@@ -109,14 +97,12 @@ architecture rtl of jordanov_filter is
     constant C_M_ROUND_LSB  : signed(C_MDIFF_WIDTH - 1 downto 0) := to_signed(2 ** (G_M_FRAC_WIDTH - 1), C_MDIFF_WIDTH); -- Half LSB for rounding
 
     -- Limits for accumulator1 (signed) overflow error at the last (top) margin bit
-    constant C_OFLOW1_TOP_BIT : natural                           := C_ACC1_WIDTH - 1;
-    constant C_OFLOW1_PLIM_S  : signed(C_ACC1_WIDTH - 1 downto 0) := to_signed(2 ** (C_ACC1_WIDTH - 1 - G_ACC1_MARGIN_BITS) - 1, C_ACC1_WIDTH);
-    constant C_OFLOW1_NLIM_S  : signed(C_ACC1_WIDTH - 1 downto 0) := - to_signed(2 ** (C_ACC1_WIDTH - 1 - G_ACC1_MARGIN_BITS), C_ACC1_WIDTH);
+    constant C_OFLOW1_PLIM_S : signed(C_ACC1_WIDTH - 1 downto 0) := to_signed(2 ** (C_ACC1_WIDTH - 1 - G_ACC1_MARGIN_BITS) - 1, C_ACC1_WIDTH);
+    constant C_OFLOW1_NLIM_S : signed(C_ACC1_WIDTH - 1 downto 0) := - to_signed(2 ** (C_ACC1_WIDTH - 1 - G_ACC1_MARGIN_BITS), C_ACC1_WIDTH);
 
     -- Limits for accumulator2 (signed) overflow error at the last (top) margin bit
-    constant C_OFLOW2_TOP_BIT : natural                           := C_ACC2_WIDTH - 1;
-    constant C_OFLOW2_PLIM_S  : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '0', others => '1');
-    constant C_OFLOW2_NLIM_S  : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '1', others => '0');
+    constant C_OFLOW2_PLIM_S : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '0', others => '1');
+    constant C_OFLOW2_NLIM_S : signed(C_ACC2_WIDTH - 1 downto 0) := (C_ACC2_WIDTH - 1 downto C_ACC2_WIDTH - 1 - G_ACC2_MARGIN_BITS => '1', others => '0');
 
     -- overflow error types
     constant C_ERROR_OFLOW_CORRECT : std_logic_vector(1 downto 0) := "00";

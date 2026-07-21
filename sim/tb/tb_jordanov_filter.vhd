@@ -70,9 +70,6 @@ architecture tb of tb_jordanov_filter is
     signal tb_data_ref    : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output
     signal tb_data_ref_q0 : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output delayed +1 cycles    
     signal tb_data_ref_q1 : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output delayed +2 cycles     
-    signal tb_data_ref_q2 : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output delayed +3 cycles     
-    signal tb_data_ref_q3 : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output delayed +4 cycles     
-    signal tb_data_ref_q4 : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output delayed +4 cycles     
 
     signal tb_data_diff  : std_logic_vector(C_ADC_WIDTH + 1 downto 0) := (others => '0'); -- error between delayed python and filtered output
     signal tb_sync_pulse : std_logic                                  := '0';             -- pulse indicating first current sample at n from data_i
@@ -94,7 +91,6 @@ begin
             -- Jordanov parameters
             G_DATA_WIDTH   => C_ADC_WIDTH,
             G_K_RISE_WIDTH => C_K_RISE_WIDTH,
-            G_M_FLAT_WIDTH => C_M_FLAT_WIDTH,
             -- Exponential decay
             G_M_VALUE      => C_M_EXP_VALUE,
             G_M_FRAC_WIDTH => 4,

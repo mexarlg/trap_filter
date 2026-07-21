@@ -92,12 +92,11 @@ architecture rtl of trap_subsystem is
     signal stat_error          : std_logic_vector(5 downto 0);            -- error status
 
     -- intermidiate data after delays
-    signal data_n         : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_n_delayed : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_k    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_l    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_jord_kl   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_mov_d     : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_n       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_k  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_l  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_jord_kl : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_mov_d   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
     -- intermidiate data after jordanov and mov avg filters
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
@@ -323,7 +322,6 @@ begin
             -- Jordanov parameters
             G_DATA_WIDTH   => G_DATA_WIDTH,
             G_K_RISE_WIDTH => G_JORD_K_WIDTH,
-            G_M_FLAT_WIDTH => G_JORD_M_WIDTH,
             -- Exponential decay
             G_M_VALUE      => G_JORD_M_EXP_VALUE,
             G_M_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,

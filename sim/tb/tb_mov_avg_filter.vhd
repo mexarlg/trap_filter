@@ -27,7 +27,6 @@ architecture tb of tb_mov_avg_filter is
     constant C_DELAY_VALUE     : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
     constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
     constant C_ACC_MARGIN_BITS : natural := 2;                  -- Margin bits for accumulator signal (at worst case, 1MB holds 7 extra cycles, 2 MB holds 15 extra cycles)
-    constant C_WINDOW          : natural := 2 ** C_DELAY_WIDTH; -- Value of the delay (all bits of DELAY_WIDTH => '1')
 
     -- Sign configuration of input pulse -> Needs to be changed in waveform
     constant C_DATA_I_SIGNED       : natural := 1;                              -- '1' if signed, '0' if unsigned

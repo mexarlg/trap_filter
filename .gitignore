@@ -75,3 +75,6 @@ _info
 
 # Generated pulse waves
 *.txt
+
+# vhdl_ls toml file
+*.toml
