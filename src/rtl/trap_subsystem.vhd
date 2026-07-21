@@ -71,12 +71,16 @@ architecture rtl of trap_subsystem is
     ----------------------------------------------------------------------------
 
     -- Delay values
-    constant C_K_RISE_DELAY : natural := 2 ** G_JORD_K_WIDTH;             -- k  = 2^K_RISE_WIDTH
-    constant C_M_FLAT_DELAY : natural := 2 ** G_JORD_M_WIDTH;             -- m  = 2^M_FLAT_WIDTH
-    constant C_L_DELAY      : natural := C_K_RISE_DELAY + C_M_FLAT_DELAY; -- l  = k + m
-    constant C_KL_DELAY     : natural := C_K_RISE_DELAY + C_L_DELAY;      -- k + l = 2k + m
-    constant C_D_DELAY      : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
-    constant C_PULSE_DELAY  : natural := 2 ** G_PULSE_DELAY_WIDTH;        -- Value of delay for both paths
+    constant C_JORD_K_DELAY  : natural := 2 ** G_JORD_K_WIDTH;             -- k  = 2^K_RISE_WIDTH
+    constant C_JORD_M_DELAY  : natural := 2 ** G_JORD_M_WIDTH;             -- m  = 2^M_FLAT_WIDTH
+    constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
+    constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
+    constant C_MOV_D_DELAY   : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
+    constant C_PULSE_DELAY   : natural := 2 ** G_PULSE_DELAY_WIDTH;        -- Value of delay for both paths
+
+    -- Latency of filters
+    constant C_MOV_LATENCY  : natural := 2;
+    constant C_JORD_LATENCY : natural := 6;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -96,11 +100,11 @@ architecture rtl of trap_subsystem is
     signal data_jord_k  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_l  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_kl : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_mov_d   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_mov_d   : std_logic_vector(G_DATA_WIDTH downto 0);
 
     -- intermidiate data after jordanov and mov avg filters
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
-    signal data_mov_filt  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_mov_filt  : std_logic_vector(G_DATA_WIDTH downto 0);
 
     -- ready signals for delays
     signal delay_jord_ready : std_logic_vector(2 downto 0);
@@ -146,11 +150,14 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    sr_n_i : entity trap_filter.delay_unit_sr
+    delay_trap_i : entity trap_filter.delay_trap
         generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_PULSE_DELAY,
-            G_DATA_SIGNED => 0
+            G_DATA_WIDTH    => G_DATA_WIDTH,
+            G_PULSE_DELAY   => C_PULSE_DELAY,
+            G_JORD_K_DELAY  => C_JORD_K_DELAY,
+            G_JORD_L_DELAY  => C_JORD_L_DELAY,
+            G_JORD_KL_DELAY => C_JORD_KL_DELAY,
+            G_MOV_D_DELAY   => C_MOV_D_DELAY
         )
         port map(
             ------------------------------------------------------------------------
@@ -161,122 +168,30 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I   => CE_I,
-            DATA_I => DATA_I,
+            CE_I             => CE_I,
+            DATA_I           => DATA_I,
+            DATA_JORD_FILT_I => data_jord_filt,
             ------------------------------------------------------------------------
-            -- Outputs
+            -- Delayed data outputs
             ------------------------------------------------------------------------
-            DATA_N_O       => open,
-            DATA_D_O       => data_n,
-            DATA_D_VALID_O => open
-        );
-
-    sr_d_i : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_D_DELAY + C_PULSE_DELAY,
-            G_DATA_SIGNED => 0
-        )
-        port map(
+            DATA_N_O     => data_n,
+            DATA_K_O     => data_jord_k,
+            DATA_L_O     => data_jord_l,
+            DATA_KL_O    => data_jord_kl,
+            DATA_MOV_D_O => data_mov_d,
             ------------------------------------------------------------------------
-            -- Clock / Reset
+            -- Ready flags
             ------------------------------------------------------------------------
-            CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
-            ------------------------------------------------------------------------
-            -- Control Inputs
-            ------------------------------------------------------------------------
-            CE_I   => CE_I,
-            DATA_I => DATA_I,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            DATA_N_O       => open,
-            DATA_D_O       => data_mov_d,
-            DATA_D_VALID_O => delay_mov_ready
-        );
-
-    sr_k : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_K_RISE_DELAY + C_PULSE_DELAY,
-            G_DATA_SIGNED => 0
-        )
-        port map(
-            ------------------------------------------------------------------------
-            -- Clock / Reset
-            ------------------------------------------------------------------------
-            CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
-            ------------------------------------------------------------------------
-            -- Control Inputs
-            ------------------------------------------------------------------------
-            CE_I   => CE_I,
-            DATA_I => DATA_I,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            DATA_N_O       => open,
-            DATA_D_O       => data_jord_k,
-            DATA_D_VALID_O => delay_jord_ready(2)
-        );
-
-    sr_l : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_L_DELAY + C_PULSE_DELAY,
-            G_DATA_SIGNED => 0
-        )
-        port map(
-            ------------------------------------------------------------------------
-            -- Clock / Reset
-            ------------------------------------------------------------------------
-            CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
-            ------------------------------------------------------------------------
-            -- Control Inputs
-            ------------------------------------------------------------------------
-            CE_I   => CE_I,
-            DATA_I => DATA_I,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            DATA_N_O       => open,
-            DATA_D_O       => data_jord_l,
-            DATA_D_VALID_O => delay_jord_ready(1)
-        );
-
-    sr_kl : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_KL_DELAY + C_PULSE_DELAY,
-            G_DATA_SIGNED => 0
-        )
-        port map(
-            ------------------------------------------------------------------------
-            -- Clock / Reset
-            ------------------------------------------------------------------------
-            CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
-            ------------------------------------------------------------------------
-            -- Control Inputs
-            ------------------------------------------------------------------------
-            CE_I   => CE_I,
-            DATA_I => DATA_I,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            DATA_N_O       => open,
-            DATA_D_O       => data_jord_kl,
-            DATA_D_VALID_O => delay_jord_ready(0)
+            DELAY_JORD_READY_O => delay_jord_ready,
+            DELAY_MOV_READY_O  => delay_mov_ready
         );
 
     u_valid_i : entity trap_filter.valid_tracker
         generic map(
-            G_JORD_LATENCY      => 6,
+            G_JORD_LATENCY      => C_JORD_LATENCY,
             G_JORD_K_WIDTH      => G_JORD_K_WIDTH,
             G_JORD_M_WIDTH      => G_JORD_M_WIDTH,
-            G_MOV_LATENCY       => 2,
+            G_MOV_LATENCY       => C_MOV_LATENCY,
             G_MOV_D_WIDTH       => G_MOV_D_WIDTH,
             G_PULSE_DELAY_WIDTH => G_PULSE_DELAY_WIDTH
         )
@@ -296,7 +211,7 @@ begin
             G_DATA_WIDTH      => G_DATA_WIDTH,
             G_DELAY_WIDTH     => G_MOV_D_WIDTH,
             G_ACC_MARGIN_BITS => G_MOV_ACC_MARGIN_BITS,
-            G_DATA_I_SIGNED   => 0
+            G_DATA_I_SIGNED   => 1
         )
         port map(
             ------------------------------------------------------------------------
@@ -308,7 +223,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I     => CE_I,
-            DATA_N_I => data_n,
+            DATA_N_I => data_jord_filt,
             DATA_D_I => data_mov_d,
             ------------------------------------------------------------------------
             -- Outputs
@@ -358,8 +273,7 @@ begin
     baseline_i : entity trap_filter.baseline_restorer
         generic map(
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_JORD_LATENCY => 6,
-            G_MOV_LATENCY  => 2
+            G_LATENCY_SKEW => C_MOV_LATENCY
         )
         port map(
             ------------------------------------------------------------------------

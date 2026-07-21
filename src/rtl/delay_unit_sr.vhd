@@ -28,7 +28,7 @@ use trap_filter.trap_filter_pkg.all;
 entity delay_unit_sr is
     generic (
         G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_VALUE : natural range 1 to 4096 := 8;  -- Value of actual delayed (10 bit max width)
+        G_DELAY_VALUE : natural range 2 to 4096 := 8;  -- Value of actual delayed (10 bit max width)
         G_DATA_SIGNED : natural range 0 to 1    := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_SIGNED
     );
     port (
@@ -45,7 +45,6 @@ entity delay_unit_sr is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_N_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Data at sample N
         DATA_D_O       : out std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0); -- Delayed Data for sample N
         DATA_D_VALID_O : out std_logic                                                    -- Valid flag when delayed data is ready (shift reg is full, asserted on last cycle)
     );
@@ -74,12 +73,11 @@ architecture rtl of delay_unit_sr is
     ----------------------------------------------------------------------------
 
     -- Value of the delay and its required bit width (to represent 2^N samples, or 0 to 2^N - 1)
-    constant C_DELAY_DEPTH : integer := G_DELAY_VALUE;
-    constant C_DELAY_WIDTH : natural := clog2(G_DELAY_VALUE - 1);
+    constant C_DELAY_WIDTH : natural := clog2(G_DELAY_VALUE);
 
     -- Limits for delay valid counter (Need counter flag high on counter = DEPTH (since cycle 0 is not valid) 
     -- so CNT_D_VALID = DELAY_DEPTH - 1 = 15 so flag can be asserted on cycle 16, and delay arrives at cycle 17)
-    constant C_CNT_D_MAX  : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_DELAY_DEPTH - 1, C_DELAY_WIDTH));
+    constant C_CNT_D_MAX  : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(G_DELAY_VALUE - 1, C_DELAY_WIDTH));
     constant C_CNT_D_ONE  : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_DELAY_WIDTH));
     constant C_CNT_D_ZERO : std_logic_vector(C_DELAY_WIDTH - 1 downto 0) := (others => '0');
 
@@ -92,7 +90,7 @@ architecture rtl of delay_unit_sr is
     ----------------------------------------------------------------------------
 
     -- shift register array
-    type sr_t is array (0 to C_DELAY_DEPTH - 1) of std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
+    type sr_t is array (0 to G_DELAY_VALUE - 1) of std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
     signal sr : sr_t;
 
     -- shift register write enable
@@ -118,7 +116,6 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    DATA_N_O       <= data_n;
     DATA_D_O       <= data_d;
     DATA_D_VALID_O <= data_d_valid;
 
@@ -127,7 +124,7 @@ begin
     ----------------------------------------------------------------------------
 
     -- shift register last tap (data_d)
-    data_d <= sr(C_DELAY_DEPTH - 1);
+    data_d <= sr(G_DELAY_VALUE - 1);
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -140,7 +137,7 @@ begin
             if RST_N_I = '0' then
                 sr <= (others => (others => '0'));
             elsif wr_en = '1' then
-                sr <= data_n & sr(0 to C_DELAY_DEPTH - 2);
+                sr <= data_n & sr(0 to G_DELAY_VALUE - 2);
             end if;
         end if;
     end process p_sr;
