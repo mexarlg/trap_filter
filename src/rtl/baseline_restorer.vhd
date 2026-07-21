@@ -92,7 +92,7 @@ begin
     end process p_skew;
 
     ----------------------------------------------------------------------------
-    -- Latch the aligned baseline on trigger
+    -- Latch the baseline on trigger
     ----------------------------------------------------------------------------
 
     p_latch : process (CLK_I, RST_N_I)
@@ -102,7 +102,7 @@ begin
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
                 if (LATCH_TRIG_I = '1') then
-                    baseline_held <= delayed_skew(G_LATENCY_SKEW);
+                    baseline_held <= BASELINE_I;
                 end if;
             end if;
         end if;
@@ -119,8 +119,7 @@ begin
             data_out <= (others => '0');
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
-                -- Jordanov is 15b signed while baseline is 14b unsigned
-                diff_ext <= resize(signed(DATA_JORD_I), G_DATA_WIDTH + 2)
+                diff_ext <= resize(signed(delayed_skew(G_LATENCY_SKEW)), G_DATA_WIDTH + 2)
                     - resize(signed(baseline_held), G_DATA_WIDTH + 2);
                 -- truncate back to 15-bit signed output
                 data_out <= std_logic_vector(resize(diff_ext, G_DATA_WIDTH + 1));
