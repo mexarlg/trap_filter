@@ -24,20 +24,20 @@ entity trap_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Jordanov params
-        G_JORD_K_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
+        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
         G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
         G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
         G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
         -- Jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 1; -- Width of margin given to the 2nd accumulator
+        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3;  -- Width of margin given to the delayed difference
+        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2;  -- Width of margin given to the 1st accumulator
+        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1;  -- Width of margin given to the 2nd accumulator
+        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17; -- Width of margin given to the 2nd accumulator
         -- Moving average params
-        G_MOV_D_WIDTH         : natural range 0 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Width of margin given to the accumulator
         -- Detection params
-        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 4 -- Width of delay given from pulse detection subsystem
+        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given from pulse detection subsystem
     );
     port (
         ------------------------------------------------------------------------

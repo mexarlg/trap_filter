@@ -1,0 +1,16 @@
+#==============================================================================
+# trap_pulse_shaper.pdc  -  Physical constraints
+# Device : LFCPNX-100-9LFG672C  (CertusPro-NX Evaluation Board)
+#==============================================================================
+
+#------------------------------------------------------------------------------
+# Clock  (125 MHz)
+#------------------------------------------------------------------------------
+ldc_set_location -site {N25} [get_ports CLK_I]
+ldc_set_port -iobuf {IO_TYPE=LVCMOS33} [get_ports CLK_I]
+
+#------------------------------------------------------------------------------
+# Reset  (assigned to a button)
+#------------------------------------------------------------------------------
+ldc_set_location -site {J5} [get_ports RST_N_I]
+ldc_set_port -iobuf {IO_TYPE=LVCMOS33 PULLMODE=UP} [get_ports RST_N_I]

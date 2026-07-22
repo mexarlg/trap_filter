@@ -28,16 +28,17 @@ if {$SCRIPT_PATH eq ""} {
 set SCRIPT_DIR  [file dirname [file normalize $SCRIPT_PATH]]
 set PROJECT_DIR [file normalize "$SCRIPT_DIR/../build/radiant"]
 set RTL_DIR     [file normalize "$SCRIPT_DIR/../src/rtl"]
+set PKG_DIR     [file normalize "$SCRIPT_DIR/../src/pkg"]
 set CONST_DIR   [file normalize "$SCRIPT_DIR/../constraints"]
 
 #------------------------------------------------------------------------------
 # FPGA Selection: CertusPro-NX LFCPNX-100
 #------------------------------------------------------------------------------
 
-#   LFCPNX-100-9BBG484C   (484-ball caBGA, speed 9, commercial)
+#   LFCPNX-100-9LFG672C
 set DEV_FAMILY      "LFCPNX"
 set DEV_DEVICE      "LFCPNX-100"
-set DEV_PART        "LFCPNX-100-9BBG484C"
+set DEV_PART        "LFCPNX-100-9LFG672C"
 set DEV_PERFORMANCE "9_High-Performance_1.0V"
 set DEV_OPERATION   "Commercial"
 
@@ -75,7 +76,9 @@ prj_create \
     -impl        "impl1" \
     -impl_dir    "impl1"
 
-prj_set_impl_opt -impl "impl1" "VHDL_2008" "True"
+# VHDL 2008 and library definition (trap_filter)
+prj_set_strategy_value -strategy Strategy1 lse_vhdl2008=True
+prj_set_impl_opt -impl "impl1" {lib} {trap_filter}
 
 #------------------------------------------------------------------------------
 # NEXT STEPS
@@ -85,20 +88,30 @@ prj_set_impl_opt -impl "impl1" "VHDL_2008" "True"
 # Add RTL Source Files
 #------------------------------------------------------------------------------
 
-# prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
+# Packages
+prj_add_source [file join $PKG_DIR "trap_filter_pkg.vhd"]
+
+# RTL
+prj_add_source [file join $RTL_DIR "delay_unit_sr.vhd"]
+prj_add_source [file join $RTL_DIR "delay_trap.vhd"]
+prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
+prj_add_source [file join $RTL_DIR "jordanov_filter.vhd"]
+prj_add_source [file join $RTL_DIR "valid_tracker.vhd"]
+prj_add_source [file join $RTL_DIR "baseline_restorer.vhd"]
+prj_add_source [file join $RTL_DIR "trap_subsystem.vhd"]
 
 #------------------------------------------------------------------------------
 # Add RTL Top Wrapper
 #------------------------------------------------------------------------------
 
-# prj_set_impl_opt -impl "impl1" "top" "trap_filter"
+prj_set_impl_opt -impl "impl1" "top" "trap_subsystem"
 
 #------------------------------------------------------------------------------
 # Add Constraints (Physical / Timing)
 #------------------------------------------------------------------------------
 
-# prj_add_source [file join $CONST_DIR "trap_filter.pdc"]
-# prj_add_source [file join $CONST_DIR "trap_filter.ldc"]
+prj_add_source [file join $CONST_DIR "trap_pulse_shaper.pdc"]
+prj_add_source [file join $CONST_DIR "trap_pulse_shaper.ldc"]
 
 #------------------------------------------------------------------------------
 # Add IP Sources
