@@ -43,18 +43,8 @@ entity trap_pulse_shaper_top is
         ------------------------------------------------------------------------
         -- Clock / Reset
         ------------------------------------------------------------------------
-        CLK_I   : in std_logic;
-        RST_N_I : in std_logic;
-        ------------------------------------------------------------------------
-        -- Control Inputs
-        ------------------------------------------------------------------------
-        CE_I : in std_logic; -- clock enable
-        ------------------------------------------------------------------------
-        -- Outputs
-        ------------------------------------------------------------------------
-        DATA_FILTERED_O       : out std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-        DATA_FILTERED_VALID_O : out std_logic;                               -- Trapezoidal valid
-        STAT_ERROR_O          : out std_logic_vector(5 downto 0)             -- error status
+        CLK_I : in std_logic;
+        BTN   : in std_logic
     );
 end entity trap_pulse_shaper_top;
 
@@ -75,6 +65,15 @@ architecture rtl of trap_pulse_shaper_top is
     -- Types
     ----------------------------------------------------------------------------
 
+    component vio_trap is
+        port (
+            clk        : in std_logic;
+            probe_out0 : out std_logic_vector(0 downto 0) -- spare / soft start
+        );
+    end component vio_trap;
+
+    for u_vio : vio_trap use entity xil_defaultlib.vio_trap;
+
     ----------------------------------------------------------------------------
     -- Signals
     ----------------------------------------------------------------------------
@@ -87,7 +86,27 @@ architecture rtl of trap_pulse_shaper_top is
     -- intermidiate data after delays
     signal data_input : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
+    signal rst_n  : std_logic;
+    signal ce_vio : std_logic_vector(0 downto 0);
+    signal ce_int : std_logic;
+
+    -- ILA
+    attribute mark_debug                        : string;
+    attribute mark_debug of data_input          : signal is "true";
+    attribute mark_debug of data_filtered       : signal is "true";
+    attribute mark_debug of data_filtered_valid : signal is "true";
+    attribute mark_debug of stat_error          : signal is "true";
+    attribute mark_debug of ce_int              : signal is "true";
+
 begin
+
+    ce_int <= ce_vio(0);
+
+    u_vio : vio_trap
+    port map(
+        clk        => CLK_I,
+        probe_out0 => ce_vio
+    );
 
     ----------------------------------------------------------------------------
     -- Assertions
@@ -97,14 +116,10 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    DATA_FILTERED_O       <= data_filtered;
-    DATA_FILTERED_VALID_O <= data_filtered_valid;
-    STAT_ERROR_O          <= stat_error;
-
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
-
+    rst_n <= not BTN;
     ----------------------------------------------------------------------------
     -- Main sequential process
     ----------------------------------------------------------------------------
@@ -119,11 +134,11 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
+            RST_N_I => rst_n,
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            CE_I         => CE_I,
+            CE_I         => ce_int,
             DATA_O       => data_input,
             DATA_VALID_O => open
         );
@@ -151,11 +166,11 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => RST_N_I,
+            RST_N_I => rst_n,
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I            => CE_I,
+            CE_I            => ce_int,
             DATA_I          => data_input,
             BASELINE_TRIG_I => '0',
             ------------------------------------------------------------------------

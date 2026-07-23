@@ -1,12 +1,12 @@
 #==============================================================================
-# build_trap_filter.tcl
+# build_lattice_trap_filter.tcl
 #
 # Creates the Lattice Radiant project for the trapezoidal filter 
 # design targeting the CertusPro-NX LFCPNX-100.
 #
 # Run with:
-#   radiantc build_trap_filter.tcl         (command line, Linux or Windows)
-#   source build_trap_filter.tcl           (radiant tcl console)
+#   radiantc build_lattice_trap_filter.tcl         (command line, Linux or Windows)
+#   source build_lattice_trap_filter.tcl           (radiant tcl console)
 #
 # Author: Aldo Lupio
 # Date:   09/07/2026
@@ -22,7 +22,7 @@ set PROJECT_NAME    "trap_filter"
 
 set SCRIPT_PATH [info script]
 if {$SCRIPT_PATH eq ""} {
-    error "Cannot resolve script location. Run as: radiantc [file join scripts build_trap_filter.tcl]"
+    error "Cannot resolve script location. Run as: radiantc [file join scripts build_lattice_trap_filter.tcl]"
 }
 
 set SCRIPT_DIR  [file dirname [file normalize $SCRIPT_PATH]]
@@ -113,8 +113,8 @@ prj_set_impl_opt -impl "impl1" "top" "trap_pulse_shaper_top"
 # Add Constraints (Physical / Timing)
 #------------------------------------------------------------------------------
 
-prj_add_source [file join $CONST_DIR "trap_pulse_shaper.pdc"]
-prj_add_source [file join $CONST_DIR "trap_pulse_shaper.ldc"]
+prj_add_source [file join $CONST_DIR "trap_pulse_shaper_lattice.pdc"]
+prj_add_source [file join $CONST_DIR "trap_pulse_shaper_lattice.ldc"]
 
 #------------------------------------------------------------------------------
 # Add IP Sources

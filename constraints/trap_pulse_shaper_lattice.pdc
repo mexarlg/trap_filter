@@ -12,5 +12,5 @@ ldc_set_port -iobuf {IO_TYPE=LVCMOS33} [get_ports CLK_I]
 #------------------------------------------------------------------------------
 # Reset  (assigned to a Switch SW4)
 #------------------------------------------------------------------------------
-ldc_set_location -site {J2} [get_ports RST_N_I]
-ldc_set_port -iobuf {IO_TYPE=LVCMOS33 PULLMODE=UP} [get_ports RST_N_I]
+ldc_set_location -site {J2} [get_ports BTN]
+ldc_set_port -iobuf {IO_TYPE=LVCMOS33 PULLMODE=UP} [get_ports BTN]
