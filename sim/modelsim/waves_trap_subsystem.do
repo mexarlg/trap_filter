@@ -23,8 +23,7 @@ add wave -color green -radix binary sim:/tb_trap_subsystem/tb_rst_n
 #===========================================================================
 add wave -divider " INPUTS "
 add wave -color green -radix binary sim:/tb_trap_subsystem/tb_ce
-add wave -color white -format Analog-Step -radix unsigned sim:/tb_trap_subsystem/tb_data_i
-add wave -color green -radix binary sim:/tb_trap_subsystem/tb_sync_pulse
+add wave -color white -format Analog-Step -radix unsigned sim:/tb_trap_subsystem/dut/data_input
 
 #===========================================================================
 # SHIFT REGISTER  (internal)

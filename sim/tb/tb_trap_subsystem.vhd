@@ -26,16 +26,13 @@ architecture tb of tb_trap_subsystem is
     -- Jordanov params configuration
     constant C_ADC_WIDTH           : natural := 14;
     constant C_JORD_K_WIDTH        : natural := 6;  -- k  = 2^K_RISE_WIDTH
-    constant C_JORD_M_WIDTH        : natural := 8;  -- m  = 2^M_FLAT_WIDTH
+    constant C_JORD_M_WIDTH        : natural := 7;  -- m  = 2^M_FLAT_WIDTH
     constant C_JORD_OUT_SHIFT_BITS : natural := 17; -- m  = 2^M_FLAT_WIDTH
     constant C_MOV_D_WIDTH         : natural := 4;  -- d  = 2^C_DELAY_WIDTH
     constant C_PULSE_DELAY_WIDTH   : natural := 4;  -- d  = 2^C_PULSE_DELAY_WIDTH
 
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
-
-    -- Sign configuration of input pulse -> Needs to be changed in waveform
-    constant C_UNSIGNED_PULSE_FILE : string := "noisy_pulse_14b_unsigned_jord.txt"; -- Name of unsigned input pulse file (and mov avg ref) from python
 
     ----------------------------------------------------------------------------    
     -- DUT Signals
@@ -54,10 +51,6 @@ architecture tb of tb_trap_subsystem is
     signal tb_data_filtered       : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
     signal tb_data_filtered_valid : std_logic;
     signal tb_stat_error          : std_logic_vector(5 downto 0) := (others => '0');
-
-    -- validation signals between python output and filtered data
-    signal tb_data_ref   : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0'); -- python filtered output
-    signal tb_sync_pulse : std_logic                              := '0';             -- pulse indicating first current sample at n from data_i
 
 begin
 
@@ -101,7 +94,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I            => tb_ce,
-            DATA_I          => tb_data_i,
+            DATA_I          => tb_data_i, -- not used
             BASELINE_TRIG_I => tb_baseline_trig,
             ------------------------------------------------------------------------
             -- Outputs
@@ -120,15 +113,6 @@ begin
     ----------------------------------------------------------------------------
 
     p_stimulus : process
-        -- variables for reading .txt for input pulse
-        file fin        : text;
-        variable status : file_open_status;
-        variable ln     : line;
-        variable good   : boolean;
-        variable v_in   : integer;
-        variable v_ref  : integer;
-        variable v_sync : integer;
-        variable v_cnt  : integer := 0;
     begin
 
         ------------------------------------------------------------------------
@@ -144,50 +128,22 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        ------------------------------------------------------------------------
-        -- Open the stimulus input pulse file
-        ------------------------------------------------------------------------
+        wait for 1000 ns;
+        wait until rising_edge(tb_clk);
+        tb_baseline_trig <= '1';
+        wait until rising_edge(tb_clk);
+        tb_baseline_trig <= '0';
 
-        file_open(status, fin, C_UNSIGNED_PULSE_FILE, read_mode);
-        if status /= open_ok then
-            report "Could not open stimulus file."
-                severity failure;
-        end if;
-
-        ------------------------------------------------------------------------
-        -- Stream one sample per clock
-        ------------------------------------------------------------------------
-        while not endfile(fin) loop
-            readline(fin, ln);      -- read line
-            read(ln, v_in, good);   -- line value, second element value (input pulse), success flag
-            read(ln, v_ref, good);  -- line value, second element value (reference pulse), success flag
-            read(ln, v_sync, good); -- line value, second element value (sync pulse), success flag
-            if good then
-                -- give data_i to shift register
-                tb_data_i   <= std_logic_vector(to_unsigned(v_in, C_ADC_WIDTH));
-                tb_data_ref <= std_logic_vector(to_signed(v_ref, C_ADC_WIDTH + 1));
-                -- start of data pulse
-                tb_sync_pulse <= '1' when v_sync = 1 else
-                    '0';
-                tb_baseline_trig <= '1' when v_cnt = 200 else
-                    '0';
-                wait until rising_edge(tb_clk);
-            end if;
-            v_cnt := v_cnt + 1;
-        end loop;
-
-        file_close(fin);
-
-        wait for 4000 ns;
-
-        -- toggle of CE
-        tb_ce <= '0';
-        wait for 80 ns;
+        wait for 8000 ns;
 
         ------------------------------------------------------------------------
         -- Simulation done
         ------------------------------------------------------------------------
+
+        tb_ce    <= '0';
+        tb_rst_n <= '0';
         wait for 200 ns;
+
         assert false report "Simulation finished" severity failure;
         wait;
     end process p_stimulus;

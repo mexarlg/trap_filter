@@ -82,6 +82,9 @@ architecture rtl of trap_subsystem is
     constant C_MOV_LATENCY  : natural := 2;
     constant C_JORD_LATENCY : natural := 6;
 
+    -- Width needed for N (1025) amount of samples of the input pulse
+    constant C_PULSE_SAMPLES_WIDTH : natural := 10;
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -97,6 +100,7 @@ architecture rtl of trap_subsystem is
 
     -- intermidiate data after delays
     signal data_n       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal data_input   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_k  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_l  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_kl : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -150,6 +154,25 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
+    pulse_feed_i : entity trap_filter.pulse_feed
+        generic map(
+            G_DATA_WIDTH  => G_DATA_WIDTH,
+            G_PULSE_WIDTH => C_PULSE_SAMPLES_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Control Inputs / Outputs
+            ------------------------------------------------------------------------
+            CE_I         => CE_I,
+            DATA_O       => data_input,
+            DATA_VALID_O => open
+        );
+
     delay_trap_i : entity trap_filter.delay_trap
         generic map(
             G_DATA_WIDTH    => G_DATA_WIDTH,
@@ -169,7 +192,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I             => CE_I,
-            DATA_I           => DATA_I,
+            DATA_I           => data_input,
             DATA_JORD_FILT_I => data_jord_filt,
             ------------------------------------------------------------------------
             -- Delayed data outputs
