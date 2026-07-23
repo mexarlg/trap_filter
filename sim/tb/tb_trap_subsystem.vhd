@@ -34,6 +34,9 @@ architecture tb of tb_trap_subsystem is
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
 
+    -- Width needed for N (1025) amount of samples of the input pulse
+    constant C_PULSE_SAMPLES_WIDTH : natural := 10;
+
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -63,6 +66,25 @@ begin
     ----------------------------------------------------------------------------
     -- DUT Instantiation
     ----------------------------------------------------------------------------
+
+    pulse_feed_i : entity trap_filter.pulse_feed
+        generic map(
+            G_DATA_WIDTH  => C_ADC_WIDTH,
+            G_PULSE_WIDTH => C_PULSE_SAMPLES_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => tb_clk,
+            RST_N_I => tb_rst_n,
+            ------------------------------------------------------------------------
+            -- Control Inputs / Outputs
+            ------------------------------------------------------------------------
+            CE_I         => tb_ce,
+            DATA_O       => tb_data_i,
+            DATA_VALID_O => open
+        );
 
     dut : entity trap_filter.trap_subsystem
         generic map(
@@ -94,7 +116,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             CE_I            => tb_ce,
-            DATA_I          => tb_data_i, -- not used
+            DATA_I          => tb_data_i,
             BASELINE_TRIG_I => tb_baseline_trig,
             ------------------------------------------------------------------------
             -- Outputs

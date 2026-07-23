@@ -90,8 +90,10 @@ prj_set_impl_opt -impl "impl1" {lib} {trap_filter}
 
 # Packages
 prj_add_source [file join $PKG_DIR "trap_filter_pkg.vhd"]
+prj_add_source [file join $PKG_DIR "pulse_data_pkg.vhd"]
 
 # RTL
+prj_add_source [file join $RTL_DIR "pulse_feed.vhd"]
 prj_add_source [file join $RTL_DIR "delay_unit_sr.vhd"]
 prj_add_source [file join $RTL_DIR "delay_trap.vhd"]
 prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
@@ -99,12 +101,13 @@ prj_add_source [file join $RTL_DIR "jordanov_filter.vhd"]
 prj_add_source [file join $RTL_DIR "valid_tracker.vhd"]
 prj_add_source [file join $RTL_DIR "baseline_restorer.vhd"]
 prj_add_source [file join $RTL_DIR "trap_subsystem.vhd"]
+prj_add_source [file join $RTL_DIR "trap_pulse_shaper_top.vhd"]
 
 #------------------------------------------------------------------------------
 # Add RTL Top Wrapper
 #------------------------------------------------------------------------------
 
-prj_set_impl_opt -impl "impl1" "top" "trap_subsystem"
+prj_set_impl_opt -impl "impl1" "top" "trap_pulse_shaper_top"
 
 #------------------------------------------------------------------------------
 # Add Constraints (Physical / Timing)
