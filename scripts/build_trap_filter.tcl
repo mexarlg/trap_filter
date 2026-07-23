@@ -126,6 +126,38 @@ prj_add_source [file join $CONST_DIR "trap_pulse_shaper.ldc"]
 # prj_add_source -simulate_only [file join $SCRIPT_DIR ".." "sim" "tb_delay_unit.v"]
 
 #------------------------------------------------------------------------------
+# Logic analyzer creation
+#------------------------------------------------------------------------------
+
+## Create project and add core
+#rvl_new_project -overwrite trap_la -stage presyn
+#rvl_add_core trap_LA0
+#
+## Mark traced signals
+#rvl_add_trace -core trap_LA0 {DATA_FILTERED_O}
+#rvl_add_trace -core trap_LA0 {DATA_FILTERED_VALID_O}
+#rvl_add_trace -core trap_LA0 {STAT_ERROR_O}
+#rvl_add_trace -core trap_LA0 {DATA_I}
+#rvl_add_trace -core trap_LA0 {CE_I}
+#
+## Select sample clock and buffer depth
+#rvl_set_traceoptn -core trap_LA0 \
+#    SampleClk=CLK_I \
+#    BufferDepth=2048 \
+#    Implementation=EBR \
+#    CaptureMode=single \
+#    IncludeTrigger=on
+#
+## Trigger on CE_I
+#rvl_add_tu -core trap_LA0 -radix bin -name TU1 "{CE_I} .RE. 1"
+#rvl_add_te -core trap_LA0 -name TE1 "TU1"
+#
+## DRC and save project
+#rvl_run_project -drc
+#rvl_run_project -save
+#rvl_close_project
+
+#------------------------------------------------------------------------------
 # Save and report
 #------------------------------------------------------------------------------
 

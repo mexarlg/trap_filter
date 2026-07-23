@@ -45,7 +45,6 @@ architecture tb of tb_delay_unit_sr is
     -- tb signals of delay_unit_sr
     signal tb_ce           : std_logic                                                  := '0';
     signal tb_data_i       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
-    signal tb_data_n       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d       : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d_valid : std_logic                                                  := '0';
 
