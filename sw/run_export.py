@@ -26,7 +26,7 @@ def main():
     tau_r_min_s = 5e-8              # min nominal rise time constant for high energy (50 ns) [s]
     tau_r_max_s = 25e-8             # max nominal rise time constant for high energy (250 ns) [s]
     tau_rise_s = tau_r_max_s        # selected rise time for simulation [s]
-    noise_offset = int(0*amplitude)    # offset of baseline
+    noise_offset = int(0.1*amplitude)    # offset of baseline
     noise_sigma = int(0*amplitude)     # white noise std dev
 
     # ------------------------------------------------------------------------
@@ -48,7 +48,7 @@ def main():
     # Filter selection
     # ------------------------------------------------------------------------
     SHAPER_SELECT = 1               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
-    PLOT_ENABLE = 1                 # plot what we are exporting
+    PLOT_ENABLE = 0                 # plot what we are exporting
 
     # ------------------------------------------------------------------------
     # Workspace
@@ -56,6 +56,9 @@ def main():
     t, clean, noisy, Tclk = generate_input(n_samples=n_samples, fs=fs, amplitude=amplitude, tau_rise_s=tau_rise_s, tau_decay_s=tau_decay_s,
                                         noise_offset=noise_offset, noise_sigma=noise_sigma)
     noisy_signed = noisy
+
+    # export into a pkg the values of the pulse
+    export_pulse_mem(noisy)
 
     # select shaper:
     if SHAPER_SELECT == 1:
@@ -66,17 +69,17 @@ def main():
         y0_signed = moving_average(noisy_signed, delay, out_shift=shifter, signed_input= True)
 
     # Export unsigned discrete signals to vhdl
-    export_for_vhdl(noisy, y0,
-                data_width=14, out_width=15,
-                in_signed=False, out_signed=True,
-                filename="noisy_pulse_14b_unsigned_jord.txt")
+    #export_for_vhdl(noisy, y0,
+    #            data_width=14, out_width=15,
+    #            in_signed=False, out_signed=True,
+    #            filename="noisy_pulse_14b_unsigned_jord.txt")
     
     # Export signed discrete signals to vhdl
     #export_for_vhdl(noisy_signed, y0_signed,
     #            data_width=15, out_width=15,
     #            in_signed=True, out_signed=True,
     #            filename="noisy_pulse_15b_signed.txt")
-    
+
     # ------------------------------------------------------------------------
     # Quick plot 
     # ------------------------------------------------------------------------
