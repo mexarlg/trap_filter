@@ -91,7 +91,7 @@ architecture rtl of delay_unit_sr is
 
     -- shift register array
     type sr_t is array (0 to G_DELAY_VALUE - 1) of std_logic_vector(G_DATA_WIDTH + G_DATA_SIGNED - 1 downto 0);
-    signal sr : sr_t;
+    signal sr : sr_t := (others => (others => '0'));
 
     -- shift register write enable
     signal wr_en : std_logic;
@@ -130,13 +130,11 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    -- shift register inferred for delay (should avoid rst to infer sr?)
+    -- shift register inferred for delay (should avoid rst to infer bram)
     p_sr : process (CLK_I)
     begin
         if rising_edge(CLK_I) then
-            if RST_N_I = '0' then
-                sr <= (others => (others => '0'));
-            elsif wr_en = '1' then
+            if wr_en = '1' then
                 sr <= data_n & sr(0 to G_DELAY_VALUE - 2);
             end if;
         end if;
