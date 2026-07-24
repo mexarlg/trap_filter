@@ -7,7 +7,8 @@
 --
 --  Description:
 --  Top wrapper for the delay shift registers of the trapezoidal subsystem.
---  Instantiates the delay units in parallel, all fed from the same input timeline.
+--  Jordanov delays are chained in series, all sharing one input timeline, which is registered along the taps.
+--  Each registration has an overhead of 1 cycle, and these are accounted for in the delays of the shift_register modules
 --  Moving average delay is fed from trapezoidal output.
 --
 --      data_n  = DATA_I delayed by C_PULSE_DELAY
@@ -17,7 +18,7 @@
 --      data_mov_d = DATA_JORD_FILT_I delayed by d
 --
 --  Dependencies:
---  CE asserted high while data is fed sync.
+--  data fed sync with CLK_I. Validity handled externally.
 --==============================================================================
 
 library ieee;
@@ -45,7 +46,6 @@ entity delay_trap is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I             : in std_logic;                                   -- Chip enable
         DATA_I           : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Raw unsigned input
         DATA_JORD_FILT_I : in std_logic_vector(G_DATA_WIDTH downto 0);     -- Signed trapezoidal stream
         ------------------------------------------------------------------------
@@ -55,12 +55,7 @@ entity delay_trap is
         DATA_K_O     : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- v[n-k]  (+ pulse delay)
         DATA_L_O     : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- v[n-l]  (+ pulse delay)
         DATA_KL_O    : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- v[n-k-l](+ pulse delay)
-        DATA_MOV_D_O : out std_logic_vector(G_DATA_WIDTH downto 0);     -- Signed mov avg delay (from jord filter)
-        ------------------------------------------------------------------------
-        -- Ready flags
-        ------------------------------------------------------------------------
-        DELAY_JORD_READY_O : out std_logic_vector(2 downto 0); -- Filled ready signal: bit2 = k, bit1 = l, bit0 = kl
-        DELAY_MOV_READY_O  : out std_logic
+        DATA_MOV_D_O : out std_logic_vector(G_DATA_WIDTH downto 0)      -- Signed mov avg delay (from jord filter)
     );
 end entity delay_trap;
 
@@ -70,31 +65,16 @@ architecture rtl of delay_trap is
     -- Functions
     ----------------------------------------------------------------------------
 
-    function clog2(n : natural) return natural is
-        variable r       : natural := 0;
-        variable v       : natural := n;
-    begin
-        while v > 0 loop
-            v := v / 2;
-            r := r + 1;
-        end loop;
-        return r;
-    end function;
-
     ----------------------------------------------------------------------------
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Jordanov taps carry the common pulse delay so all share one timeline
-    constant C_K_TOTAL  : natural := G_JORD_K_DELAY + G_PULSE_DELAY;
-    constant C_L_TOTAL  : natural := G_JORD_L_DELAY + G_PULSE_DELAY;
-    constant C_KL_TOTAL : natural := G_JORD_KL_DELAY + G_PULSE_DELAY;
-
-    -- Arming counter limits (common pulse detection delay before counting)
-    constant C_ARM_CNT_WIDTH : natural                                        := clog2(G_PULSE_DELAY);
-    constant C_ARM_CNT_MAX   : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(G_PULSE_DELAY - 1, C_ARM_CNT_WIDTH));
-    constant C_ARM_CNT_ONE   : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_ARM_CNT_WIDTH));
-    constant C_ARM_CNT_ZERO  : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := (others => '0');
+    -- delay values taking into account shift register latency
+    constant C_SEG_N  : natural := G_PULSE_DELAY;                        -- 16      -> data_n at 17
+    constant C_SEG_K  : natural := G_JORD_K_DELAY - 1;                   -- 63      -> data_k at 81 (k - n = 64)
+    constant C_SEG_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;  -- 127     -> data_l at 209 (l - k = 128)
+    constant C_SEG_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1; -- 63
+    constant C_SEG_D  : natural := G_MOV_D_DELAY - 1;
 
     ----------------------------------------------------------------------------
     -- Signals
@@ -107,16 +87,14 @@ architecture rtl of delay_trap is
     signal data_kl  : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_mov : std_logic_vector(G_DATA_WIDTH downto 0);
 
-    -- memory fullfilled signals (asserted on same cycle as fullfilled)
-    signal jord_ready : std_logic_vector(2 downto 0);
-    signal mov_ready  : std_logic;
-
-    -- Gate the mov avg ready until the pulse detection delay line has filled
-    signal cnt_arm : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0);
-    signal armed   : std_logic;
-    signal sr_d_ce : std_logic;
-
 begin
+
+    ----------------------------------------------------------------------------
+    -- Assertions
+    ----------------------------------------------------------------------------
+    assert (G_JORD_L_DELAY > G_JORD_K_DELAY + 1) and (G_JORD_KL_DELAY > G_JORD_L_DELAY + 1)
+    report "delay_trap: Jordanov tap spacing must exceed 1 cycle for chained segments"
+        severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments
@@ -128,9 +106,6 @@ begin
     DATA_KL_O    <= data_kl;
     DATA_MOV_D_O <= data_mov;
 
-    DELAY_JORD_READY_O <= jord_ready;
-    DELAY_MOV_READY_O  <= mov_ready;
-
     ----------------------------------------------------------------------------
     -- Pulse delayed input (common delay D)
     ----------------------------------------------------------------------------
@@ -138,65 +113,57 @@ begin
     sr_n : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => G_PULSE_DELAY,
-            G_DATA_SIGNED => 0
+            G_DELAY_VALUE => C_SEG_N,
+            G_REG_INPUT   => 1
         )
         port map(
-            CLK_I          => CLK_I,
-            RST_N_I        => RST_N_I,
-            CE_I           => CE_I,
-            DATA_I         => DATA_I,
-            DATA_D_O       => data_n,
-            DATA_D_VALID_O => open
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => DATA_I,
+            DATA_D_O => data_n
         );
 
     ----------------------------------------------------------------------------
-    -- Jordanov delay taps
+    -- Jordanov delay chain: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
     ----------------------------------------------------------------------------
 
     sr_k : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_K_TOTAL,
-            G_DATA_SIGNED => 0
+            G_DELAY_VALUE => C_SEG_K,
+            G_REG_INPUT   => 1
         )
         port map(
-            CLK_I          => CLK_I,
-            RST_N_I        => RST_N_I,
-            CE_I           => CE_I,
-            DATA_I         => DATA_I,
-            DATA_D_O       => data_k,
-            DATA_D_VALID_O => jord_ready(2)
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => data_n,
+            DATA_D_O => data_k
         );
 
     sr_l : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_L_TOTAL,
-            G_DATA_SIGNED => 0
+            G_DELAY_VALUE => C_SEG_L,
+            G_REG_INPUT   => 1
         )
         port map(
-            CLK_I          => CLK_I,
-            RST_N_I        => RST_N_I,
-            CE_I           => CE_I,
-            DATA_I         => DATA_I,
-            DATA_D_O       => data_l,
-            DATA_D_VALID_O => jord_ready(1)
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => data_k,
+            DATA_D_O => data_l
         );
 
     sr_kl : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_KL_TOTAL,
-            G_DATA_SIGNED => 0
+            G_DELAY_VALUE => C_SEG_KL,
+            G_REG_INPUT   => 1
         )
         port map(
-            CLK_I          => CLK_I,
-            RST_N_I        => RST_N_I,
-            CE_I           => CE_I,
-            DATA_I         => DATA_I,
-            DATA_D_O       => data_kl,
-            DATA_D_VALID_O => jord_ready(0)
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => data_l,
+            DATA_D_O => data_kl
         );
 
     ----------------------------------------------------------------------------
@@ -205,36 +172,15 @@ begin
 
     sr_d : entity trap_filter.delay_unit_sr
         generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => G_MOV_D_DELAY,
-            G_DATA_SIGNED => 1
+            G_DATA_WIDTH  => G_DATA_WIDTH + 1,
+            G_DELAY_VALUE => C_SEG_D,
+            G_REG_INPUT   => 1
         )
         port map(
-            CLK_I          => CLK_I,
-            RST_N_I        => RST_N_I,
-            CE_I           => sr_d_ce,
-            DATA_I         => DATA_JORD_FILT_I,
-            DATA_D_O       => data_mov,
-            DATA_D_VALID_O => mov_ready
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => DATA_JORD_FILT_I,
+            DATA_D_O => data_mov
         );
-
-    -- sr_d only counts once the pulse delayed trapezoidal stream is valid
-    sr_d_ce <= CE_I and armed;
-
-    p_arm : process (CLK_I, RST_N_I)
-    begin
-        if (RST_N_I = '0') then
-            cnt_arm <= C_ARM_CNT_ZERO;
-            armed   <= '0';
-        elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                if (unsigned(cnt_arm) < unsigned(C_ARM_CNT_MAX)) then
-                    cnt_arm <= std_logic_vector(unsigned(cnt_arm) + unsigned(C_ARM_CNT_ONE));
-                else
-                    armed <= '1';
-                end if;
-            end if;
-        end if;
-    end process p_arm;
 
 end architecture rtl;
