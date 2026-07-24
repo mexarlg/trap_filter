@@ -21,26 +21,10 @@ add wave -color green  -radix binary sim:/tb_delay_unit_sr/tb_rst_n
 #===========================================================================
 # delay_unit_sr IN
 #===========================================================================
-add wave -divider " DELAY_UNIT_SR INPUTS"
-add wave -color green  -radix binary sim:/tb_delay_unit_sr/tb_ce
-add wave -color white -format Analog-Step -radix signed sim:/tb_delay_unit_sr/tb_data_i
-add wave -color green -radix binary sim:/tb_delay_unit_sr/tb_sync_pulse
-
-#===========================================================================
-# delay_unit_sr Internal
-#===========================================================================
-add wave -divider " DELAY_UNIT_SR INTERNAL"
-add wave -color green  -radix unsigned sim:/tb_delay_unit_sr/dut/C_CNT_D_MAX
-add wave -color green  -radix signed sim:/tb_delay_unit_sr/dut/data_n
-add wave -color white  -radix unsigned sim:/tb_delay_unit_sr/dut/cnt_data_d
-
-#===========================================================================
-# Mov_avg_filter OUT
-#===========================================================================
-add wave -divider " DELAY_UNIT_SR OUTPUTS"
-add wave -color white  -radix signed sim:/tb_delay_unit_sr/tb_data_n
-add wave -color green  -radix signed sim:/tb_delay_unit_sr/tb_data_d
-add wave -color green  -radix binary sim:/tb_delay_unit_sr/tb_data_d_valid
+add wave -divider " DELAY_UNIT_SR "
+add wave -color green -radix unsigned sim:/tb_delay_unit_sr/tb_data_i
+add wave -color green  -radix unsigned sim:/tb_delay_unit_sr/tb_data_d
+add wave -color green  -radix unsigned sim:/tb_delay_unit_sr/tb_data_d2
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS
