@@ -56,7 +56,7 @@ entity trap_subsystem is
         ------------------------------------------------------------------------
         DATA_FILTERED_O       : out std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
         DATA_FILTERED_VALID_O : out std_logic;                               -- Trapezoidal valid
-        STAT_ERROR_O          : out std_logic_vector(5 downto 0)             -- error status
+        ERROR_OFLOW_O         : out std_logic_vector(3 downto 0)             -- error status
     );
 end entity trap_subsystem;
 
@@ -93,7 +93,7 @@ architecture rtl of trap_subsystem is
     -- output signals
     signal data_filtered       : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
     signal data_filtered_valid : std_logic;                               -- Trapezoidal valid
-    signal stat_error          : std_logic_vector(5 downto 0);            -- error status
+    signal error_oflow         : std_logic_vector(3 downto 0);            -- error status
 
     -- intermidiate data after delays
     signal data_n       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -106,10 +106,6 @@ architecture rtl of trap_subsystem is
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
     signal data_mov_filt  : std_logic_vector(G_DATA_WIDTH downto 0);
 
-    -- ready signals for delays
-    signal delay_jord_ready : std_logic_vector(2 downto 0);
-    signal delay_mov_ready  : std_logic;
-
     -- valid signals
     signal data_jord_valid : std_logic;
     signal data_mov_valid  : std_logic;
@@ -118,7 +114,6 @@ architecture rtl of trap_subsystem is
     signal error_oflow_jord : std_logic_vector(1 downto 0);
     signal error_oflow_mov  : std_logic;
     signal error_oflow_base : std_logic;
-    signal error_sync       : std_logic_vector(1 downto 0);
 
 begin
 
@@ -132,17 +127,16 @@ begin
 
     DATA_FILTERED_O       <= data_filtered;
     DATA_FILTERED_VALID_O <= data_filtered_valid;
-    STAT_ERROR_O          <= stat_error;
+    ERROR_OFLOW_O         <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
     -- error group
-    stat_error(5 downto 4) <= error_oflow_jord;
-    stat_error(3)          <= error_oflow_mov;
-    stat_error(2)          <= error_oflow_base;
-    stat_error(1 downto 0) <= error_sync;
+    error_oflow(3 downto 2) <= error_oflow_jord;
+    error_oflow(1)          <= error_oflow_mov;
+    error_oflow(0)          <= error_oflow_base;
 
     data_filtered_valid <= data_jord_valid;
 
@@ -190,14 +184,11 @@ begin
             G_PULSE_DELAY_WIDTH => G_PULSE_DELAY_WIDTH
         )
         port map(
-            CLK_I              => CLK_I,
-            RST_N_I            => RST_N_I,
-            CE_I               => CE_I,
-            DELAY_JORD_READY_I => delay_jord_ready,
-            DELAY_MOV_READY_I  => delay_mov_ready,
-            DATA_JORD_VALID_O  => data_jord_valid,
-            DATA_MOV_VALID_O   => data_mov_valid,
-            ERROR_SYNC_O       => error_sync
+            CLK_I             => CLK_I,
+            RST_N_I           => RST_N_I,
+            CE_I              => CE_I,
+            DATA_JORD_VALID_O => data_jord_valid,
+            DATA_MOV_VALID_O  => data_mov_valid
         );
 
     mov_avg_i : entity trap_filter.mov_avg_filter

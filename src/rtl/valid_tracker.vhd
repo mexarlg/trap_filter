@@ -42,15 +42,12 @@ entity valid_tracker is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I               : in std_logic;                    -- Chip enable of jordanov filter (DATA_N_I arrives after 1 cycle of CE)
-        DELAY_JORD_READY_I : in std_logic_vector(2 downto 0); -- Enough samples stored flag for the 3 delays (asserted when filled)
-        DELAY_MOV_READY_I  : in std_logic;                    -- Enough samples stored flag for 1 delay (asserted when filled)
+        CE_I : in std_logic; -- Chip enable of jordanov filter (DATA_N_I arrives after 1 cycle of CE)
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_JORD_VALID_O : out std_logic;                   -- Filter Jordanov output is valid (delay cycles + N latency cycle)
-        DATA_MOV_VALID_O  : out std_logic;                   -- Filter Mov avg output is valid (delay cycles + N latency cycle)
-        ERROR_SYNC_O      : out std_logic_vector(1 downto 0) -- Synchronization disagreement between delays
+        DATA_JORD_VALID_O : out std_logic; -- Filter Jordanov output is valid (delay cycles + N latency cycle)
+        DATA_MOV_VALID_O  : out std_logic  -- Filter Mov avg output is valid (delay cycles + N latency cycle)
     );
 end entity valid_tracker;
 
@@ -104,11 +101,6 @@ architecture rtl of valid_tracker is
     constant C_ARM_CNT_ONE   : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_ARM_CNT_WIDTH));
     constant C_ARM_CNT_ZERO  : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0) := (others => '0');
 
-    -- Error synchronization types
-    constant C_ERROR_SYNC_CORRECT : std_logic_vector(1 downto 0) := "00";
-    constant C_ERROR_SYNC_JORD    : std_logic_vector(1 downto 0) := "10";
-    constant C_ERROR_SYNC_MOV     : std_logic_vector(1 downto 0) := "01";
-
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -120,9 +112,6 @@ architecture rtl of valid_tracker is
     -- Output data signals
     signal data_jord_valid : std_logic;
     signal data_mov_valid  : std_logic;
-
-    -- output error signal -> bit1 (Jordanov), bit0 (Mov avg)
-    signal error_sync : std_logic_vector(1 downto 0);
 
     -- Gate the filter counters until the pulse detection delay line has filled
     signal cnt_arm : std_logic_vector(C_ARM_CNT_WIDTH - 1 downto 0);
@@ -136,16 +125,9 @@ architecture rtl of valid_tracker is
     signal delay_l_ready_trig  : std_logic;
     signal delay_k_ready_trig  : std_logic;
 
-    -- Jordanov: internal sync errors of delays
-    signal delay_jord_sync_error : std_logic;
-    signal delay_k_sync_error    : std_logic;
-    signal delay_l_sync_error    : std_logic;
-    signal delay_kl_sync_error   : std_logic;
-
     -- Moving avg: counter and delay error synchronization signals
-    signal cnt_delay_mov        : std_logic_vector(G_MOV_D_WIDTH - 1 downto 0);
-    signal delay_d_ready_trig   : std_logic;
-    signal delay_mov_sync_error : std_logic;
+    signal cnt_delay_mov      : std_logic_vector(G_MOV_D_WIDTH - 1 downto 0);
+    signal delay_d_ready_trig : std_logic;
 
     -- Valid of filtered data (delays ready + latency) -> delay_ready_trig arrive 1 cycle before completed
     signal jord_valid_pipe : std_logic_vector(G_JORD_LATENCY - 1 downto 0);
@@ -163,7 +145,6 @@ begin
 
     DATA_JORD_VALID_O <= data_jord_valid;
     DATA_MOV_VALID_O  <= data_mov_valid;
-    ERROR_SYNC_O      <= error_sync;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -174,7 +155,7 @@ begin
     ----------------------------------------------------------------------------
 
     ----------------------------------------------------------------------------
-    -- Arming: absorb the common pulse-detection delay before counting
+    -- Common delay due pulse detection
     ----------------------------------------------------------------------------
 
     -- Pulse detection delay
@@ -195,7 +176,7 @@ begin
     end process p_arm;
 
     ----------------------------------------------------------------------------
-    -- Validity filtered data
+    -- Align valid signals due latency
     ----------------------------------------------------------------------------
 
     -- Jordanov: delay the KL ready trigger by the filter pipeline latency to align valid
@@ -228,7 +209,7 @@ begin
     end process p_mov_valid;
 
     ----------------------------------------------------------------------------
-    -- Mov avg filter sync error
+    -- Mov avg filter
     ----------------------------------------------------------------------------
 
     -- Assert internal delay valid in case external ready is not properly asserted
@@ -259,12 +240,8 @@ begin
         end if;
     end process p_mov_cnt;
 
-    -- Delay sync error condition (when both data_valid are different)
-    delay_mov_sync_error <= '1' when (delay_d_ready_trig /= DELAY_MOV_READY_I) and (CE_I = '1') else
-        '0';
-
     ----------------------------------------------------------------------------
-    -- Jordanov filter sync error
+    -- Jordanov filter
     ----------------------------------------------------------------------------
 
     -- counters that time-out at maximum of each of the delays -> gated by arming
@@ -302,41 +279,5 @@ begin
             end if;
         end if;
     end process p_jord_ready;
-
-    -- Delay sync error condition for delay k
-    delay_k_sync_error <= '1' when (DELAY_JORD_READY_I(2) /= delay_k_ready_trig) and (CE_I = '1') else
-        '0';
-
-    -- Delay sync error condition for delay l
-    delay_l_sync_error <= '1' when (DELAY_JORD_READY_I(1) /= delay_l_ready_trig) and (CE_I = '1') else
-        '0';
-
-    -- Delay sync error condition for delay kl
-    delay_kl_sync_error <= '1' when (DELAY_JORD_READY_I(0) /= delay_kl_ready_trig) and (CE_I = '1') else
-        '0';
-
-    -- Global delays sync error condition
-    delay_jord_sync_error <= delay_k_sync_error or delay_l_sync_error or delay_kl_sync_error;
-
-    ----------------------------------------------------------------------------
-    -- Error handling
-    ----------------------------------------------------------------------------
-
-    p_err : process (CLK_I, RST_N_I)
-    begin
-        if RST_N_I = '0' then
-            error_sync <= C_ERROR_SYNC_CORRECT;
-        elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- delays latched sync error
-                if delay_mov_sync_error = '1' then
-                    error_sync <= error_sync or C_ERROR_SYNC_MOV;
-                end if;
-                if delay_jord_sync_error = '1' then
-                    error_sync <= error_sync or C_ERROR_SYNC_JORD;
-                end if;
-            end if;
-        end if;
-    end process p_err;
 
 end architecture rtl;

@@ -123,7 +123,7 @@ begin
             ------------------------------------------------------------------------
             DATA_FILTERED_O       => tb_data_filtered,
             DATA_FILTERED_VALID_O => tb_data_filtered_valid,
-            STAT_ERROR_O          => tb_stat_error
+            ERROR_OFLOW_O         => tb_stat_error
         );
 
     ----------------------------------------------------------------------------

@@ -70,11 +70,11 @@ architecture rtl of delay_trap is
     ----------------------------------------------------------------------------
 
     -- delay values taking into account shift register latency
-    constant C_SEG_N  : natural := G_PULSE_DELAY;                        -- 16      -> data_n at 17
-    constant C_SEG_K  : natural := G_JORD_K_DELAY - 1;                   -- 63      -> data_k at 81 (k - n = 64)
-    constant C_SEG_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;  -- 127     -> data_l at 209 (l - k = 128)
-    constant C_SEG_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1; -- 63
-    constant C_SEG_D  : natural := G_MOV_D_DELAY - 1;
+    constant C_PULSE_DELAY   : natural := G_PULSE_DELAY - 1;                    -- 16      -> data_n at 17
+    constant C_JORD_DELAY_K  : natural := G_JORD_K_DELAY - 1;                   -- 63      -> data_k at 81 (k - n = 64)
+    constant C_JORD_DELAY_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;  -- 127     -> data_l at 209 (l - k = 128)
+    constant C_JORD_DELAY_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1; -- 63
+    constant C_MOV_DELAY_D   : natural := G_MOV_D_DELAY - 1;
 
     ----------------------------------------------------------------------------
     -- Signals
@@ -113,7 +113,7 @@ begin
     sr_n : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_SEG_N,
+            G_DELAY_VALUE => C_PULSE_DELAY,
             G_REG_INPUT   => 1
         )
         port map(
@@ -124,13 +124,13 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- Jordanov delay chain: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
+    -- Jordanov delay: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
     ----------------------------------------------------------------------------
 
     sr_k : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_SEG_K,
+            G_DELAY_VALUE => C_JORD_DELAY_K,
             G_REG_INPUT   => 1
         )
         port map(
@@ -143,7 +143,7 @@ begin
     sr_l : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_SEG_L,
+            G_DELAY_VALUE => C_JORD_DELAY_L,
             G_REG_INPUT   => 1
         )
         port map(
@@ -156,7 +156,7 @@ begin
     sr_kl : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_SEG_KL,
+            G_DELAY_VALUE => C_JORD_DELAY_KL,
             G_REG_INPUT   => 1
         )
         port map(
@@ -173,7 +173,7 @@ begin
     sr_d : entity trap_filter.delay_unit_sr
         generic map(
             G_DATA_WIDTH  => G_DATA_WIDTH + 1,
-            G_DELAY_VALUE => C_SEG_D,
+            G_DELAY_VALUE => C_MOV_DELAY_D,
             G_REG_INPUT   => 1
         )
         port map(

@@ -82,7 +82,7 @@ architecture rtl of top_trap_zedboard_test is
     -- output signals
     signal data_filtered_o       : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
     signal data_filtered_valid_o : std_logic;                               -- Trapezoidal valid
-    signal stat_error_o          : std_logic_vector(5 downto 0);            -- error status
+    signal error_oflow_o         : std_logic_vector(3 downto 0);            -- error status
 
     -- connection signals
     signal data_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -96,7 +96,7 @@ architecture rtl of top_trap_zedboard_test is
     attribute mark_debug of data_i                : signal is "true";
     attribute mark_debug of data_filtered_o       : signal is "true";
     attribute mark_debug of data_filtered_valid_o : signal is "true";
-    attribute mark_debug of stat_error_o          : signal is "true";
+    attribute mark_debug of error_oflow_o         : signal is "true";
 
 begin
 
@@ -184,7 +184,7 @@ begin
             ------------------------------------------------------------------------
             data_filtered_o       => data_filtered_o,
             data_filtered_valid_o => data_filtered_valid_o,
-            stat_error_o          => stat_error_o
+            error_oflow_o         => error_oflow_o
         );
 
 end architecture rtl;
