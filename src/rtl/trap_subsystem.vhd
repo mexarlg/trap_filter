@@ -168,7 +168,6 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I             => CE_I,
             DATA_I           => DATA_I,
             DATA_JORD_FILT_I => data_jord_filt,
             ------------------------------------------------------------------------
@@ -178,12 +177,7 @@ begin
             DATA_K_O     => data_jord_k,
             DATA_L_O     => data_jord_l,
             DATA_KL_O    => data_jord_kl,
-            DATA_MOV_D_O => data_mov_d,
-            ------------------------------------------------------------------------
-            -- Ready flags
-            ------------------------------------------------------------------------
-            DELAY_JORD_READY_O => delay_jord_ready,
-            DELAY_MOV_READY_O  => delay_mov_ready
+            DATA_MOV_D_O => data_mov_d
         );
 
     u_valid_i : entity trap_filter.valid_tracker
