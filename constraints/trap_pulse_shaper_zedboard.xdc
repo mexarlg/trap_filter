@@ -202,7 +202,7 @@ create_clock -period 10.000 -name sys_clk -waveform {0.000 5.000} -add [get_port
 # ----------------------------------------------------------------------------
 # User Push Buttons - Bank 34
 # ----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS18} [get_ports RST_N_I]
+set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS18} [get_ports BTN_RST]
 #set_property PACKAGE_PIN R16 [get_ports {BTND}];  # "BTND"
 #set_property PACKAGE_PIN N15 [get_ports {BTNL}];  # "BTNL"
 #set_property PACKAGE_PIN R18 [get_ports {BTNR}];  # "BTNR"
@@ -375,7 +375,14 @@ set_property IOSTANDARD LVCMOS18 [get_ports -of_objects [get_iobanks 35]];
 # Note that the bank voltage for IO Bank 13 is fixed to 3.3V on ZedBoard.
 set_property IOSTANDARD LVCMOS33 [get_ports -of_objects [get_iobanks 13]]
 
-
+## ----------------------------------------------------------------------------
+## ILA instantiation for debugging
+## ----------------------------------------------------------------------------
+connect_debug_port u_ila_0/probe0 [get_nets [list {data_input[0]} {data_input[1]} {data_input[2]} {data_input[3]} {data_input[4]} {data_input[5]} {data_input[6]} {data_input[7]} {data_input[8]} {data_input[9]} {data_input[10]} {data_input[11]} {data_input[12]} {data_input[13]}]]
+connect_debug_port u_ila_0/probe1 [get_nets [list {data_filtered[0]} {data_filtered[1]} {data_filtered[2]} {data_filtered[3]} {data_filtered[4]} {data_filtered[5]} {data_filtered[6]} {data_filtered[7]} {data_filtered[8]} {data_filtered[9]} {data_filtered[10]} {data_filtered[11]} {data_filtered[12]} {data_filtered[13]} {data_filtered[14]}]]
+connect_debug_port u_ila_0/probe2 [get_nets [list {stat_error[0]} {stat_error[1]} {stat_error[2]} {stat_error[3]} {stat_error[4]} {stat_error[5]}]]
+connect_debug_port u_ila_0/probe3 [get_nets [list ce_int]]
+connect_debug_port u_ila_0/probe4 [get_nets [list data_filtered_valid]]
 
 create_debug_core u_ila_0 ila
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
@@ -388,25 +395,25 @@ set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
 set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
 set_property port_width 1 [get_debug_ports u_ila_0/clk]
 connect_debug_port u_ila_0/clk [get_nets [list CLK_I_IBUF_BUFG]]
-set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe0]
-set_property port_width 14 [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {data_input[0]} {data_input[1]} {data_input[2]} {data_input[3]} {data_input[4]} {data_input[5]} {data_input[6]} {data_input[7]} {data_input[8]} {data_input[9]} {data_input[10]} {data_input[11]} {data_input[12]} {data_input[13]}]]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
+set_property port_width 6 [get_debug_ports u_ila_0/probe0]
+connect_debug_port u_ila_0/probe0 [get_nets [list {stat_error_o[0]} {stat_error_o[1]} {stat_error_o[2]} {stat_error_o[3]} {stat_error_o[4]} {stat_error_o[5]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe1]
 set_property port_width 15 [get_debug_ports u_ila_0/probe1]
-connect_debug_port u_ila_0/probe1 [get_nets [list {data_filtered[0]} {data_filtered[1]} {data_filtered[2]} {data_filtered[3]} {data_filtered[4]} {data_filtered[5]} {data_filtered[6]} {data_filtered[7]} {data_filtered[8]} {data_filtered[9]} {data_filtered[10]} {data_filtered[11]} {data_filtered[12]} {data_filtered[13]} {data_filtered[14]}]]
+connect_debug_port u_ila_0/probe1 [get_nets [list {data_filtered_o[0]} {data_filtered_o[1]} {data_filtered_o[2]} {data_filtered_o[3]} {data_filtered_o[4]} {data_filtered_o[5]} {data_filtered_o[6]} {data_filtered_o[7]} {data_filtered_o[8]} {data_filtered_o[9]} {data_filtered_o[10]} {data_filtered_o[11]} {data_filtered_o[12]} {data_filtered_o[13]} {data_filtered_o[14]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe2]
-set_property port_width 6 [get_debug_ports u_ila_0/probe2]
-connect_debug_port u_ila_0/probe2 [get_nets [list {stat_error[0]} {stat_error[1]} {stat_error[2]} {stat_error[3]} {stat_error[4]} {stat_error[5]}]]
+set_property port_width 14 [get_debug_ports u_ila_0/probe2]
+connect_debug_port u_ila_0/probe2 [get_nets [list {data_i[0]} {data_i[1]} {data_i[2]} {data_i[3]} {data_i[4]} {data_i[5]} {data_i[6]} {data_i[7]} {data_i[8]} {data_i[9]} {data_i[10]} {data_i[11]} {data_i[12]} {data_i[13]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
 set_property port_width 1 [get_debug_ports u_ila_0/probe3]
-connect_debug_port u_ila_0/probe3 [get_nets [list ce_int]]
+connect_debug_port u_ila_0/probe3 [get_nets [list ce_i]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe4]
 set_property port_width 1 [get_debug_ports u_ila_0/probe4]
-connect_debug_port u_ila_0/probe4 [get_nets [list data_filtered_valid]]
+connect_debug_port u_ila_0/probe4 [get_nets [list data_filtered_valid_o]]
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
 set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]
