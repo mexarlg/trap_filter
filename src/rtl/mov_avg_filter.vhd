@@ -47,7 +47,6 @@ entity mov_avg_filter is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I     : in std_logic;                                                     -- Chip enable of moving average filter
         DATA_N_I : in std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Input data at sample N
         DATA_D_I : in std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Input delayed data at sample (N - delay)
         ------------------------------------------------------------------------
@@ -121,17 +120,15 @@ begin
         if (RST_N_I = '0') then
             acc_reg <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- the accumulator runs at 'CE' + 1 cycle of registering the accumulator
-                if G_DATA_I_SIGNED = 1 then
-                    acc_reg <= std_logic_vector(signed(acc_reg)
-                        + resize(signed(DATA_N_I), acc_reg'length)
-                        - resize(signed(DATA_D_I), acc_reg'length));
-                else
-                    acc_reg <= std_logic_vector(unsigned(acc_reg)
-                        + resize(unsigned(DATA_N_I), acc_reg'length)
-                        - resize(unsigned(DATA_D_I), acc_reg'length));
-                end if;
+            -- the accumulator runs at + 1 cycle of registering the accumulator
+            if G_DATA_I_SIGNED = 1 then
+                acc_reg <= std_logic_vector(signed(acc_reg)
+                    + resize(signed(DATA_N_I), acc_reg'length)
+                    - resize(signed(DATA_D_I), acc_reg'length));
+            else
+                acc_reg <= std_logic_vector(unsigned(acc_reg)
+                    + resize(unsigned(DATA_N_I), acc_reg'length)
+                    - resize(unsigned(DATA_D_I), acc_reg'length));
             end if;
         end if;
     end process p_acc;
@@ -142,17 +139,15 @@ begin
         if (RST_N_I = '0') then
             data_filtered <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- shifter runs at 'CE' + 1 cycle of accumulator + 1 cycle of registering the shift
-                if G_DATA_I_SIGNED = 1 then
-                    -- arithmetic shift
-                    data_filtered <= std_logic_vector(
-                        resize(shift_right(signed(acc_reg), G_DELAY_WIDTH), data_filtered'length));
-                else
-                    -- logic shift
-                    data_filtered <= std_logic_vector(
-                        resize(shift_right(unsigned(acc_reg), G_DELAY_WIDTH), data_filtered'length));
-                end if;
+            -- shifter runs at + 1 cycle of accumulator + 1 cycle of registering the shift
+            if G_DATA_I_SIGNED = 1 then
+                -- arithmetic shift
+                data_filtered <= std_logic_vector(
+                    resize(shift_right(signed(acc_reg), G_DELAY_WIDTH), data_filtered'length));
+            else
+                -- logic shift
+                data_filtered <= std_logic_vector(
+                    resize(shift_right(unsigned(acc_reg), G_DELAY_WIDTH), data_filtered'length));
             end if;
         end if;
     end process p_output;
@@ -167,15 +162,13 @@ begin
         if RST_N_I = '0' then
             error_oflow <= '0';
         elsif rising_edge(CLK_I) then
-            if CE_I = '1' then
-                if G_DATA_I_SIGNED = 1 then
-                    if (signed(acc_reg) >= C_OFLOW_PLIM_S) or (signed(acc_reg) <= C_OFLOW_NLIM_S) then
-                        error_oflow                                                <= '1';
-                    end if;
-                else
-                    if unsigned(acc_reg) >= C_OFLOW_PLIM_U then
-                        error_oflow <= '1';
-                    end if;
+            if G_DATA_I_SIGNED = 1 then
+                if (signed(acc_reg) >= C_OFLOW_PLIM_S) or (signed(acc_reg) <= C_OFLOW_NLIM_S) then
+                    error_oflow                                                <= '1';
+                end if;
+            else
+                if unsigned(acc_reg) >= C_OFLOW_PLIM_U then
+                    error_oflow <= '1';
                 end if;
             end if;
         end if;

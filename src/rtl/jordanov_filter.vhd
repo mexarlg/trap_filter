@@ -56,7 +56,6 @@ entity jordanov_filter is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I      : in std_logic;                                   -- Chip enable of jordanov filter (DATA_N_I arrives after 1 cycle of CE)
         DATA_N_I  : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input data at sample N
         DATA_K_I  : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input delayed data at sample (N - k delay)
         DATA_L_I  : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input delayed data at sample (N - l delay = N - k - m delay)
@@ -108,6 +107,7 @@ architecture rtl of jordanov_filter is
     constant C_ERROR_OFLOW_CORRECT : std_logic_vector(1 downto 0) := "00";
     constant C_ERROR_OFLOW_ACC1    : std_logic_vector(1 downto 0) := "10";
     constant C_ERROR_OFLOW_ACC2    : std_logic_vector(1 downto 0) := "01";
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -160,14 +160,12 @@ begin
         if (RST_N_I = '0') then
             diff <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- accumulator runs at 'CE' + 1 cycle
-                diff <= std_logic_vector(
-                    resize(signed('0' & DATA_N_I), diff'length)
-                    - resize(signed('0' & DATA_K_I), diff'length)
-                    - resize(signed('0' & DATA_L_I), diff'length)
-                    + resize(signed('0' & DATA_KL_I), diff'length));
-            end if;
+            -- accumulator runs at + 1 cycle
+            diff <= std_logic_vector(
+                resize(signed('0' & DATA_N_I), diff'length)
+                - resize(signed('0' & DATA_K_I), diff'length)
+                - resize(signed('0' & DATA_L_I), diff'length)
+                + resize(signed('0' & DATA_KL_I), diff'length));
         end if;
     end process p_diff;
 
@@ -177,11 +175,9 @@ begin
         if (RST_N_I = '0') then
             acc1 <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- the accumulator runs at 'CE' + 2 cycles
-                acc1 <= std_logic_vector(signed(acc1)
-                    + resize(signed(diff), acc1'length));
-            end if;
+            -- the accumulator runs at + 2 cycles
+            acc1 <= std_logic_vector(signed(acc1)
+                + resize(signed(diff), acc1'length));
         end if;
     end process p_acc1;
 
@@ -203,10 +199,8 @@ begin
         if (RST_N_I = '0') then
             Mdiff <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- multiplier runs at 'CE' + 3 cycles
-                Mdiff <= std_logic_vector(signed(C_M_FULL_VALUE) * signed(diff));
-            end if;
+            -- multiplier runs at + 3 cycles
+            Mdiff <= std_logic_vector(signed(C_M_FULL_VALUE) * signed(diff));
         end if;
     end process p_mult;
 
@@ -216,15 +210,13 @@ begin
         if (RST_N_I = '0') then
             Mdiff_scaled <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- rescaler runs at 'CE' + 4 cycles
-                if (signed(Mdiff) >= 0) then
-                    Mdiff_scaled <= std_logic_vector(resize(
-                        shift_right(signed(Mdiff) + C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
-                else
-                    Mdiff_scaled <= std_logic_vector(resize(
-                        shift_right(signed(Mdiff) - C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
-                end if;
+            -- rescaler runs at + 4 cycles
+            if (signed(Mdiff) >= 0) then
+                Mdiff_scaled <= std_logic_vector(resize(
+                    shift_right(signed(Mdiff) + C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
+            else
+                Mdiff_scaled <= std_logic_vector(resize(
+                    shift_right(signed(Mdiff) - C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
             end if;
         end if;
     end process p_rescale;
@@ -235,12 +227,10 @@ begin
         if (RST_N_I = '0') then
             acc2 <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- acc2 runs at 'CE' + 5 cycles
-                acc2 <= std_logic_vector(signed(acc2)
-                    + resize(signed(acc1_q1), acc2'length)
-                    + resize(signed(Mdiff_scaled), acc2'length));
-            end if;
+            -- acc2 runs at + 5 cycles
+            acc2 <= std_logic_vector(signed(acc2)
+                + resize(signed(acc1_q1), acc2'length)
+                + resize(signed(Mdiff_scaled), acc2'length));
         end if;
     end process p_acc2;
 
@@ -250,10 +240,8 @@ begin
         if (RST_N_I = '0') then
             data_filtered <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                -- output shifter runs at 'CE' + 6 cycles
-                data_filtered <= std_logic_vector(resize(shift_right(signed(acc2), G_OUT_SHIFT), data_filtered'length));
-            end if;
+            -- output shifter runs at + 6 cycles
+            data_filtered <= std_logic_vector(resize(shift_right(signed(acc2), G_OUT_SHIFT), data_filtered'length));
         end if;
     end process p_output;
 
@@ -267,15 +255,13 @@ begin
         if RST_N_I = '0' then
             error_oflow <= C_ERROR_OFLOW_CORRECT;
         elsif rising_edge(CLK_I) then
-            if CE_I = '1' then
-                -- Accumulator 1
-                if (signed(acc1) >= C_OFLOW1_PLIM_S) or (signed(acc1) <= C_OFLOW1_NLIM_S) then
-                    error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC1;
-                end if;
-                -- Accumulator 2
-                if (signed(acc2) >= C_OFLOW2_PLIM_S) or (signed(acc2) <= C_OFLOW2_NLIM_S) then
-                    error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC2;
-                end if;
+            -- Accumulator 1
+            if (signed(acc1) >= C_OFLOW1_PLIM_S) or (signed(acc1) <= C_OFLOW1_NLIM_S) then
+                error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC1;
+            end if;
+            -- Accumulator 2
+            if (signed(acc2) >= C_OFLOW2_PLIM_S) or (signed(acc2) <= C_OFLOW2_NLIM_S) then
+                error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC2;
             end if;
         end if;
     end process p_oflow;

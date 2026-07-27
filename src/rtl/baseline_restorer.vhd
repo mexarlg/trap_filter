@@ -35,7 +35,6 @@ entity baseline_restorer is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        CE_I         : in std_logic;                               -- clock enable
         DATA_JORD_I  : in std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal filtered stream (signed)
         BASELINE_I   : in std_logic_vector(G_DATA_WIDTH downto 0); -- Moving average baseline stream (signed)
         LATCH_TRIG_I : in std_logic;                               -- Freeze baseline trigger
@@ -82,12 +81,10 @@ begin
         if (RST_N_I = '0') then
             delayed_skew <= (others => (others => '0'));
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                delayed_skew(0) <= DATA_JORD_I;
-                for i in 1 to G_LATENCY_SKEW loop
-                    delayed_skew(i) <= delayed_skew(i - 1);
-                end loop;
-            end if;
+            delayed_skew(0) <= DATA_JORD_I;
+            for i in 1 to G_LATENCY_SKEW loop
+                delayed_skew(i) <= delayed_skew(i - 1);
+            end loop;
         end if;
     end process p_skew;
 
@@ -100,10 +97,8 @@ begin
         if (RST_N_I = '0') then
             baseline_held <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                if (LATCH_TRIG_I = '1') then
-                    baseline_held <= BASELINE_I;
-                end if;
+            if (LATCH_TRIG_I = '1') then
+                baseline_held <= BASELINE_I;
             end if;
         end if;
     end process p_latch;
@@ -118,12 +113,10 @@ begin
             diff_ext <= (others => '0');
             data_out <= (others => '0');
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                diff_ext <= resize(signed(delayed_skew(G_LATENCY_SKEW)), G_DATA_WIDTH + 2)
-                    - resize(signed(baseline_held), G_DATA_WIDTH + 2);
-                -- truncate back to 15-bit signed output
-                data_out <= std_logic_vector(resize(diff_ext, G_DATA_WIDTH + 1));
-            end if;
+            diff_ext <= resize(signed(delayed_skew(G_LATENCY_SKEW)), G_DATA_WIDTH + 2)
+                - resize(signed(baseline_held), G_DATA_WIDTH + 2);
+            -- truncate back to 15-bit signed output
+            data_out <= std_logic_vector(resize(diff_ext, G_DATA_WIDTH + 1));
         end if;
     end process p_restore;
 
@@ -136,10 +129,8 @@ begin
         if (RST_N_I = '0') then
             error_oflow <= '0';
         elsif rising_edge(CLK_I) then
-            if (CE_I = '1') then
-                if (diff_ext(G_DATA_WIDTH + 1) /= diff_ext(G_DATA_WIDTH)) then
-                    error_oflow <= '1';
-                end if;
+            if (diff_ext(G_DATA_WIDTH + 1) /= diff_ext(G_DATA_WIDTH)) then
+                error_oflow <= '1';
             end if;
         end if;
     end process p_oflow;

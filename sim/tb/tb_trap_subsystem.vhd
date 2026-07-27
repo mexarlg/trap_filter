@@ -52,7 +52,7 @@ architecture tb of tb_trap_subsystem is
 
     -- tb output signals
     signal tb_data_filtered : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
-    signal tb_stat_error    : std_logic_vector(5 downto 0)           := (others => '0');
+    signal tb_stat_error    : std_logic_vector(3 downto 0)           := (others => '0');
 
 begin
 
@@ -114,7 +114,6 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I            => tb_ce,
             DATA_I          => tb_data_i,
             BASELINE_TRIG_I => tb_baseline_trig,
             ------------------------------------------------------------------------

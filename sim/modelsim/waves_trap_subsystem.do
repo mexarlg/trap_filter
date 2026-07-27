@@ -33,9 +33,6 @@ add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_n
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_k
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_l
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_kl
-add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/delay_module_i/sr_kl/cnt_data_d
-add wave -color green -radix binary sim:/tb_trap_subsystem/dut/delay_jord_ready
-
 
 #===========================================================================
 # VALID TRACKER  (internal)
@@ -43,7 +40,6 @@ add wave -color green -radix binary sim:/tb_trap_subsystem/dut/delay_jord_ready
 add wave -divider " JORDANOV / MOV AVG "
 add wave -color green -radix signed sim:/tb_trap_subsystem/dut/data_jord_filt
 add wave -color green -radix signed sim:/tb_trap_subsystem/dut/data_mov_d
-add wave -color green -radix binary sim:/tb_trap_subsystem/dut/delay_mov_ready
 add wave -color green -radix signed sim:/tb_trap_subsystem/dut/data_mov_filt
 
 #===========================================================================
@@ -54,11 +50,6 @@ add wave -color green -radix binary sim:/tb_trap_subsystem/tb_baseline_trig
 add wave -color green -radix signed sim:/tb_trap_subsystem/dut/baseline_i/baseline_held
 add wave -color white -format Analog-Step -radix signed sim:/tb_trap_subsystem/tb_data_filtered
 add wave -color green -radix binary sim:/tb_trap_subsystem/tb_stat_error
-
-#===========================================================================
-# JORDANOV_FILTER VALIDATION  (output vs python reference)
-#===========================================================================
-add wave -divider " JORDANOV_FILTER VALIDATION "
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS
