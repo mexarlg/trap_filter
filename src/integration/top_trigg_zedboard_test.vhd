@@ -31,15 +31,10 @@ entity top_trigg_zedboard_test is
         G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (12 bits mag + 4 bits fraction)
         G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (4 bits)
         -- Jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3;  -- Width of margin given to the delayed difference of jordanov
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2;  -- Width of margin given to the 1st accumulator of jordanov
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1;  -- Width of margin given to the 2nd accumulator of jordanov
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17; -- Number of bits that output will be shifted of jordanov
-        -- Moving average params
-        G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged of mov_avg
-        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator of mov_avg
-        -- Pulse detection delay params
-        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given from pulse detection subsystem
+        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference of jordanov
+        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator of jordanov
+        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator of jordanov
+        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17 -- Number of bits that output will be shifted of jordanov
     );
     port (
         ------------------------------------------------------------------------
@@ -85,10 +80,16 @@ architecture rtl of top_trigg_zedboard_test is
     signal ce_vio : std_logic_vector(0 downto 0);
     signal ce_i   : std_logic;
 
+    -- output signals
+    signal trigger_o     : std_logic_vector(3 downto 0);
+    signal error_oflow_o : std_logic_vector(3 downto 0);
+
     -- Mark as debug for ILA
-    attribute mark_debug           : string;
-    attribute mark_debug of ce_i   : signal is "true";
-    attribute mark_debug of data_i : signal is "true";
+    attribute mark_debug                  : string;
+    attribute mark_debug of ce_i          : signal is "true";
+    attribute mark_debug of data_i        : signal is "true";
+    attribute mark_debug of trigger_o     : signal is "true";
+    attribute mark_debug of error_oflow_o : signal is "true";
 
 begin
 
@@ -138,6 +139,40 @@ begin
             CE_I         => ce_i,
             DATA_O       => data_i,
             DATA_VALID_O => open
+        );
+
+    -- trap_subsystem instantiation
+    trap_i : entity trap_filter.trigg_subsystem
+        generic map(
+            -- Jordanov parameters
+            G_DATA_WIDTH   => G_DATA_WIDTH,
+            G_JORD_K_WIDTH => G_JORD_K_WIDTH,
+            -- Exponential decay
+            G_JORD_M_WIDTH          => G_JORD_M_WIDTH,
+            G_JORD_M_EXP_VALUE      => G_JORD_M_EXP_VALUE,
+            G_JORD_M_EXP_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,
+            -- Fixed point params
+            G_JORD_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
+            G_JORD_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
+            G_JORD_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS,
+            G_JORD_OUT_SHIFT_BITS   => G_JORD_OUT_SHIFT_BITS
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => rst_n,
+            ------------------------------------------------------------------------
+            -- Control Inputs
+            ------------------------------------------------------------------------
+            CE_I   => ce_i,
+            DATA_I => data_i,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            TRIGGER_O     => trigger_o,
+            error_oflow_o => error_oflow_o
         );
 
 end architecture rtl;
