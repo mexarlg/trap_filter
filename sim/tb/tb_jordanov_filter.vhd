@@ -111,12 +111,15 @@ begin
 
     delay_trap_i : entity trap_filter.delay_module
         generic map(
-            G_DATA_WIDTH    => C_ADC_WIDTH,
-            G_PULSE_DELAY   => 8,
-            G_JORD_K_DELAY  => C_K_RISE_DELAY,
-            G_JORD_L_DELAY  => C_L_DELAY,
-            G_JORD_KL_DELAY => C_KL_DELAY,
-            G_MOV_D_DELAY   => 8
+            G_DATA_WIDTH      => C_ADC_WIDTH,
+            G_COMMON_DELAY_EN => 1,
+            G_COMMON_DELAY    => 8,
+            G_JORD_DELAY_EN   => 1,
+            G_JORD_K_DELAY    => C_K_RISE_DELAY,
+            G_JORD_L_DELAY    => C_L_DELAY,
+            G_JORD_KL_DELAY   => C_KL_DELAY,
+            G_MOV_DELAY_EN    => 1,
+            G_MOV_D_DELAY     => 8
         )
         port map(
             ------------------------------------------------------------------------

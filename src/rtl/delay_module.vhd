@@ -30,12 +30,18 @@ use trap_filter.trap_filter_pkg.all;
 
 entity delay_module is
     generic (
-        G_DATA_WIDTH    : natural range 4 to 16 := 14;  -- Raw ADC data width (unsigned)
-        G_PULSE_DELAY   : natural               := 16;  -- Common delay (pulse detection)
-        G_JORD_K_DELAY  : natural               := 64;  -- k  = 2^k_w
-        G_JORD_L_DELAY  : natural               := 192; -- l  = k + m
-        G_JORD_KL_DELAY : natural               := 256; -- kl = k + l
-        G_MOV_D_DELAY   : natural               := 16   -- Moving average depth
+        G_DATA_WIDTH : natural range 4 to 16 := 14; -- Raw ADC data width (unsigned)
+        -- common delay
+        G_COMMON_DELAY_EN : natural range 0 to 1    := 0;
+        G_COMMON_DELAY    : natural range 4 to 4096 := 16; -- Common delay (pulse detection)
+        -- jordanov
+        G_JORD_DELAY_EN : natural range 0 to 1    := 0;
+        G_JORD_K_DELAY  : natural range 4 to 4096 := 64;  -- k  = 2^k_w
+        G_JORD_L_DELAY  : natural range 4 to 4096 := 192; -- l  = k + m
+        G_JORD_KL_DELAY : natural range 4 to 4096 := 256; -- kl = k + l
+        -- mov avg
+        G_MOV_DELAY_EN : natural range 0 to 1    := 0;
+        G_MOV_D_DELAY  : natural range 4 to 4096 := 16 -- Moving average depth
     );
     port (
         ------------------------------------------------------------------------
@@ -70,7 +76,7 @@ architecture rtl of delay_module is
     ----------------------------------------------------------------------------
 
     -- delay values taking into account shift register latency
-    constant C_PULSE_DELAY   : natural := G_PULSE_DELAY - 1;                    -- 16      -> data_n at 17
+    constant C_PULSE_DELAY   : natural := G_COMMON_DELAY - 1;                   -- 16      -> data_n at 17
     constant C_JORD_DELAY_K  : natural := G_JORD_K_DELAY - 1;                   -- 63      -> data_k at 81 (k - n = 64)
     constant C_JORD_DELAY_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;  -- 127     -> data_l at 209 (l - k = 128)
     constant C_JORD_DELAY_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1; -- 63
@@ -110,77 +116,109 @@ begin
     -- Pulse delayed input (common delay D)
     ----------------------------------------------------------------------------
 
-    sr_n : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_PULSE_DELAY,
-            G_REG_INPUT   => 1
-        )
-        port map(
-            CLK_I    => CLK_I,
-            RST_N_I  => RST_N_I,
-            DATA_I   => DATA_I,
-            DATA_D_O => data_n
-        );
+    if G_COMMON_DELAY_EN = 1 generate
+
+        sr_n : entity trap_filter.delay_unit_sr
+            generic map(
+                G_DATA_WIDTH  => G_DATA_WIDTH,
+                G_DELAY_VALUE => C_PULSE_DELAY,
+                G_REG_INPUT   => 1
+            )
+            port map(
+                CLK_I    => CLK_I,
+                RST_N_I  => RST_N_I,
+                DATA_I   => DATA_I,
+                DATA_D_O => data_n
+            );
+
+    end generate;
+
+    if G_COMMON_DELAY_EN = 0 generate
+
+        data_n <= DATA_I;
+
+    end generate;
 
     ----------------------------------------------------------------------------
     -- Jordanov delay: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
     ----------------------------------------------------------------------------
 
-    sr_k : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_JORD_DELAY_K,
-            G_REG_INPUT   => 1
-        )
-        port map(
-            CLK_I    => CLK_I,
-            RST_N_I  => RST_N_I,
-            DATA_I   => data_n,
-            DATA_D_O => data_k
-        );
+    if G_JORD_DELAY_EN = 1 generate
 
-    sr_l : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_JORD_DELAY_L,
-            G_REG_INPUT   => 1
-        )
-        port map(
-            CLK_I    => CLK_I,
-            RST_N_I  => RST_N_I,
-            DATA_I   => data_k,
-            DATA_D_O => data_l
-        );
+        sr_k : entity trap_filter.delay_unit_sr
+            generic map(
+                G_DATA_WIDTH  => G_DATA_WIDTH,
+                G_DELAY_VALUE => C_JORD_DELAY_K,
+                G_REG_INPUT   => 1
+            )
+            port map(
+                CLK_I    => CLK_I,
+                RST_N_I  => RST_N_I,
+                DATA_I   => data_n,
+                DATA_D_O => data_k
+            );
 
-    sr_kl : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH,
-            G_DELAY_VALUE => C_JORD_DELAY_KL,
-            G_REG_INPUT   => 1
-        )
-        port map(
-            CLK_I    => CLK_I,
-            RST_N_I  => RST_N_I,
-            DATA_I   => data_l,
-            DATA_D_O => data_kl
-        );
+        sr_l : entity trap_filter.delay_unit_sr
+            generic map(
+                G_DATA_WIDTH  => G_DATA_WIDTH,
+                G_DELAY_VALUE => C_JORD_DELAY_L,
+                G_REG_INPUT   => 1
+            )
+            port map(
+                CLK_I    => CLK_I,
+                RST_N_I  => RST_N_I,
+                DATA_I   => data_k,
+                DATA_D_O => data_l
+            );
+
+        sr_kl : entity trap_filter.delay_unit_sr
+            generic map(
+                G_DATA_WIDTH  => G_DATA_WIDTH,
+                G_DELAY_VALUE => C_JORD_DELAY_KL,
+                G_REG_INPUT   => 1
+            )
+            port map(
+                CLK_I    => CLK_I,
+                RST_N_I  => RST_N_I,
+                DATA_I   => data_l,
+                DATA_D_O => data_kl
+            );
+
+    end generate;
+
+    if G_JORD_DELAY_EN = 0 generate
+
+        data_k  <= DATA_I;
+        data_l  <= DATA_I;
+        data_kl <= DATA_I;
+
+    end generate;
 
     ----------------------------------------------------------------------------
     -- Moving average baseline delay
     ----------------------------------------------------------------------------
 
-    sr_d : entity trap_filter.delay_unit_sr
-        generic map(
-            G_DATA_WIDTH  => G_DATA_WIDTH + 1,
-            G_DELAY_VALUE => C_MOV_DELAY_D,
-            G_REG_INPUT   => 1
-        )
-        port map(
-            CLK_I    => CLK_I,
-            RST_N_I  => RST_N_I,
-            DATA_I   => DATA_JORD_FILT_I,
-            DATA_D_O => data_mov
-        );
+    if G_MOV_DELAY_EN = 1 generate
+
+        sr_d : entity trap_filter.delay_unit_sr
+            generic map(
+                G_DATA_WIDTH  => G_DATA_WIDTH + 1,
+                G_DELAY_VALUE => C_MOV_DELAY_D,
+                G_REG_INPUT   => 1
+            )
+            port map(
+                CLK_I    => CLK_I,
+                RST_N_I  => RST_N_I,
+                DATA_I   => DATA_JORD_FILT_I,
+                DATA_D_O => data_mov
+            );
+
+    end generate;
+
+    if G_MOV_DELAY_EN = 0 generate
+
+        data_mov <= DATA_JORD_FILT_I;
+
+    end generate;
 
 end architecture rtl;
