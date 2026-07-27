@@ -80,9 +80,8 @@ architecture rtl of top_trap_zedboard_test is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal data_filtered_o       : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-    signal data_filtered_valid_o : std_logic;                               -- Trapezoidal valid
-    signal error_oflow_o         : std_logic_vector(3 downto 0);            -- error status
+    signal data_filtered_o : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
+    signal error_oflow_o   : std_logic_vector(3 downto 0);            -- error status
 
     -- connection signals
     signal data_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -91,12 +90,11 @@ architecture rtl of top_trap_zedboard_test is
     signal ce_i   : std_logic;
 
     -- Mark as debug for ILA
-    attribute mark_debug                          : string;
-    attribute mark_debug of ce_i                  : signal is "true";
-    attribute mark_debug of data_i                : signal is "true";
-    attribute mark_debug of data_filtered_o       : signal is "true";
-    attribute mark_debug of data_filtered_valid_o : signal is "true";
-    attribute mark_debug of error_oflow_o         : signal is "true";
+    attribute mark_debug                    : string;
+    attribute mark_debug of ce_i            : signal is "true";
+    attribute mark_debug of data_i          : signal is "true";
+    attribute mark_debug of data_filtered_o : signal is "true";
+    attribute mark_debug of error_oflow_o   : signal is "true";
 
 begin
 
@@ -182,9 +180,8 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            data_filtered_o       => data_filtered_o,
-            data_filtered_valid_o => data_filtered_valid_o,
-            error_oflow_o         => error_oflow_o
+            data_filtered_o => data_filtered_o,
+            error_oflow_o   => error_oflow_o
         );
 
 end architecture rtl;

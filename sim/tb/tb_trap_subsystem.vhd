@@ -51,9 +51,8 @@ architecture tb of tb_trap_subsystem is
     signal tb_baseline_trig : std_logic                                  := '0';
 
     -- tb output signals
-    signal tb_data_filtered       : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
-    signal tb_data_filtered_valid : std_logic;
-    signal tb_stat_error          : std_logic_vector(5 downto 0) := (others => '0');
+    signal tb_data_filtered : std_logic_vector(C_ADC_WIDTH downto 0) := (others => '0');
+    signal tb_stat_error    : std_logic_vector(5 downto 0)           := (others => '0');
 
 begin
 
@@ -121,9 +120,8 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_FILTERED_O       => tb_data_filtered,
-            DATA_FILTERED_VALID_O => tb_data_filtered_valid,
-            ERROR_OFLOW_O         => tb_stat_error
+            DATA_FILTERED_O => tb_data_filtered,
+            ERROR_OFLOW_O   => tb_stat_error
         );
 
     ----------------------------------------------------------------------------

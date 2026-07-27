@@ -54,9 +54,8 @@ entity trap_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_FILTERED_O       : out std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-        DATA_FILTERED_VALID_O : out std_logic;                               -- Trapezoidal valid
-        ERROR_OFLOW_O         : out std_logic_vector(3 downto 0)             -- error status
+        DATA_FILTERED_O : out std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
+        ERROR_OFLOW_O   : out std_logic_vector(3 downto 0)             -- error status
     );
 end entity trap_subsystem;
 
@@ -80,7 +79,7 @@ architecture rtl of trap_subsystem is
 
     -- Latency of filters
     constant C_MOV_LATENCY  : natural := 2;
-    constant C_JORD_LATENCY : natural := 6;
+    constant C_SKEW_LATENCY : natural := C_MOV_LATENCY;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -91,9 +90,8 @@ architecture rtl of trap_subsystem is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal data_filtered       : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-    signal data_filtered_valid : std_logic;                               -- Trapezoidal valid
-    signal error_oflow         : std_logic_vector(3 downto 0);            -- error status
+    signal data_filtered : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
+    signal error_oflow   : std_logic_vector(3 downto 0);            -- error status
 
     -- intermidiate data after delays
     signal data_n       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -106,11 +104,7 @@ architecture rtl of trap_subsystem is
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
     signal data_mov_filt  : std_logic_vector(G_DATA_WIDTH downto 0);
 
-    -- valid signals
-    signal data_jord_valid : std_logic;
-    signal data_mov_valid  : std_logic;
-
-    -- overflow and synchronization error signals
+    -- overflow error signals
     signal error_oflow_jord : std_logic_vector(1 downto 0);
     signal error_oflow_mov  : std_logic;
     signal error_oflow_base : std_logic;
@@ -125,9 +119,8 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    DATA_FILTERED_O       <= data_filtered;
-    DATA_FILTERED_VALID_O <= data_filtered_valid;
-    ERROR_OFLOW_O         <= error_oflow;
+    DATA_FILTERED_O <= data_filtered;
+    ERROR_OFLOW_O   <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -137,8 +130,6 @@ begin
     error_oflow(3 downto 2) <= error_oflow_jord;
     error_oflow(1)          <= error_oflow_mov;
     error_oflow(0)          <= error_oflow_base;
-
-    data_filtered_valid <= data_jord_valid;
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -172,23 +163,6 @@ begin
             DATA_L_O     => data_jord_l,
             DATA_KL_O    => data_jord_kl,
             DATA_MOV_D_O => data_mov_d
-        );
-
-    u_valid_i : entity trap_filter.valid_tracker
-        generic map(
-            G_JORD_LATENCY      => C_JORD_LATENCY,
-            G_JORD_K_WIDTH      => G_JORD_K_WIDTH,
-            G_JORD_M_WIDTH      => G_JORD_M_WIDTH,
-            G_MOV_LATENCY       => C_MOV_LATENCY,
-            G_MOV_D_WIDTH       => G_MOV_D_WIDTH,
-            G_PULSE_DELAY_WIDTH => G_PULSE_DELAY_WIDTH
-        )
-        port map(
-            CLK_I             => CLK_I,
-            RST_N_I           => RST_N_I,
-            CE_I              => CE_I,
-            DATA_JORD_VALID_O => data_jord_valid,
-            DATA_MOV_VALID_O  => data_mov_valid
         );
 
     mov_avg_i : entity trap_filter.mov_avg_filter
@@ -258,7 +232,7 @@ begin
     baseline_i : entity trap_filter.baseline_restorer
         generic map(
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_LATENCY_SKEW => C_MOV_LATENCY
+            G_LATENCY_SKEW => C_SKEW_LATENCY
         )
         port map(
             ------------------------------------------------------------------------
