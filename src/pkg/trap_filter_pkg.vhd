@@ -26,11 +26,14 @@ package trap_filter_pkg is
     -- Constants
     ----------------------------------------------------------------------------
 
-    constant ADC_WIDTH : integer := 14;
+    constant C_ADC_WIDTH : integer := 14;
+    constant C_MEM_DEPTH : natural := 2048;
 
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
+
+    type mem_t is array (natural range <>) of std_logic_vector(13 downto 0);
 
     ----------------------------------------------------------------------------
     -- Records

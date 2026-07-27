@@ -41,6 +41,7 @@ echo "Compiling RTL..."
 
 vcom -2008 -work trap_filter ../../src/pkg/trap_filter_pkg.vhd
 vcom -2008 -work trap_filter ../../src/pkg/pulse_data_pkg.vhd
+vcom -2008 -work trap_filter ../../src/pkg/pulse_mult_data_pkg.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_feed.vhd
 
 

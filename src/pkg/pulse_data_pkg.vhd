@@ -1,9 +1,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-package pulse_data_pkg is
+library trap_filter;
+use trap_filter.trap_filter_pkg.all;
 
-    type mem_t is array (0 to 1023) of std_logic_vector(13 downto 0);
+package pulse_data_pkg is
 
     constant C_INIT_PULSE : mem_t := (
         "00001111010110",

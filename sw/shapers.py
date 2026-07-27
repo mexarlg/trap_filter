@@ -83,6 +83,38 @@ def generate_input(n_samples = 1048,
 
     return t, clean, noisy, Tclk
 
+def generate_two_pulse_loop(n_samples=2048,
+                            fs=125e6,
+                            t0_fracs=(0.25, 0.6),
+                            amplitude=300.0,
+                            tau_rise_s=8e-8,
+                            tau_decay_s=2e-5,
+                            noise_offset=1,
+                            noise_sigma=30,
+                            seed=0):
+    """Two pulses summed onto the baseline. Tails may clip at the window edge; that's fine."""
+
+    Tclk = 1.0 / fs
+    t    = np.arange(n_samples) * Tclk
+
+    clean = np.zeros(n_samples, dtype=np.float64)
+    for frac in t0_fracs:
+        t0 = frac * n_samples * Tclk
+        dt = t - t0
+        # only apply the pulse where dt >= 0 (before its start it contributes nothing)
+        rising = 1.0 + np.tanh(dt / tau_rise_s)
+        decay  = np.exp(-dt / tau_decay_s)
+        pulse  = 0.5 * amplitude * rising * decay
+        pulse[dt < 0] = 0.0                          # no pre-start ramp / no wrap
+        clean += pulse
+
+    rng = np.random.default_rng(seed)
+    noisy = clean + noise_offset + rng.normal(0.0, noise_sigma, n_samples)
+
+    clean = quantize_adc(clean)
+    noisy = quantize_adc(noisy)
+
+    return t, clean, noisy, Tclk
 
 # ----------------------------------------------------------------------
 # Recursive Jordanov trapezoidal

@@ -23,6 +23,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 use trap_filter.pulse_data_pkg.all;
+use trap_filter.pulse_mult_data_pkg.all;
 
 entity pulse_feed is
     generic (
@@ -74,8 +75,8 @@ architecture rtl of pulse_feed is
     signal data       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_valid : std_logic;
 
-    -- intermidiate signals
-    signal rom_pulse : mem_t                                        := C_INIT_PULSE;
+    -- intermidiate signals (choose pulse data from pkg constants)
+    signal rom_pulse : mem_t(0 to C_MEM_DEPTH - 1)                  := C_INIT_PULSE_MULT;
     signal addr      : std_logic_vector(G_PULSE_WIDTH - 1 downto 0) := (others => '0');
 begin
 

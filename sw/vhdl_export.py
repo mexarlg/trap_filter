@@ -64,9 +64,10 @@ def export_pulse_mem(samples, filename="pulse_data_pkg.vhd",
 f"""library ieee;
 use ieee.std_logic_1164.all;
 
-package {package_name} is
+library trap_filter;
+use trap_filter.trap_filter_pkg.all;
 
-    type mem_t is array (0 to {depth - 1}) of std_logic_vector({width - 1} downto 0);
+package {package_name} is
 
     constant {const_name} : mem_t := (
 {body}

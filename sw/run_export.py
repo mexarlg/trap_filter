@@ -48,7 +48,7 @@ def main():
     # Filter selection
     # ------------------------------------------------------------------------
     SHAPER_SELECT = 1               # chooses shaper algorithm, 1 for Jordanov, 0 for moving average
-    PLOT_ENABLE = 0                 # plot what we are exporting
+    PLOT_ENABLE = 1                 # plot what we are exporting
 
     # ------------------------------------------------------------------------
     # Workspace
@@ -57,8 +57,23 @@ def main():
                                         noise_offset=noise_offset, noise_sigma=noise_sigma)
     noisy_signed = noisy
 
-    # export into a pkg the values of the pulse
+    # export into a pkg the values of 1 pulse
     export_pulse_mem(noisy)
+
+    # export into a pkg the values of 2 pulses
+    t, clean, noisy, Tclk = generate_two_pulse_loop(n_samples=2048,
+                            fs=fs,
+                            t0_fracs=(0.25, 0.65),
+                            amplitude=amplitude,
+                            tau_rise_s=tau_rise_s,
+                            tau_decay_s=tau_decay_s,
+                            noise_offset=noise_offset,
+                            noise_sigma=noise_sigma)
+    
+    export_pulse_mem(noisy, filename="pulse_mult_data_pkg.vhd",
+                      package_name="pulse_mult_data_pkg",
+                      const_name="C_INIT_PULSE_MULT",
+                      width=14)
 
     # select shaper:
     if SHAPER_SELECT == 1:

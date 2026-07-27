@@ -91,6 +91,7 @@ prj_set_impl_opt -impl "impl1" {lib} {trap_filter}
 # Packages
 prj_add_source [file join $PKG_DIR "trap_filter_pkg.vhd"]
 prj_add_source [file join $PKG_DIR "pulse_data_pkg.vhd"]
+prj_add_source [file join $PKG_DIR "pulse_mult_data_pkg.vhd"]
 
 # RTL
 prj_add_source [file join $RTL_DIR "pulse_feed.vhd"]
