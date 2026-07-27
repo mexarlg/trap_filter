@@ -24,17 +24,7 @@ entity top_trigg_zedboard_test is
     generic (
         -- Data parameters
         G_DATA_WIDTH         : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 10; -- Width of memory needed to store incoming data stream (1048 samples -> 10 bits)
-        -- Jordanov params
-        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of delay needed for rising time
-        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top
-        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (12 bits mag + 4 bits fraction)
-        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (4 bits)
-        -- Jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference of jordanov
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator of jordanov
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator of jordanov
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17 -- Number of bits that output will be shifted of jordanov
+        G_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 10
     );
     port (
         ------------------------------------------------------------------------
@@ -145,17 +135,7 @@ begin
     trap_i : entity trap_filter.trigg_subsystem
         generic map(
             -- Jordanov parameters
-            G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_JORD_K_WIDTH => G_JORD_K_WIDTH,
-            -- Exponential decay
-            G_JORD_M_WIDTH          => G_JORD_M_WIDTH,
-            G_JORD_M_EXP_VALUE      => G_JORD_M_EXP_VALUE,
-            G_JORD_M_EXP_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,
-            -- Fixed point params
-            G_JORD_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
-            G_JORD_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
-            G_JORD_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS,
-            G_JORD_OUT_SHIFT_BITS   => G_JORD_OUT_SHIFT_BITS
+            G_DATA_WIDTH => G_DATA_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -166,7 +146,6 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs
             ------------------------------------------------------------------------
-            CE_I   => ce_i,
             DATA_I => data_i,
             ------------------------------------------------------------------------
             -- Outputs

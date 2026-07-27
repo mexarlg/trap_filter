@@ -22,17 +22,7 @@ use trap_filter.trap_filter_pkg.all;
 entity pulse_detection is
     generic (
         -- Data parameters
-        G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        -- Jordanov params
-        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
-        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
-        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
-        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
-        -- Jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17 -- Width of margin given to the 2nd accumulator
+        G_DATA_WIDTH : natural range 8 to 16 := 14 -- Width of incoming data stream (ADC Magnitude resolution)
     );
     port (
         ------------------------------------------------------------------------
@@ -62,14 +52,24 @@ architecture rtl of pulse_detection is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Jordanov delay values
-    constant C_JORD_K_DELAY  : natural := 2 ** G_JORD_K_WIDTH;             -- k  = 2^K_RISE_WIDTH
-    constant C_JORD_M_DELAY  : natural := 2 ** G_JORD_M_WIDTH;             -- m  = 2^M_FLAT_WIDTH
+    -- Jordanov fixed point params for pulse detection
+    constant C_JORD_K_WIDTH : natural := 3;
+    constant C_JORD_M_WIDTH : natural := 4;
+
+    constant C_JORD_M_EXP_VALUE      : natural := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
+    constant C_JORD_M_EXP_FRAC_WIDTH : natural := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
+    constant C_JORD_DIFF_MARGIN_BITS : natural := 3;     -- Width of margin given to the delayed difference
+    constant C_JORD_ACC1_MARGIN_BITS : natural := 2;     -- Width of margin given to the 1st accumulator
+    constant C_JORD_ACC2_MARGIN_BITS : natural := 1;     -- Width of margin given to the 2nd accumulator
+    constant C_JORD_OUT_SHIFT_BITS   : natural := 17;    -- Number of bits to shift output
+
+    constant C_JORD_K_DELAY  : natural := 2 ** C_JORD_K_WIDTH;             -- k  = 2^JORD_K_WIDTH
+    constant C_JORD_M_DELAY  : natural := 2 ** C_JORD_M_WIDTH;             -- m  = 2^JORD_M_WIDTH
     constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
 
     -- Threshold value
-    constant C_THERESHOLD : integer := 1000;
+    constant C_THRESHOLD : integer := 1000;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -117,7 +117,7 @@ begin
         if (RST_N_I = '0') then
             pulse_detected <= '0';
         elsif rising_edge(CLK_I) then
-            if (signed(data_jord_filt) >= C_THERESHOLD) then
+            if (signed(data_jord_filt) >= C_THRESHOLD) then
                 pulse_detected <= '1';
             end if;
         end if;
@@ -159,15 +159,15 @@ begin
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_K_RISE_WIDTH => G_JORD_K_WIDTH,
+            G_K_RISE_WIDTH => C_JORD_K_WIDTH,
             -- Exponential decay
-            G_M_VALUE      => G_JORD_M_EXP_VALUE,
-            G_M_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,
+            G_M_VALUE      => C_JORD_M_EXP_VALUE,
+            G_M_FRAC_WIDTH => C_JORD_M_EXP_FRAC_WIDTH,
             -- Fixed point params
-            G_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
-            G_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
-            G_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS,
-            G_OUT_SHIFT        => G_JORD_OUT_SHIFT_BITS
+            G_DIFF_MARGIN_BITS => C_JORD_DIFF_MARGIN_BITS,
+            G_ACC1_MARGIN_BITS => C_JORD_ACC1_MARGIN_BITS,
+            G_ACC2_MARGIN_BITS => C_JORD_ACC2_MARGIN_BITS,
+            G_OUT_SHIFT        => C_JORD_OUT_SHIFT_BITS
         )
         port map(
             ------------------------------------------------------------------------
