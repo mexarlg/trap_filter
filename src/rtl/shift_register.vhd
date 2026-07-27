@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        delay_unit_sr.vhd
+--  Module:        shift_register.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       09/07/2026
@@ -23,7 +23,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity delay_unit_sr is
+entity shift_register is
     generic (
         G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         G_DELAY_VALUE : natural range 4 to 4096 := 8;  -- Value of actual delayed (10 bit max width)
@@ -44,9 +44,9 @@ entity delay_unit_sr is
         ------------------------------------------------------------------------
         DATA_D_O : out std_logic_vector(G_DATA_WIDTH - 1 downto 0) -- Delayed Data for sample N
     );
-end entity delay_unit_sr;
+end entity shift_register;
 
-architecture rtl of delay_unit_sr is
+architecture rtl of shift_register is
 
     ----------------------------------------------------------------------------
     -- Functions

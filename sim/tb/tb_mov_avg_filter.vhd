@@ -107,7 +107,7 @@ begin
             DATA_VALID_O => open
         );
 
-    sr : entity trap_filter.delay_unit_sr
+    sr : entity trap_filter.shift_register
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
             G_DELAY_VALUE => C_DELAY_VALUE,

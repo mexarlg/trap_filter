@@ -1,6 +1,6 @@
 --==============================================================================
---  Testbench:     tb_delay_unit_sr
---  Description:   Testbench for delay_unit_sr
+--  Testbench:     tb_shift_register
+--  Description:   Testbench for shift_register
 --  Author:        Aldo Lupio
 --==============================================================================
 
@@ -12,10 +12,10 @@ use std.textio.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity tb_delay_unit_sr is
+entity tb_shift_register is
 end entity;
 
-architecture tb of tb_delay_unit_sr is
+architecture tb of tb_shift_register is
 
     ----------------------------------------------------------------------------
     -- Test configuration
@@ -41,7 +41,7 @@ architecture tb of tb_delay_unit_sr is
     signal tb_rst_n : std_logic := '0';
     signal tb_ce    : std_logic := '0';
 
-    -- tb signals of delay_unit_sr
+    -- tb signals of shift_register
     signal tb_data_i  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d  : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
     signal tb_data_d2 : std_logic_vector(C_ADC_WIDTH + C_DATA_SIGNED - 1 downto 0) := (others => '0');
@@ -59,7 +59,7 @@ begin
     ----------------------------------------------------------------------------
 
     -- input not reg
-    dut : entity trap_filter.delay_unit_sr
+    dut : entity trap_filter.shift_register
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
             G_DELAY_VALUE => C_DELAY_VALUE,
@@ -82,7 +82,7 @@ begin
         );
 
     -- input reg
-    dut2 : entity trap_filter.delay_unit_sr
+    dut2 : entity trap_filter.shift_register
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
             G_DELAY_VALUE => C_DELAY_VALUE,

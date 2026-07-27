@@ -116,9 +116,9 @@ begin
     -- Pulse delayed input (common delay D)
     ----------------------------------------------------------------------------
 
-    if G_COMMON_DELAY_EN = 1 generate
+    g_common_en : if G_COMMON_DELAY_EN = 1 generate
 
-        sr_n : entity trap_filter.delay_unit_sr
+        sr_n : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH,
                 G_DELAY_VALUE => C_PULSE_DELAY,
@@ -131,21 +131,21 @@ begin
                 DATA_D_O => data_n
             );
 
-    end generate;
+    end generate g_common_en;
 
-    if G_COMMON_DELAY_EN = 0 generate
+    g_common_dis : if G_COMMON_DELAY_EN = 0 generate
 
         data_n <= DATA_I;
 
-    end generate;
+    end generate g_common_dis;
 
     ----------------------------------------------------------------------------
     -- Jordanov delay: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
     ----------------------------------------------------------------------------
 
-    if G_JORD_DELAY_EN = 1 generate
+    g_jord_en : if G_JORD_DELAY_EN = 1 generate
 
-        sr_k : entity trap_filter.delay_unit_sr
+        sr_k : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH,
                 G_DELAY_VALUE => C_JORD_DELAY_K,
@@ -158,7 +158,7 @@ begin
                 DATA_D_O => data_k
             );
 
-        sr_l : entity trap_filter.delay_unit_sr
+        sr_l : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH,
                 G_DELAY_VALUE => C_JORD_DELAY_L,
@@ -171,7 +171,7 @@ begin
                 DATA_D_O => data_l
             );
 
-        sr_kl : entity trap_filter.delay_unit_sr
+        sr_kl : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH,
                 G_DELAY_VALUE => C_JORD_DELAY_KL,
@@ -184,23 +184,23 @@ begin
                 DATA_D_O => data_kl
             );
 
-    end generate;
+    end generate g_jord_en;
 
-    if G_JORD_DELAY_EN = 0 generate
+    g_jord_dis : if G_JORD_DELAY_EN = 0 generate
 
         data_k  <= DATA_I;
         data_l  <= DATA_I;
         data_kl <= DATA_I;
 
-    end generate;
+    end generate g_jord_dis;
 
     ----------------------------------------------------------------------------
     -- Moving average baseline delay
     ----------------------------------------------------------------------------
 
-    if G_MOV_DELAY_EN = 1 generate
+    g_mov_en : if G_MOV_DELAY_EN = 1 generate
 
-        sr_d : entity trap_filter.delay_unit_sr
+        sr_d : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH + 1,
                 G_DELAY_VALUE => C_MOV_DELAY_D,
@@ -213,12 +213,12 @@ begin
                 DATA_D_O => data_mov
             );
 
-    end generate;
+    end generate g_mov_en;
 
-    if G_MOV_DELAY_EN = 0 generate
+    g_mov_dis : if G_MOV_DELAY_EN = 0 generate
 
         data_mov <= DATA_JORD_FILT_I;
 
-    end generate;
+    end generate g_mov_dis;
 
 end architecture rtl;

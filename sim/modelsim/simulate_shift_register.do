@@ -1,5 +1,5 @@
 #==============================================================================
-# File: simulate_delay_unit_sr.do
+# File: simulate_shift_register.do
 #
 # Description:
 #   ModelSim simulation script for tb_delay_unit_sr.
@@ -9,18 +9,18 @@
 #   - Leaves GUI open for inspection
 #
 # Usage:
-#   vsim -do simulate_delay_unit_sr.do
+#   vsim -do simulate_shift_register.do
 #==============================================================================
 
 #--------------------------------------------------------------------------
 # Launch the simulator
 #--------------------------------------------------------------------------
-vsim trap_filter.tb_delay_unit_sr -t 1ns
+vsim trap_filter.tb_shift_register -t 1ns
 
 #--------------------------------------------------------------------------
 # Load waveform configuration
 #--------------------------------------------------------------------------
-do waves_delay_unit_sr.do
+do waves_shift_register.do
 
 #--------------------------------------------------------------------------
 # Optional: add cursors or zoom

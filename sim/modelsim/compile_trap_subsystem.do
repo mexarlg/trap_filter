@@ -43,7 +43,7 @@ vcom -2008 -work trap_filter ../../src/pkg/trap_filter_pkg.vhd
 vcom -2008 -work trap_filter ../../src/pkg/pulse_data_pkg.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_feed.vhd
 vcom -2008 -work trap_filter ../../src/rtl/valid_tracker.vhd
-vcom -2008 -work trap_filter ../../src/rtl/delay_unit_sr.vhd
+vcom -2008 -work trap_filter ../../src/rtl/shift_register.vhd
 vcom -2008 -work trap_filter ../../src/rtl/delay_module.vhd
 vcom -2008 -work trap_filter ../../src/rtl/jordanov_filter.vhd
 vcom -2008 -work trap_filter ../../src/rtl/mov_avg_filter.vhd

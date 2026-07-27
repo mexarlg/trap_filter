@@ -1,11 +1,11 @@
 #==============================================================================
-# File: compile_delay_unit_sr.do
+# File: compile_shift_register.do
 #
 # Description:
 #   Compiles all RTL and testbench files into the ModelSim work library.
 #
 # Usage:
-#   do compile_delay_unit_sr.do
+#   do compile_shift_register.do
 #
 #==============================================================================
 
@@ -42,7 +42,7 @@ echo "Compiling RTL..."
 vcom -2008 -work trap_filter ../../src/pkg/trap_filter_pkg.vhd
 vcom -2008 -work trap_filter ../../src/pkg/pulse_data_pkg.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_feed.vhd
-vcom -2008 -work trap_filter ../../src/rtl/delay_unit_sr.vhd
+vcom -2008 -work trap_filter ../../src/rtl/shift_register.vhd
 
 
 #------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ vcom -2008 -work trap_filter ../../src/rtl/delay_unit_sr.vhd
 
 echo "Compiling Testbench..."
 
-vcom -2008 -work trap_filter ../tb/tb_delay_unit_sr.vhd
+vcom -2008 -work trap_filter ../tb/tb_shift_register.vhd
 
 
 echo "--------------------------------------------"
