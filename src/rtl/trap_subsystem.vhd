@@ -135,7 +135,7 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    delay_trap_i : entity trap_filter.delay_trap
+    delay_module_i : entity trap_filter.delay_module
         generic map(
             G_DATA_WIDTH    => G_DATA_WIDTH,
             G_PULSE_DELAY   => C_PULSE_DELAY,

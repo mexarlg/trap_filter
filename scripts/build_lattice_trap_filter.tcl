@@ -95,7 +95,7 @@ prj_add_source [file join $PKG_DIR "pulse_data_pkg.vhd"]
 # RTL
 prj_add_source [file join $RTL_DIR "pulse_feed.vhd"]
 prj_add_source [file join $RTL_DIR "delay_unit_sr.vhd"]
-prj_add_source [file join $RTL_DIR "delay_trap.vhd"]
+prj_add_source [file join $RTL_DIR "delay_module.vhd"]
 prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
 prj_add_source [file join $RTL_DIR "jordanov_filter.vhd"]
 prj_add_source [file join $RTL_DIR "valid_tracker.vhd"]

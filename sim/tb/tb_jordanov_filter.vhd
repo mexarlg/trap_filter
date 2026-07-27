@@ -109,7 +109,7 @@ begin
             ERROR_OFLOW_O => tb_error_oflow
         );
 
-    delay_trap_i : entity trap_filter.delay_trap
+    delay_trap_i : entity trap_filter.delay_module
         generic map(
             G_DATA_WIDTH    => C_ADC_WIDTH,
             G_PULSE_DELAY   => 8,

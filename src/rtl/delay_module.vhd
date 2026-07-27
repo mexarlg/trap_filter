@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        delay_trap.vhd
+--  Module:        delay_module.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       21/07/2026
@@ -28,7 +28,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity delay_trap is
+entity delay_module is
     generic (
         G_DATA_WIDTH    : natural range 4 to 16 := 14;  -- Raw ADC data width (unsigned)
         G_PULSE_DELAY   : natural               := 16;  -- Common delay (pulse detection)
@@ -57,9 +57,9 @@ entity delay_trap is
         DATA_KL_O    : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- v[n-k-l](+ pulse delay)
         DATA_MOV_D_O : out std_logic_vector(G_DATA_WIDTH downto 0)      -- Signed mov avg delay (from jord filter)
     );
-end entity delay_trap;
+end entity delay_module;
 
-architecture rtl of delay_trap is
+architecture rtl of delay_module is
 
     ----------------------------------------------------------------------------
     -- Functions
@@ -93,7 +93,7 @@ begin
     -- Assertions
     ----------------------------------------------------------------------------
     assert (G_JORD_L_DELAY > G_JORD_K_DELAY + 1) and (G_JORD_KL_DELAY > G_JORD_L_DELAY + 1)
-    report "delay_trap: Jordanov tap spacing must exceed 1 cycle for chained segments"
+    report "delay_module: Jordanov tap spacing must exceed 1 cycle for chained segments"
         severity failure;
 
     ----------------------------------------------------------------------------

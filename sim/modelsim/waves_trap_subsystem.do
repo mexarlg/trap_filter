@@ -28,12 +28,12 @@ add wave -color white -format Analog-Step -radix unsigned sim:/tb_trap_subsystem
 #===========================================================================
 # SHIFT REGISTER  (internal)
 #===========================================================================
-add wave -divider " DELAY TRAP "
+add wave -divider " DELAY MODULE "
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_n
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_k
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_l
 add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/data_jord_kl
-add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/delay_trap_i/sr_kl/cnt_data_d
+add wave -color green -radix unsigned sim:/tb_trap_subsystem/dut/delay_module_i/sr_kl/cnt_data_d
 add wave -color green -radix binary sim:/tb_trap_subsystem/dut/delay_jord_ready
 
 

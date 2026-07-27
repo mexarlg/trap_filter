@@ -72,7 +72,7 @@ set PKG_FILES [list \
 set RTL_FILES [list \
     [file join $RTL_DIR "pulse_feed.vhd"] \
     [file join $RTL_DIR "delay_unit_sr.vhd"] \
-    [file join $RTL_DIR "delay_trap.vhd"] \
+    [file join $RTL_DIR "delay_module.vhd"] \
     [file join $RTL_DIR "mov_avg_filter.vhd"] \
     [file join $RTL_DIR "jordanov_filter.vhd"] \
     [file join $RTL_DIR "valid_tracker.vhd"] \
