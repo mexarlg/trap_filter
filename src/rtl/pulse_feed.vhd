@@ -108,6 +108,8 @@ begin
             if (CE_I = '1') then
                 if (unsigned(addr) < unsigned(C_ADDR_MAX)) then
                     addr <= std_logic_vector(unsigned(addr) + unsigned(C_ADDR_ONE));
+                else
+                    addr <= C_ADDR_ZERO;
                 end if;
             end if;
         end if;
