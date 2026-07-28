@@ -53,7 +53,7 @@ architecture rtl of pulse_detection is
     ----------------------------------------------------------------------------
 
     -- Jordanov fixed point params for pulse detection
-    constant C_JORD_K_WIDTH : natural := 3;
+    constant C_JORD_K_WIDTH : natural := 4;
     constant C_JORD_M_WIDTH : natural := 4;
 
     constant C_JORD_M_EXP_VALUE      : natural := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
@@ -68,8 +68,9 @@ architecture rtl of pulse_detection is
     constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
 
-    -- Threshold value
-    constant C_THRESHOLD : integer := 1000;
+    -- Threshold values
+    constant C_THRESHOLD_HI : integer := 2000;
+    constant C_THRESHOLD_LO : integer := 1500;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -80,8 +81,8 @@ architecture rtl of pulse_detection is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal pulse_detected : std_logic;                    -- pulse detected flag
-    signal error_oflow    : std_logic_vector(1 downto 0); -- error status
+    signal pulse_trigger : std_logic;                    -- pulse detected flag
+    signal error_oflow   : std_logic_vector(1 downto 0); -- error status
 
     -- intermidiate data
     signal data_n         : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -89,6 +90,12 @@ architecture rtl of pulse_detection is
     signal data_jord_l    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_kl   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
+
+    -- pulse detection signals
+    signal pulse_above_th : std_logic;
+    signal pulse_below_th : std_logic;
+    signal pulse_armed    : std_logic;
+    signal pulse_armed_q0 : std_logic;
 
 begin
 
@@ -100,7 +107,7 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    PULSE_DETECTED_O <= pulse_detected;
+    PULSE_DETECTED_O <= pulse_trigger;
     ERROR_OFLOW_O    <= error_oflow;
 
     ----------------------------------------------------------------------------
@@ -111,17 +118,59 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    -- assert flag if data overcomes threshold
-    p_detect : process (RST_N_I, CLK_I)
+    -- assert a 1 cycle trigger
+    p_trigg : process (RST_N_I, CLK_I)
     begin
         if (RST_N_I = '0') then
-            pulse_detected <= '0';
+            pulse_trigger <= '0';
         elsif rising_edge(CLK_I) then
-            if (signed(data_jord_filt) >= C_THRESHOLD) then
-                pulse_detected <= '1';
+            pulse_trigger <= pulse_armed and not pulse_armed_q0;
+        end if;
+    end process p_trigg;
+
+    -- assert arm flag if above th, deassert when pulse ends
+    p_arm : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            pulse_armed    <= '0';
+            pulse_armed_q0 <= '0';
+        elsif rising_edge(CLK_I) then
+            pulse_armed_q0 <= pulse_armed;
+            if (pulse_above_th = '1') then
+                pulse_armed <= '1';
+            elsif (pulse_below_th = '1') then
+                pulse_armed <= '0';
             end if;
         end if;
-    end process p_detect;
+    end process p_arm;
+
+    -- assert flag regarding threshold state
+    p_above_th : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            pulse_above_th <= '0';
+        elsif rising_edge(CLK_I) then
+            if (signed(data_jord_filt) >= C_THRESHOLD_HI) then
+                pulse_above_th <= '1';
+            else
+                pulse_above_th <= '0';
+            end if;
+        end if;
+    end process p_above_th;
+
+    -- assert flag regarding threshold state
+    p_below_th : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            pulse_below_th <= '0';
+        elsif rising_edge(CLK_I) then
+            if (signed(data_jord_filt) < C_THRESHOLD_LO) then
+                pulse_below_th <= '1';
+            else
+                pulse_below_th <= '0';
+            end if;
+        end if;
+    end process p_below_th;
 
     -- delay for jordanov
     delay_trigg_i : entity trap_filter.delay_module
@@ -144,7 +193,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             DATA_I           => DATA_I,
-            DATA_JORD_FILT_I => open,
+            DATA_JORD_FILT_I => data_jord_filt,
             ------------------------------------------------------------------------
             -- Delayed data outputs
             ------------------------------------------------------------------------
