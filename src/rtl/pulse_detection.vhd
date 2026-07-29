@@ -37,8 +37,8 @@ entity pulse_detection is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_DETECTED_O : out std_logic;                   -- pulse detected flag (1 cycle pulse)
-        ERROR_OFLOW_O    : out std_logic_vector(1 downto 0) -- error status
+        PULSE_TRIG_O  : out std_logic;                   -- pulse detected flag (1 cycle pulse)
+        ERROR_OFLOW_O : out std_logic_vector(3 downto 0) -- error status
     );
 end entity pulse_detection;
 
@@ -53,9 +53,8 @@ architecture rtl of pulse_detection is
     ----------------------------------------------------------------------------
 
     -- Jordanov fixed point params for pulse detection
-    constant C_JORD_K_WIDTH : natural := 4;
-    constant C_JORD_M_WIDTH : natural := 4;
-
+    constant C_JORD_K_WIDTH          : natural := 4;
+    constant C_JORD_M_WIDTH          : natural := 4;
     constant C_JORD_M_EXP_VALUE      : natural := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
     constant C_JORD_M_EXP_FRAC_WIDTH : natural := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
     constant C_JORD_DIFF_MARGIN_BITS : natural := 3;     -- Width of margin given to the delayed difference
@@ -63,14 +62,22 @@ architecture rtl of pulse_detection is
     constant C_JORD_ACC2_MARGIN_BITS : natural := 1;     -- Width of margin given to the 2nd accumulator
     constant C_JORD_OUT_SHIFT_BITS   : natural := 17;    -- Number of bits to shift output
 
+    -- Jordanov delay values
     constant C_JORD_K_DELAY  : natural := 2 ** C_JORD_K_WIDTH;             -- k  = 2^JORD_K_WIDTH
     constant C_JORD_M_DELAY  : natural := 2 ** C_JORD_M_WIDTH;             -- m  = 2^JORD_M_WIDTH
     constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
 
-    -- Threshold values
-    constant C_THRESHOLD_HI : integer := 2000;
-    constant C_THRESHOLD_LO : integer := 1500;
+    -- CFD fixed point parameters
+    constant C_CFD_F_WIDTH       : natural := 2;                                    -- Bit width of scalar f -> * (1/f)
+    constant C_CFD_D_WIDTH       : natural := 5;                                    -- Bit width of delay d for cfd
+    constant C_CFD_M_WIDTH       : natural := 3;                                    -- Bit width of delay m for slope
+    constant C_CFD_MARGIN_BITS   : natural := 1;                                    -- Margin bits for difference signal
+    constant C_CFD_VAL_TH        : natural := 1024;                                 -- Threshold for value of DATA_I
+    constant C_CFD_SLOPE_TH      : natural := 100;                                  -- Threshold for slope of DATA_I
+    constant C_CFD_TIMEOUT_WIDTH : natural := 6;                                    -- Bit width of timeout window
+    constant C_CFD_DATA_WIDTH    : natural := G_DATA_WIDTH + 1;                     -- CFD data width (ADC_WIDTH + 1)
+    constant C_CFD_SIGNAL_WIDTH  : natural := C_CFD_DATA_WIDTH + C_CFD_MARGIN_BITS; -- Bit width of cfd (zero-cross) signal
 
     ----------------------------------------------------------------------------
     -- Types
@@ -81,21 +88,22 @@ architecture rtl of pulse_detection is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal pulse_trigger : std_logic;                    -- pulse detected flag
-    signal error_oflow   : std_logic_vector(1 downto 0); -- error status
+    signal pulse_trig  : std_logic;                    -- pulse detected flag
+    signal error_oflow : std_logic_vector(3 downto 0); -- error status
 
-    -- intermidiate data
+    -- delayed data
     signal data_n         : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_k    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_l    : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_kl   : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     signal data_jord_filt : std_logic_vector(G_DATA_WIDTH downto 0);
 
-    -- pulse detection signals
-    signal pulse_above_th : std_logic;
-    signal pulse_below_th : std_logic;
-    signal pulse_armed    : std_logic;
-    signal pulse_armed_q0 : std_logic;
+    -- cfd signals
+    signal cfd_signal : std_logic_vector(C_CFD_SIGNAL_WIDTH - 1 downto 0);
+
+    -- overflow errors
+    signal jord_error_oflow : std_logic_vector(1 downto 0);
+    signal cfd_error_oflow  : std_logic_vector(1 downto 0);
 
 begin
 
@@ -107,73 +115,52 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    PULSE_DETECTED_O <= pulse_trigger;
-    ERROR_OFLOW_O    <= error_oflow;
+    PULSE_TRIG_O  <= pulse_trig;
+    ERROR_OFLOW_O <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
+    error_oflow(3 downto 2) <= jord_error_oflow;
+    error_oflow(1 downto 0) <= cfd_error_oflow;
+
     ----------------------------------------------------------------------------
     -- Main sequential process
     ----------------------------------------------------------------------------
 
-    -- assert a 1 cycle trigger
-    p_trigg : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            pulse_trigger <= '0';
-        elsif rising_edge(CLK_I) then
-            pulse_trigger <= pulse_armed and not pulse_armed_q0;
-        end if;
-    end process p_trigg;
+    -- cfd algorithm for amplitude discrimination
+    cfd_i : entity trap_filter.cfd
+        generic map(
+            G_DATA_WIDTH        => C_CFD_DATA_WIDTH,
+            G_CFD_F_WIDTH       => C_CFD_F_WIDTH,
+            G_CFD_D_WIDTH       => C_CFD_D_WIDTH,
+            G_CFD_M_WIDTH       => C_CFD_M_WIDTH,
+            G_CFD_MARGIN_BITS   => C_CFD_MARGIN_BITS,
+            G_CFD_VAL_TH        => C_CFD_VAL_TH,
+            G_CFD_SLOPE_TH      => C_CFD_SLOPE_TH,
+            G_CFD_TIMEOUT_WIDTH => C_CFD_TIMEOUT_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            DATA_I => data_jord_filt,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            CFD_SIGNAL_O      => cfd_signal,
+            CFD_PULSE_TRIG_O  => pulse_trig,
+            CFD_ERROR_OFLOW_O => cfd_error_oflow
+        );
 
-    -- assert arm flag if above th, deassert when pulse ends
-    p_arm : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            pulse_armed    <= '0';
-            pulse_armed_q0 <= '0';
-        elsif rising_edge(CLK_I) then
-            pulse_armed_q0 <= pulse_armed;
-            if (pulse_above_th = '1') then
-                pulse_armed <= '1';
-            elsif (pulse_below_th = '1') then
-                pulse_armed <= '0';
-            end if;
-        end if;
-    end process p_arm;
-
-    -- assert flag regarding threshold state
-    p_above_th : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            pulse_above_th <= '0';
-        elsif rising_edge(CLK_I) then
-            if (signed(data_jord_filt) >= C_THRESHOLD_HI) then
-                pulse_above_th <= '1';
-            else
-                pulse_above_th <= '0';
-            end if;
-        end if;
-    end process p_above_th;
-
-    -- assert flag regarding threshold state
-    p_below_th : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            pulse_below_th <= '0';
-        elsif rising_edge(CLK_I) then
-            if (signed(data_jord_filt) < C_THRESHOLD_LO) then
-                pulse_below_th <= '1';
-            else
-                pulse_below_th <= '0';
-            end if;
-        end if;
-    end process p_below_th;
-
-    -- delay for jordanov
-    delay_trigg_i : entity trap_filter.delay_module
+    -- delay module for jordanov
+    delay_i : entity trap_filter.delay_module
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
             G_COMMON_DELAY_EN => 0,
@@ -204,6 +191,7 @@ begin
             DATA_MOV_D_O => open
         );
 
+    -- jordanov for pileup discrimination (amplitude sensitive)
     jord_i : entity trap_filter.jordanov_filter
         generic map(
             -- Jordanov parameters
@@ -238,7 +226,7 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            ERROR_OFLOW_O => error_oflow
+            ERROR_OFLOW_O => jord_error_oflow
         );
 
 end architecture rtl;

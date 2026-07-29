@@ -106,8 +106,8 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_DETECTED_O => pulse_detected,
-            ERROR_OFLOW_O    => error_oflow
+            PULSE_TRIG_O  => pulse_detected,
+            ERROR_OFLOW_O => error_oflow
         );
 
 end architecture rtl;

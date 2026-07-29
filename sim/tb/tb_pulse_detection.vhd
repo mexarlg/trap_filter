@@ -26,9 +26,6 @@ architecture tb of tb_pulse_detection is
     -- Jordanov params configuration
     constant C_ADC_WIDTH : natural := 14;
 
-    -- Exp decay
-    constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
-
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -42,8 +39,8 @@ architecture tb of tb_pulse_detection is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
     -- tb dut output signals
-    signal tb_pulse_detected : std_logic                    := '0';
-    signal tb_error_oflow    : std_logic_vector(1 downto 0) := (others => '0');
+    signal tb_pulse_trig  : std_logic                    := '0';
+    signal tb_error_oflow : std_logic_vector(3 downto 0) := (others => '0');
 
 begin
 
@@ -89,9 +86,9 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            DATA_I           => tb_data_i,
-            PULSE_DETECTED_O => tb_pulse_detected,
-            ERROR_OFLOW_O    => tb_error_oflow
+            DATA_I        => tb_data_i,
+            PULSE_TRIG_O  => tb_pulse_trig,
+            ERROR_OFLOW_O => tb_error_oflow
         );
 
     ----------------------------------------------------------------------------
@@ -114,7 +111,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 17000 ns;
+        wait for 24000 ns;
 
         ------------------------------------------------------------------------
         -- Simulation done

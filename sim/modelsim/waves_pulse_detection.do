@@ -18,18 +18,21 @@ add wave -divider " CLK/RST_N "
 add wave -color green  -radix binary sim:/tb_pulse_detection/tb_clk
 add wave -color green  -radix binary sim:/tb_pulse_detection/tb_rst_n
 add wave -color green  -radix binary sim:/tb_pulse_detection/tb_ce
+add wave -color white -format Analog-Step -radix unsigned sim:/tb_pulse_detection/tb_data_i
 
 #===========================================================================
 # pulse_detection IN
 #===========================================================================
 add wave -divider " pulse_detection"
-add wave -color white -format Analog-Step -radix unsigned sim:/tb_pulse_detection/tb_data_i
-add wave -color green -radix binary sim:/tb_pulse_detection/tb_pulse_detected
-add wave -color green -radix binary sim:/tb_pulse_detection/dut/pulse_above_th
-add wave -color green -radix binary sim:/tb_pulse_detection/dut/pulse_below_th
-add wave -color green -radix binary sim:/tb_pulse_detection/dut/pulse_armed
-add wave -color green -radix binary sim:/tb_pulse_detection/dut/pulse_armed_q0
 add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_detection/dut/data_jord_filt
+add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_detection/dut/cfd_i/cfd_signal
+add wave -color green -radix signed sim:/tb_pulse_detection/dut/cfd_i/data_slope
+add wave -color green -radix binary sim:/tb_pulse_detection/dut/cfd_i/slope_pos_flag
+add wave -color green -radix binary sim:/tb_pulse_detection/dut/cfd_i/zero_cross_flag
+add wave -color green -radix binary sim:/tb_pulse_detection/dut/cfd_i/above_th_flag
+add wave -color green -radix binary sim:/tb_pulse_detection/dut/cfd_i/pulse_incoming
+add wave -color green -radix unsigned sim:/tb_pulse_detection/dut/cfd_i/pulse_timeout_cnt
+add wave -color white -radix binary sim:/tb_pulse_detection/tb_pulse_trig
 add wave -color green -radix binary sim:/tb_pulse_detection/tb_error_oflow
 
 #==============================================================================
