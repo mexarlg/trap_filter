@@ -39,6 +39,7 @@ add wave -color green -radix unsigned sim:/tb_trig_subsystem/dut/pulse_detect_i/
 add wave -divider " trig_subsystem"
 add wave -color white -radix binary sim:/tb_trig_subsystem/dut/pulse_trig
 add wave -color white -radix binary sim:/tb_trig_subsystem/tb_trigger
+add wave -color green -radix binary sim:/tb_trig_subsystem/tb_pulse_valid
 add wave -color green -radix binary sim:/tb_trig_subsystem/tb_error_oflow
 
 #==============================================================================

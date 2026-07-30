@@ -87,6 +87,7 @@ architecture rtl of top_trap_zedboard_test is
     signal error_trap_oflow_o : std_logic_vector(3 downto 0);            -- overflow error trap_subsystem
     signal error_trig_oflow_o : std_logic_vector(3 downto 0);            -- overflow error trig_subsystem
     signal trigger_o          : std_logic_vector(4 downto 0);            -- pulse stage triggers
+    signal pulse_valid_o      : std_logic;                               -- pulse valid (no pileup)
 
     -- connection signals
     signal data_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -101,6 +102,7 @@ architecture rtl of top_trap_zedboard_test is
     attribute mark_debug of data_filtered_o    : signal is "true";
     attribute mark_debug of error_trap_oflow_o : signal is "true";
     attribute mark_debug of trigger_o          : signal is "true";
+    attribute mark_debug of pulse_valid_o      : signal is "true";
 
 begin
 
@@ -175,6 +177,7 @@ begin
             ------------------------------------------------------------------------
             DATA_I        => data_i,
             TRIGGER_O     => trigger_o,
+            PULSE_VALID_O => pulse_valid_o,
             ERROR_OFLOW_O => error_trig_oflow_o
         );
 

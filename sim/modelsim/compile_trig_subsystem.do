@@ -49,6 +49,7 @@ vcom -2008 -work trap_filter ../../src/rtl/cfd.vhd
 vcom -2008 -work trap_filter ../../src/rtl/jordanov_filter.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_detection.vhd
 vcom -2008 -work trap_filter ../../src/rtl/trig_gen.vhd
+vcom -2008 -work trap_filter ../../src/rtl/pileup_detection.vhd
 vcom -2008 -work trap_filter ../../src/rtl/trig_subsystem.vhd
 
 

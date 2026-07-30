@@ -41,6 +41,7 @@ architecture tb of tb_trig_subsystem is
     -- tb dut output signals
     signal tb_error_oflow : std_logic_vector(3 downto 0) := (others => '0');
     signal tb_trigger     : std_logic_vector(4 downto 0) := (others => '0');
+    signal tb_pulse_valid : std_logic;
 
 begin
 
@@ -91,6 +92,7 @@ begin
             ------------------------------------------------------------------------
             DATA_I        => tb_data_i,
             TRIGGER_O     => tb_trigger,
+            PULSE_VALID_O => tb_pulse_valid,
             ERROR_OFLOW_O => tb_error_oflow
         );
 

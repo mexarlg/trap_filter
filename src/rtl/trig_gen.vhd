@@ -25,13 +25,13 @@ entity trig_gen is
     generic (
         -- delays from detection pulse
         G_TRIG_TO_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
-        G_TRIG_TO_START    : natural range 4 to 256 := 24; -- N of samples from trigger to start of pulse
+        G_TRIG_TO_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
         -- jordanov trapezoid parameters
         G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of trapezoid rising edge
         G_JORD_M_WIDTH : natural range 2 to 8 := 8; -- Width of trapezoid flat top
         -- real trapezoidal guards
-        G_START_PULSE_GUARD : natural range 0 to 16  := 0; -- N of samples to assert earlier the start of the pulse
-        G_END_PULSE_GUARD   : natural range 0 to 128 := 16 -- N of samples to assert later the end of the pulse
+        G_START_PULSE_GUARD : natural range 0 to 16  := 1; -- N of samples to assert earlier the start of the pulse
+        G_END_PULSE_GUARD   : natural range 0 to 128 := 40 -- N of samples to assert later the end of the pulse
     );
     port (
         ------------------------------------------------------------------------
@@ -46,7 +46,7 @@ entity trig_gen is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O : out std_logic_vector(4 downto 0) -- Triggers at different stages of a pulse
+        TRIGGER_O : out std_logic_vector(4 downto 0) -- Triggers at different stages of a pulse (baseline, start, top, mid-top, end)
     );
 end entity trig_gen;
 

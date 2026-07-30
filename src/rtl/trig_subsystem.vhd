@@ -45,6 +45,7 @@ entity trig_subsystem is
         -- Outputs
         ------------------------------------------------------------------------
         TRIGGER_O     : out std_logic_vector(4 downto 0);
+        PULSE_VALID_O : out std_logic;
         ERROR_OFLOW_O : out std_logic_vector(3 downto 0) -- error status
     );
 end entity trig_subsystem;
@@ -74,8 +75,9 @@ architecture rtl of trig_subsystem is
     ----------------------------------------------------------------------------
 
     -- intermidiate signals
-    signal trigger    : std_logic_vector(4 downto 0); -- pulse stages trigger
-    signal pulse_trig : std_logic;                    -- pulse detected trigger
+    signal trigger     : std_logic_vector(4 downto 0); -- pulse stages trigger
+    signal pulse_trig  : std_logic;                    -- pulse detected trigger
+    signal pulse_valid : std_logic;                    -- pulse valid trigger
 
     -- output signals
     signal error_oflow : std_logic_vector(3 downto 0); -- error status
@@ -90,8 +92,9 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    ERROR_OFLOW_O <= error_oflow;
     TRIGGER_O     <= trigger;
+    PULSE_VALID_O <= pulse_valid;
+    ERROR_OFLOW_O <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -127,6 +130,7 @@ begin
             ERROR_OFLOW_O => error_oflow
         );
 
+    -- asserts the triggers for the stages of the pulse
     trig_gen_i : entity trap_filter.trig_gen
         generic map(
             G_TRIG_TO_BASELINE  => C_TRIG_TO_BASELINE,
@@ -150,6 +154,30 @@ begin
             -- Outputs
             ------------------------------------------------------------------------
             TRIGGER_O => trigger
+        );
+
+    --  pileup discrimination
+    pileup_detect_i : entity trap_filter.pileup_detection
+        generic map(
+            G_JORD_K_WIDTH    => G_SLOW_JORD_K,
+            G_JORD_M_WIDTH    => G_SLOW_JORD_M,
+            G_END_PULSE_GUARD => C_END_PULSE_GUARD
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            PULSE_TRIG_I => pulse_trig,
+            PULSE_END_I  => trigger(0),
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            PULSE_VALID_O => pulse_valid
         );
 
 end architecture rtl;
