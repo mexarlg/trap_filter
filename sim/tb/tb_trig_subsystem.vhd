@@ -39,7 +39,6 @@ architecture tb of tb_trig_subsystem is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
     -- tb dut output signals
-    signal tb_pulse_trig  : std_logic                    := '0';
     signal tb_error_oflow : std_logic_vector(3 downto 0) := (others => '0');
     signal tb_trigger     : std_logic_vector(4 downto 0) := (others => '0');
 

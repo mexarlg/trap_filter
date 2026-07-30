@@ -80,7 +80,8 @@ set RTL_FILES [list \
     [file join $RTL_DIR "trap_subsystem.vhd"] \
     [file join $RTL_DIR "cfd.vhd"] \
     [file join $RTL_DIR "pulse_detection.vhd"] \
-    [file join $RTL_DIR "trigg_subsystem.vhd"] \
+    [file join $RTL_DIR "trig_gen.vhd"] \
+    [file join $RTL_DIR "trig_subsystem.vhd"] \
     [file join $INTEG_DIR "top_trap_zedboard_test.vhd"] \
 ]
 

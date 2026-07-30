@@ -132,7 +132,7 @@ begin
         );
 
     -- trap_subsystem instantiation
-    trap_i : entity trap_filter.trigg_subsystem
+    trap_i : entity trap_filter.trig_subsystem
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH => G_DATA_WIDTH
