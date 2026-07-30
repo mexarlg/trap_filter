@@ -23,6 +23,9 @@ entity trig_subsystem is
     generic (
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14;
+        -- Slow jordanov contants
+        G_SLOW_JORD_K : natural range 2 to 8 := 6;
+        G_SLOW_JORD_M : natural range 2 to 8 := 8;
         -- cfd tuning parameters
         G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048;
         G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;
@@ -55,6 +58,12 @@ architecture rtl of trig_subsystem is
     ----------------------------------------------------------------------------
     -- Constants
     ----------------------------------------------------------------------------
+
+    -- pulse detection fixed delays
+    constant C_TRIG_TO_BASELINE  : natural := 4;
+    constant C_TRIG_TO_START     : natural := 30;
+    constant C_START_PULSE_GUARD : natural := 1;
+    constant C_END_PULSE_GUARD   : natural := 40;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -120,12 +129,12 @@ begin
 
     trig_gen_i : entity trap_filter.trig_gen
         generic map(
-            G_TRIG_TO_BASELINE  => 4,
-            G_TRIG_TO_START     => 22,
-            G_JORD_K_WIDTH      => 6,
-            G_JORD_M_WIDTH      => 8,
-            G_START_PULSE_GUARD => 2,
-            G_END_PULSE_GUARD   => 16
+            G_TRIG_TO_BASELINE  => C_TRIG_TO_BASELINE,
+            G_TRIG_TO_START     => C_TRIG_TO_START,
+            G_JORD_K_WIDTH      => G_SLOW_JORD_K,
+            G_JORD_M_WIDTH      => G_SLOW_JORD_M,
+            G_START_PULSE_GUARD => C_START_PULSE_GUARD,
+            G_END_PULSE_GUARD   => C_END_PULSE_GUARD
         )
         port map(
             ------------------------------------------------------------------------

@@ -152,10 +152,14 @@ begin
             DATA_VALID_O => open
         );
 
-    -- feeds stored pulse to trap_subsystem
+    -- issues triggers at different stages of pulse
     trig_ss_i : entity trap_filter.trig_subsystem
         generic map(
-            G_DATA_WIDTH        => G_DATA_WIDTH,
+            G_DATA_WIDTH => G_DATA_WIDTH,
+            -- slow jordanov parameters
+            G_SLOW_JORD_K => G_JORD_K_WIDTH,
+            G_SLOW_JORD_M => G_JORD_M_WIDTH,
+            -- cfd tuning parameters
             G_CFD_VAL_TH        => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH      => G_CFD_SLOPE_TH,
             G_CFD_TIMEOUT_WIDTH => G_CFD_TIMEOUT_WIDTH
@@ -174,7 +178,7 @@ begin
             ERROR_OFLOW_O => error_trig_oflow_o
         );
 
-    -- trap_subsystem instantiation
+    -- generates trapezoid subsystem
     trap_ss_ii : entity trap_filter.trap_subsystem
         generic map(
             -- Jordanov parameters
