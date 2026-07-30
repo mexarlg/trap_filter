@@ -76,9 +76,11 @@ set RTL_FILES [list \
     [file join $RTL_DIR "delay_module.vhd"] \
     [file join $RTL_DIR "mov_avg_filter.vhd"] \
     [file join $RTL_DIR "jordanov_filter.vhd"] \
-    [file join $RTL_DIR "valid_tracker.vhd"] \
     [file join $RTL_DIR "baseline_restorer.vhd"] \
     [file join $RTL_DIR "trap_subsystem.vhd"] \
+    [file join $RTL_DIR "cfd.vhd"] \
+    [file join $RTL_DIR "pulse_detection.vhd"] \
+    [file join $RTL_DIR "trigg_subsystem.vhd"] \
     [file join $INTEG_DIR "top_trap_zedboard_test.vhd"] \
 ]
 

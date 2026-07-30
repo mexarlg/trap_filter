@@ -22,7 +22,11 @@ use trap_filter.trap_filter_pkg.all;
 entity pulse_detection is
     generic (
         -- Data parameters
-        G_DATA_WIDTH : natural range 8 to 16 := 14 -- Width of incoming data stream (ADC Magnitude resolution)
+        G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
+        -- thresholds and expected pulse timeout
+        G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- threshold to gate value of DATA_I
+        G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- threshold to gate slope of DATA_I
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- timeout window width
     );
     port (
         ------------------------------------------------------------------------
@@ -69,15 +73,12 @@ architecture rtl of pulse_detection is
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
 
     -- CFD fixed point parameters
-    constant C_CFD_F_WIDTH       : natural := 2;                                    -- Bit width of scalar f -> * (1/f)
-    constant C_CFD_D_WIDTH       : natural := 5;                                    -- Bit width of delay d for cfd
-    constant C_CFD_M_WIDTH       : natural := 3;                                    -- Bit width of delay m for slope
-    constant C_CFD_MARGIN_BITS   : natural := 1;                                    -- Margin bits for difference signal
-    constant C_CFD_VAL_TH        : natural := 1024;                                 -- Threshold for value of DATA_I
-    constant C_CFD_SLOPE_TH      : natural := 100;                                  -- Threshold for slope of DATA_I
-    constant C_CFD_TIMEOUT_WIDTH : natural := 6;                                    -- Bit width of timeout window
-    constant C_CFD_DATA_WIDTH    : natural := G_DATA_WIDTH + 1;                     -- CFD data width (ADC_WIDTH + 1)
-    constant C_CFD_SIGNAL_WIDTH  : natural := C_CFD_DATA_WIDTH + C_CFD_MARGIN_BITS; -- Bit width of cfd (zero-cross) signal
+    constant C_CFD_F_WIDTH      : natural := 2;                                    -- Bit width of scalar f -> * (1/f)
+    constant C_CFD_D_WIDTH      : natural := 5;                                    -- Bit width of delay d for cfd
+    constant C_CFD_M_WIDTH      : natural := 3;                                    -- Bit width of delay m for slope
+    constant C_CFD_MARGIN_BITS  : natural := 1;                                    -- Margin bits for difference signal
+    constant C_CFD_DATA_WIDTH   : natural := G_DATA_WIDTH + 1;                     -- CFD data width (ADC_WIDTH + 1)
+    constant C_CFD_SIGNAL_WIDTH : natural := C_CFD_DATA_WIDTH + C_CFD_MARGIN_BITS; -- Bit width of cfd (zero-cross) signal
 
     ----------------------------------------------------------------------------
     -- Types
@@ -137,9 +138,9 @@ begin
             G_CFD_D_WIDTH       => C_CFD_D_WIDTH,
             G_CFD_M_WIDTH       => C_CFD_M_WIDTH,
             G_CFD_MARGIN_BITS   => C_CFD_MARGIN_BITS,
-            G_CFD_VAL_TH        => C_CFD_VAL_TH,
-            G_CFD_SLOPE_TH      => C_CFD_SLOPE_TH,
-            G_CFD_TIMEOUT_WIDTH => C_CFD_TIMEOUT_WIDTH
+            G_CFD_VAL_TH        => G_CFD_VAL_TH,
+            G_CFD_SLOPE_TH      => G_CFD_SLOPE_TH,
+            G_CFD_TIMEOUT_WIDTH => G_CFD_TIMEOUT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

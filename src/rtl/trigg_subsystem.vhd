@@ -22,7 +22,11 @@ use trap_filter.trap_filter_pkg.all;
 entity trigg_subsystem is
     generic (
         -- Data parameters
-        G_DATA_WIDTH : natural range 8 to 16 := 14
+        G_DATA_WIDTH : natural range 8 to 16 := 14;
+        -- cfd tuning parameters
+        G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048;
+        G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7
     );
     port (
         ------------------------------------------------------------------------
@@ -37,8 +41,8 @@ entity trigg_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O     : out std_logic_vector(3 downto 0);
-        ERROR_OFLOW_O : out std_logic_vector(1 downto 0) -- error status
+        TRIGGER_O     : out std_logic;
+        ERROR_OFLOW_O : out std_logic_vector(3 downto 0) -- error status
     );
 end entity trigg_subsystem;
 
@@ -61,11 +65,10 @@ architecture rtl of trigg_subsystem is
     ----------------------------------------------------------------------------
 
     -- intermidiate signals
-    signal pulse_detected : std_logic; -- pulse detected flag
+    signal pulse_trig : std_logic; -- pulse detected flag
 
     -- output signals
-    signal trigger     : std_logic_vector(3 downto 0); -- trigger outputs
-    signal error_oflow : std_logic_vector(1 downto 0); -- error status
+    signal error_oflow : std_logic_vector(3 downto 0); -- error status
 
 begin
 
@@ -78,7 +81,7 @@ begin
     ----------------------------------------------------------------------------
 
     ERROR_OFLOW_O <= error_oflow;
-    TRIGGER_O     <= trigger;
+    TRIGGER_O     <= pulse_trig;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -91,7 +94,11 @@ begin
     pulse_detect_i : entity trap_filter.pulse_detection
         generic map(
             -- Jordanov parameters
-            G_DATA_WIDTH => G_DATA_WIDTH
+            G_DATA_WIDTH => G_DATA_WIDTH,
+            -- Cfd tuning parameters
+            G_CFD_VAL_TH        => G_CFD_VAL_TH,
+            G_CFD_SLOPE_TH      => G_CFD_SLOPE_TH,
+            G_CFD_TIMEOUT_WIDTH => G_CFD_TIMEOUT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -106,7 +113,7 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_TRIG_O  => pulse_detected,
+            PULSE_TRIG_O  => pulse_trig,
             ERROR_OFLOW_O => error_oflow
         );
 

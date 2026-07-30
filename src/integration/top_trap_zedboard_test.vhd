@@ -24,7 +24,7 @@ entity top_trap_zedboard_test is
     generic (
         -- Data parameters
         G_DATA_WIDTH         : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 10; -- Width of memory needed to store incoming data stream (1048 samples -> 10 bits)
+        G_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 12; -- Width of memory needed to store incoming data stream (1048 samples -> 10 bits)
         -- Jordanov params
         G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of delay needed for rising time
         G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top
@@ -39,7 +39,10 @@ entity top_trap_zedboard_test is
         G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged of mov_avg
         G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator of mov_avg
         -- Pulse detection delay params
-        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given from pulse detection subsystem
+        G_PULSE_DELAY_WIDTH : natural range 4 to 6       := 6;    -- Width of delay given from pulse detection subsystem
+        G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- Threshold level of detection
+        G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- Threshold slope of detection
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- Timeout expected pulse of detection
     );
     port (
         ------------------------------------------------------------------------
@@ -80,8 +83,10 @@ architecture rtl of top_trap_zedboard_test is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal data_filtered_o : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-    signal error_oflow_o   : std_logic_vector(3 downto 0);            -- error status
+    signal data_filtered_o    : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
+    signal error_trap_oflow_o : std_logic_vector(3 downto 0);            -- error status
+    signal error_trig_oflow_o : std_logic_vector(3 downto 0);            -- error status
+    signal trigger_o          : std_logic;                               -- error status
 
     -- connection signals
     signal data_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -90,11 +95,12 @@ architecture rtl of top_trap_zedboard_test is
     signal ce_i   : std_logic;
 
     -- Mark as debug for ILA
-    attribute mark_debug                    : string;
-    attribute mark_debug of ce_i            : signal is "true";
-    attribute mark_debug of data_i          : signal is "true";
-    attribute mark_debug of data_filtered_o : signal is "true";
-    attribute mark_debug of error_oflow_o   : signal is "true";
+    attribute mark_debug                       : string;
+    attribute mark_debug of ce_i               : signal is "true";
+    attribute mark_debug of data_i             : signal is "true";
+    attribute mark_debug of data_filtered_o    : signal is "true";
+    attribute mark_debug of error_trap_oflow_o : signal is "true";
+    attribute mark_debug of trigger_o          : signal is "true";
 
 begin
 
@@ -146,8 +152,30 @@ begin
             DATA_VALID_O => open
         );
 
+    -- feeds stored pulse to trap_subsystem
+    trig_ss_i : entity trap_filter.trigg_subsystem
+        generic map(
+            G_DATA_WIDTH        => G_DATA_WIDTH,
+            G_CFD_VAL_TH        => G_CFD_VAL_TH,
+            G_CFD_SLOPE_TH      => G_CFD_SLOPE_TH,
+            G_CFD_TIMEOUT_WIDTH => G_CFD_TIMEOUT_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => rst_n,
+            ------------------------------------------------------------------------
+            -- Control Inputs / Outputs
+            ------------------------------------------------------------------------
+            DATA_I        => data_i,
+            TRIGGER_O     => trigger_o,
+            ERROR_OFLOW_O => error_trig_oflow_o
+        );
+
     -- trap_subsystem instantiation
-    trap_i : entity trap_filter.trap_subsystem
+    trap_ss_ii : entity trap_filter.trap_subsystem
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH   => G_DATA_WIDTH,
@@ -180,7 +208,7 @@ begin
             -- Outputs
             ------------------------------------------------------------------------
             data_filtered_o => data_filtered_o,
-            error_oflow_o   => error_oflow_o
+            error_oflow_o   => error_trap_oflow_o
         );
 
 end architecture rtl;
