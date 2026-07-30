@@ -71,7 +71,7 @@ architecture rtl of top_trigg_zedboard_test is
     signal ce_i   : std_logic;
 
     -- output signals
-    signal trigger_o     : std_logic_vector(3 downto 0);
+    signal trigger_o     : std_logic_vector(4 downto 0);
     signal error_oflow_o : std_logic_vector(3 downto 0);
 
     -- Mark as debug for ILA

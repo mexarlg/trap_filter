@@ -84,9 +84,9 @@ architecture rtl of top_trap_zedboard_test is
 
     -- output signals
     signal data_filtered_o    : std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-    signal error_trap_oflow_o : std_logic_vector(3 downto 0);            -- error status
-    signal error_trig_oflow_o : std_logic_vector(3 downto 0);            -- error status
-    signal trigger_o          : std_logic;                               -- error status
+    signal error_trap_oflow_o : std_logic_vector(3 downto 0);            -- overflow error trap_subsystem
+    signal error_trig_oflow_o : std_logic_vector(3 downto 0);            -- overflow error trig_subsystem
+    signal trigger_o          : std_logic_vector(4 downto 0);            -- pulse stage triggers
 
     -- connection signals
     signal data_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
@@ -153,7 +153,7 @@ begin
         );
 
     -- feeds stored pulse to trap_subsystem
-    trig_ss_i : entity trap_filter.trigg_subsystem
+    trig_ss_i : entity trap_filter.trig_subsystem
         generic map(
             G_DATA_WIDTH        => G_DATA_WIDTH,
             G_CFD_VAL_TH        => G_CFD_VAL_TH,
@@ -203,7 +203,7 @@ begin
             -- Control Inputs
             ------------------------------------------------------------------------
             DATA_I          => data_i,
-            BASELINE_TRIG_I => '0',
+            BASELINE_TRIG_I => trigger_o(4),
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------

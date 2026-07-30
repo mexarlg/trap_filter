@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        trigg_subsystem.vhd
+--  Module:        trig_subsystem.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       17/07/2026
@@ -19,7 +19,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity trigg_subsystem is
+entity trig_subsystem is
     generic (
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14;
@@ -41,12 +41,12 @@ entity trigg_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O     : out std_logic;
+        TRIGGER_O     : out std_logic_vector(4 downto 0);
         ERROR_OFLOW_O : out std_logic_vector(3 downto 0) -- error status
     );
-end entity trigg_subsystem;
+end entity trig_subsystem;
 
-architecture rtl of trigg_subsystem is
+architecture rtl of trig_subsystem is
 
     ----------------------------------------------------------------------------
     -- Functions
@@ -65,7 +65,8 @@ architecture rtl of trigg_subsystem is
     ----------------------------------------------------------------------------
 
     -- intermidiate signals
-    signal pulse_trig : std_logic; -- pulse detected flag
+    signal trigger    : std_logic_vector(4 downto 0); -- pulse stages trigger
+    signal pulse_trig : std_logic;                    -- pulse detected trigger
 
     -- output signals
     signal error_oflow : std_logic_vector(3 downto 0); -- error status
@@ -81,7 +82,7 @@ begin
     ----------------------------------------------------------------------------
 
     ERROR_OFLOW_O <= error_oflow;
-    TRIGGER_O     <= pulse_trig;
+    TRIGGER_O     <= trigger;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -115,6 +116,31 @@ begin
             ------------------------------------------------------------------------
             PULSE_TRIG_O  => pulse_trig,
             ERROR_OFLOW_O => error_oflow
+        );
+
+    trig_gen_i : entity trap_filter.trig_gen
+        generic map(
+            G_TRIG_TO_BASELINE  => 4,
+            G_TRIG_TO_START     => 22,
+            G_JORD_K_WIDTH      => 6,
+            G_JORD_M_WIDTH      => 8,
+            G_START_PULSE_GUARD => 2,
+            G_END_PULSE_GUARD   => 16
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            PULSE_TRIG_I => pulse_trig,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            TRIGGER_O => trigger
         );
 
 end architecture rtl;
