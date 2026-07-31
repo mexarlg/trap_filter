@@ -6,12 +6,12 @@
 --  Last Modified: 30/07/2026
 --
 --  Description:
---  Module that takes the initial pulse trigger and issues triggers at specific
+--  Module that takes the detected pulse trigger and issues triggers at specific
 --  stages inside the pulse timeline. Asserted through a pipeline delay.
---
+--  The stages are: Baseline, start of pulse, start of top, center of top, end of pulse.
 --
 --  Dependencies:
---  
+--  trap_filter_pkg.vhd
 --==============================================================================
 
 library ieee;
@@ -23,15 +23,15 @@ use trap_filter.trap_filter_pkg.all;
 
 entity trig_gen is
     generic (
-        -- delays from detection pulse
+        -- delays from the pulse detected trigger to each stage
         G_TRIG_TO_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
         G_TRIG_TO_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
         -- jordanov trapezoid parameters
-        G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of trapezoid rising edge
-        G_JORD_M_WIDTH : natural range 2 to 8 := 8; -- Width of trapezoid flat top
-        -- real trapezoidal guards
+        G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of slow filtered trapezoid rising edge
+        G_JORD_M_WIDTH : natural range 2 to 8 := 8; -- Width of slow filtered trapezoid flat top
+        -- margins to decrease and increase the start/end triggers of the filtered pulse
         G_START_PULSE_GUARD : natural range 0 to 16  := 1; -- N of samples to assert earlier the start of the pulse
-        G_END_PULSE_GUARD   : natural range 0 to 128 := 40 -- N of samples to assert later the end of the pulse
+        G_END_PULSE_GUARD   : natural range 0 to 128 := 40 -- N of samples to assert later the end of the current pulse (pileup discrimination)
     );
     port (
         ------------------------------------------------------------------------
@@ -42,7 +42,7 @@ entity trig_gen is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        PULSE_TRIG_I : in std_logic; -- Trigger of pulse detection
+        PULSE_TRIG_I : in std_logic; -- Trigger of detected pulse
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
@@ -101,11 +101,11 @@ begin
 
     -- assert margin allows minimum depth of 2
     assert (G_TRIG_TO_START > G_START_PULSE_GUARD + 1)
-    report "trig_gen: G_TRIG_TO_START should be larger than G_START_PULSE_GUARD" severity failure;
+    report "trig_gen: G_TRIG_TO_START should be + 2 larger than G_START_PULSE_GUARD" severity failure;
 
     -- baseline capture has enough margin before rising edge of pulse
     assert (C_BASE_TO_START > 8)
-    report "trig_gen: Baseline capture too close to rising edge, increase C_BASE_TO_START" severity failure;
+    report "trig_gen: Baseline capture too close to rising edge, decrease C_BASELINE_DEPTH" severity failure;
 
     ----------------------------------------------------------------------------
     -- Output Assignments
@@ -121,7 +121,7 @@ begin
     -- Main Combinatory Processes
     ----------------------------------------------------------------------------
 
-    -- easier readibility
+    -- each stage of the filtered pulse (easier readibility)
     trig_baseline    <= delay_line(C_BASELINE_DEPTH - 1);
     trig_start_pulse <= delay_line(C_START_PULSE_DEPTH - 1);
     trig_start_flat  <= delay_line(C_START_FLAT_DEPTH - 1);

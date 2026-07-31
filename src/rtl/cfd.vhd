@@ -6,12 +6,12 @@
 --  Last Modified:
 --
 --  Description:
---  Module that asserts triggers if a pulse arrives using a CFD algorithm.
+--  Module that asserts a trigger if a pulse arrives using a constant fraction discriminar (CFD)
+--  algorithm. It allows for discrimination of different pulses due amplitude.
 --
---  Pipeline:
 --
 --  Dependencies:
---  shift_register
+--  trap_filter_pkg.vhd, shift_register.vhd,
 --==============================================================================
 
 library ieee;
@@ -26,14 +26,14 @@ entity cfd is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 15; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Cfd parameters
-        G_CFD_F_WIDTH     : natural range 1 to 3 := 2; -- scalar factor f (power of 2) (1 = 0.5; 2 = 0.25; 3 = 0.125)
-        G_CFD_D_WIDTH     : natural range 4 to 6 := 5; -- width of delay (4 for fast, 5 for slow pulses)
-        G_CFD_M_WIDTH     : natural range 3 to 4 := 3; -- Bit width of slope delay
-        G_CFD_MARGIN_BITS : natural range 1 to 3 := 1; -- N margin bits to difference signal
+        G_CFD_F_WIDTH     : natural range 1 to 3 := 2; -- scalar factor f (1 = 0.5; 2 = 0.25; 3 = 0.125)
+        G_CFD_D_WIDTH     : natural range 4 to 6 := 5; -- width of delay (4 for fast, 6 for slow pulses)
+        G_CFD_M_WIDTH     : natural range 3 to 4 := 3; -- Bit width of delay used to compute slope of data for gating on rising edges
+        G_CFD_MARGIN_BITS : natural range 1 to 3 := 1; -- Number of bits of margin to internal difference signal
         -- thresholds and expected pulse timeout
         G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- threshold to gate value of DATA_I
         G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- threshold to gate slope of DATA_I
-        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- timeout window width
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- timeout width after thresholds are overcomed for a zero crossing event
     );
     port (
         ------------------------------------------------------------------------
@@ -50,7 +50,7 @@ entity cfd is
         ------------------------------------------------------------------------
         CFD_SIGNAL_O      : out std_logic_vector(G_DATA_WIDTH + G_CFD_MARGIN_BITS - 1 downto 0); -- cfd output signal that crosses zero
         CFD_PULSE_TRIG_O  : out std_logic;                                                       -- pulse detected flag (1 cycle pulse)
-        CFD_ERROR_OFLOW_O : out std_logic_vector(1 downto 0)                                     -- error status
+        CFD_ERROR_OFLOW_O : out std_logic_vector(1 downto 0)                                     -- overflow error status of cfd
     );
 end entity cfd;
 
@@ -93,17 +93,17 @@ architecture rtl of cfd is
     -- intermidiate pipelined data
     signal cfd_fx      : std_logic_vector(C_CFD_WIDTH - 1 downto 0); -- multiplication -> f*x[n]
     signal cfd_diff    : std_logic_vector(C_CFD_WIDTH - 1 downto 0); -- zero cross
-    signal cfd_diff_q0 : std_logic_vector(C_CFD_WIDTH - 1 downto 0); -- zero cross
+    signal cfd_diff_q0 : std_logic_vector(C_CFD_WIDTH - 1 downto 0); -- zero cross registered
     signal data_slope  : std_logic_vector(C_CFD_WIDTH - 1 downto 0); -- slope signal
 
     -- logic flags for pulse detection
     signal zero_cross_flag : std_logic; -- change of sign in cfd_diff signal
-    signal above_th_flag   : std_logic; -- data_i above threshold
+    signal above_th_flag   : std_logic; -- data_i value above threshold
     signal slope_pos_flag  : std_logic; -- data_i slope above threshold
 
     -- detection flags asserted, pulse incoming
-    signal pulse_incoming    : std_logic;                                          -- pulse expected, waiting for zero cross
-    signal pulse_timeout_cnt : std_logic_vector(G_CFD_TIMEOUT_WIDTH - 1 downto 0); -- maximum margin for zero cross
+    signal pulse_incoming    : std_logic;                                          -- thresholds overcomed so a pulse is expected, waiting for zero cross
+    signal pulse_timeout_cnt : std_logic_vector(G_CFD_TIMEOUT_WIDTH - 1 downto 0); -- timeout counter after overcomed thresholds for a zero cross event to allow detection
 
 begin
 
@@ -112,7 +112,7 @@ begin
     ----------------------------------------------------------------------------
 
     assert (2 ** G_CFD_TIMEOUT_WIDTH - 1 > C_CFD_D_DELAY)
-    report "cfd: timeout window must be longer than cfd delay" severity failure;
+    report "cfd: timeout window G_CFD_TIMEOUT_WIDTH must be longer than C_CFD_D_DELAY delay" severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments

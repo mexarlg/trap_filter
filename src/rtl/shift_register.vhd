@@ -6,14 +6,12 @@
 --  Last Modified: 
 --
 --  Description:
---  Delay unit that implements shift register logic for the mov_avg_filter delay.
---  Free running so data shifts every clock cycle. Validity is tracked externally.
+--  Implementation of an async shift register.
 --  With G_REG_INPUT = 1 the total delay is G_DELAY_VALUE + 1 cycles.
 --  With G_REG_INPUT = 0 the total delay is G_DELAY_VALUE cycles.
 --
 --  Dependencies:
---  Data fed sync with CLK_I
--- 
+--  trap_filter_pkg.vhd
 --==============================================================================
 
 library ieee;
@@ -25,9 +23,9 @@ use trap_filter.trap_filter_pkg.all;
 
 entity shift_register is
     generic (
-        G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_DELAY_VALUE : natural range 4 to 4096 := 8;  -- Value of actual delayed (10 bit max width)
-        G_REG_INPUT   : natural range 0 to 1    := 1   -- Register input (1) for standalone or first link, pass through (0) when chained
+        G_DATA_WIDTH  : natural range 4 to 16   := 14; -- Width of incoming data stream
+        G_DELAY_VALUE : natural range 4 to 4096 := 8;  -- Value of expected delay
+        G_REG_INPUT   : natural range 0 to 1    := 1   -- Register input (1) or not (0)
     );
     port (
         ------------------------------------------------------------------------
@@ -36,13 +34,13 @@ entity shift_register is
         CLK_I   : in std_logic;
         RST_N_I : in std_logic;
         ------------------------------------------------------------------------
-        -- Control Inputs
+        -- Inputs
         ------------------------------------------------------------------------
         DATA_I : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input data sync with CLK
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_D_O : out std_logic_vector(G_DATA_WIDTH - 1 downto 0) -- Delayed Data for sample N
+        DATA_D_O : out std_logic_vector(G_DATA_WIDTH - 1 downto 0) -- Delayed Data
     );
 end entity shift_register;
 

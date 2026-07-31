@@ -7,11 +7,10 @@
 --
 --  Description:
 --  Module that takes the filtered data from jordanov and extracts the baseline offset.
---  A latency synchronization is asserted by delaying the fast data (baseline), 
---  while having overflow error control
+--  Latency synchronization is controlled by delaying the fast data (baseline) 
 --
 --  Dependencies:
--- 
+--  trap_filter_pkg.vhd
 --==============================================================================
 
 library ieee;
@@ -33,7 +32,7 @@ entity baseline_restorer is
         CLK_I   : in std_logic;
         RST_N_I : in std_logic;
         ------------------------------------------------------------------------
-        -- Control Inputs
+        -- Inputs
         ------------------------------------------------------------------------
         DATA_JORD_I  : in std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal filtered stream (signed)
         BASELINE_I   : in std_logic_vector(G_DATA_WIDTH downto 0); -- Moving average baseline stream (signed)
@@ -69,13 +68,26 @@ architecture rtl of baseline_restorer is
 
 begin
 
+    ----------------------------------------------------------------------------
+    -- Assertions
+    ----------------------------------------------------------------------------
+
+    ----------------------------------------------------------------------------
+    -- Output assignments
+    ----------------------------------------------------------------------------
+
     DATA_O        <= data_out;
     ERROR_OFLOW_O <= error_oflow;
 
     ----------------------------------------------------------------------------
-    -- Skew: delay the faster baseline stream to align with the Jordanov stream
+    -- Main Combinatory process
     ----------------------------------------------------------------------------
 
+    ----------------------------------------------------------------------------
+    -- Main sequential process
+    ----------------------------------------------------------------------------
+
+    -- delay the faster baseline stream to align with the Jordanov stream
     p_skew : process (CLK_I, RST_N_I)
     begin
         if (RST_N_I = '0') then
@@ -88,10 +100,7 @@ begin
         end if;
     end process p_skew;
 
-    ----------------------------------------------------------------------------
     -- Latch the baseline on trigger
-    ----------------------------------------------------------------------------
-
     p_latch : process (CLK_I, RST_N_I)
     begin
         if (RST_N_I = '0') then
@@ -103,10 +112,7 @@ begin
         end if;
     end process p_latch;
 
-    ----------------------------------------------------------------------------
-    -- Jordanov - baseline offset
-    ----------------------------------------------------------------------------
-
+    -- Substract the jordanov output - baseline offset
     p_restore : process (CLK_I, RST_N_I)
     begin
         if (RST_N_I = '0') then

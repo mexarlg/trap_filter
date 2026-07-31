@@ -6,10 +6,12 @@
 --  Last Modified: 
 --
 --  Description:
---  Module that shapes a pulse into a trapezoid with delay and offset corrections.
+--  System that filters an input pulse into a trapezoid shape with delay
+--  synchronization and baseline corrections through a continuous streaming behaviour. 
 --
 --  Dependencies:
--- 
+--  trap_filter_pkg.vhd, shift_register.vhd, mov_avg_filter.vhd,
+--  baseline_restorer.vhd, delay_module.vhd, jordanov_filter.vhd
 --==============================================================================
 
 library ieee;
@@ -23,21 +25,21 @@ entity trap_subsystem is
     generic (
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        -- Jordanov params
-        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
-        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of delay needed for flat top (all bits -> '1' for multiple of 2^N)
-        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
-        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
-        -- Jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3;  -- Width of margin given to the delayed difference
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2;  -- Width of margin given to the 1st accumulator
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1;  -- Width of margin given to the 2nd accumulator
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17; -- Width of margin given to the 2nd accumulator
-        -- Moving average params
-        G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
-        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Width of margin given to the accumulator
-        -- Detection params
-        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given from pulse detection subsystem
+        -- Slow jordanov params
+        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
+        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
+        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Number of bits selected for the fraction part of the coefficient M_exp
+        -- Slow jordanov fixed point params
+        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3;  -- Bits of margin given to the delayed difference
+        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2;  -- Bits of margin given to the 1st accumulator
+        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1;  -- Bits of margin given to the 2nd accumulator
+        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17; -- Number of bits to shift the 2nd accumulator to the jordanov output (depends on k, M_exp)
+        -- Baseline moving average params
+        G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline
+        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
+        -- Common delay due pulse detection system
+        G_PULSE_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given to trap_system to account for the pulse detection latency
     );
     port (
         ------------------------------------------------------------------------
@@ -48,13 +50,13 @@ entity trap_subsystem is
         ------------------------------------------------------------------------
         -- Control Inputs
         ------------------------------------------------------------------------
-        DATA_I          : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- input data stream
-        BASELINE_TRIG_I : in std_logic;                                   -- baseline latch trigger
+        DATA_I          : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input data stream
+        BASELINE_TRIG_I : in std_logic;                                   -- Trigger to capture the baseline
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_FILTERED_O : out std_logic_vector(G_DATA_WIDTH downto 0); -- Trapezoidal output (signed)
-        ERROR_OFLOW_O   : out std_logic_vector(3 downto 0)             -- error status
+        DATA_FILTERED_O : out std_logic_vector(G_DATA_WIDTH downto 0); -- Filtered trapezoidal output (signed)
+        ERROR_OFLOW_O   : out std_logic_vector(3 downto 0)             -- Trapezoidal overflow error
     );
 end entity trap_subsystem;
 
@@ -75,10 +77,6 @@ architecture rtl of trap_subsystem is
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
     constant C_MOV_D_DELAY   : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
     constant C_PULSE_DELAY   : natural := 2 ** G_PULSE_DELAY_WIDTH;        -- Value of delay for both paths
-
-    -- Latency of filters
-    constant C_MOV_LATENCY  : natural := 2;
-    constant C_SKEW_LATENCY : natural := C_MOV_LATENCY;
 
     ----------------------------------------------------------------------------
     -- Types
@@ -134,6 +132,7 @@ begin
     -- Main sequential process
     ----------------------------------------------------------------------------
 
+    -- Generates necessary delays for slow jordanov
     delay_module_i : entity trap_filter.delay_module
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
@@ -167,6 +166,7 @@ begin
             DATA_MOV_D_O => data_mov_d
         );
 
+    -- Averages the filtered data for baseline substraction
     mov_avg_i : entity trap_filter.mov_avg_filter
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
@@ -192,6 +192,7 @@ begin
             ERROR_OFLOW_O   => error_oflow_mov
         );
 
+    -- filters input data to trapezoidal shape
     jord_i : entity trap_filter.jordanov_filter
         generic map(
             -- Jordanov parameters
@@ -223,16 +224,14 @@ begin
             -- Outputs
             ------------------------------------------------------------------------
             DATA_FILTERED_O => data_jord_filt,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
-            ERROR_OFLOW_O => error_oflow_jord
+            ERROR_OFLOW_O   => error_oflow_jord
         );
 
+    -- substracts the baseline from the jordanov filtered output
     baseline_i : entity trap_filter.baseline_restorer
         generic map(
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_LATENCY_SKEW => C_SKEW_LATENCY
+            G_LATENCY_SKEW => C_BASE_MOV_LATENCY
         )
         port map(
             ------------------------------------------------------------------------

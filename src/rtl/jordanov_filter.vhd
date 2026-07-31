@@ -8,7 +8,6 @@
 --  Description:
 --  Jordanov trapezoidal filter implemented for the pulse shaping transformation. 
 --  Designed for unsigned input and signed output with a latency of 6 cycles.
---  Filtered data is valid after: delay_cycles + data_n reg + 6 cycles + 2 cycles of delayed acc1_q1
 --
 --  Dependencies:
 --
@@ -22,8 +21,11 @@
 --    y[n]   = acc2[n] >> X bits                              (Normalization at output)
 -- 
 --  Parameter selection comments:
---  k -> 8 bits, should be 2^N (128 < k < 256)
---  m -> 8 bits, should be 2^N (100 < m < 256)
+--  k -> max 8 bits, recommended (128 < 2^k_width < 256)
+--  m -> max 8 bits, recommended (100 < 2^m_width < 256)
+--
+--  Dependencies:
+--  trap_filter_pkg.vhd, shift_register.vhd, delay_module.vhd,
 --==============================================================================
 
 library ieee;
@@ -35,17 +37,17 @@ use trap_filter.trap_filter_pkg.all;
 
 entity jordanov_filter is
     generic (
+        -- General parameters
+        G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Jordanov parameters
-        G_DATA_WIDTH   : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        G_K_RISE_WIDTH : natural range 2 to 8  := 8;  -- Width of delay needed for rising time (all bits -> '1' for multiple of 2^N)
-        -- Exponential decay
-        G_M_VALUE      : natural range 0 to 65535 := 39992; -- Width of decay exp factor (big "M_exp", 12 bits mag + 4 bits fraction)
-        G_M_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Width of decay exp factor for its fraction (big "M_exp")
+        G_K_RISE_WIDTH : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
+        G_M_VALUE      : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        G_M_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Number of bits selected for the fraction part of the coefficient M_exp
         -- Fixed point params
-        G_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Width of margin given to the delayed difference
-        G_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Width of margin given to the 1st accumulator
-        G_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Width of margin given to the 2nd accumulator
-        G_OUT_SHIFT        : natural range 0 to 24 := 1  -- Width of margin given to the 2nd accumulator
+        G_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Bits of margin given to the delayed difference
+        G_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Bits of margin given to the 1st accumulator
+        G_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Bits of margin given to the 2nd accumulator
+        G_OUT_SHIFT        : natural range 0 to 24 := 1  -- Number of bits to shift the 2nd accumulator to the jordanov output (depends on k, M_exp)
     );
     port (
         ------------------------------------------------------------------------
@@ -54,7 +56,7 @@ entity jordanov_filter is
         CLK_I   : in std_logic;
         RST_N_I : in std_logic;
         ------------------------------------------------------------------------
-        -- Control Inputs
+        -- Inputs
         ------------------------------------------------------------------------
         DATA_N_I  : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input data at sample N
         DATA_K_I  : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input delayed data at sample (N - k delay)
@@ -78,7 +80,7 @@ architecture rtl of jordanov_filter is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Data output sign bit and decay exp params
+    -- Data output width and coefficient of exponential decay
     constant C_DATA_O_SIGNED : natural := 1;
     constant C_M_MAG_WIDTH   : natural := 12;                                               -- Magnitude width (12 bits)
     constant C_M_WIDTH       : natural := C_M_MAG_WIDTH + G_M_FRAC_WIDTH + C_DATA_O_SIGNED; -- Width of M_exp (17 bits)

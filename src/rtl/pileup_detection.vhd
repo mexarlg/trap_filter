@@ -6,10 +6,10 @@
 --  Last Modified: 30/07/2026
 --
 --  Description:
---  Module that asserts valid flag if the current pulse is not affected by incoming pulses.
+--  Module that asserts a pulse is valid flag if the current pulse is not affected by pileup.
 --
 --  Dependencies:
---  none
+--  trap_filter_pkg.vhd
 --==============================================================================
 
 library ieee;
@@ -21,11 +21,11 @@ use trap_filter.trap_filter_pkg.all;
 
 entity pileup_detection is
     generic (
-        -- jordanov trapezoid parameters
+        -- slow jordanov trapezoid parameters for knowing timing of filtered pulse
         G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of trapezoid rising edge
         G_JORD_M_WIDTH : natural range 2 to 8 := 8; -- Width of trapezoid flat top
-        -- real trapezoidal guards
-        G_END_PULSE_GUARD : natural range 0 to 128 := 40 -- N of samples to assert later the end of the pulse
+        -- delay guard from end of pulse to increase margin of validity due pileup
+        G_END_PULSE_GUARD : natural range 0 to 128 := 40 -- N samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
     );
     port (
         ------------------------------------------------------------------------
@@ -41,7 +41,7 @@ entity pileup_detection is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_VALID_O : out std_logic -- Trigger of valid pulse
+        PULSE_VALID_O : out std_logic -- Trigger of valid filtered pulse
     );
 end entity pileup_detection;
 
@@ -55,10 +55,10 @@ architecture rtl of pileup_detection is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Need trapezoid size and its margin to know the total duration of pulse
-    constant C_RISE_DELAY      : natural := 2 ** G_JORD_K_WIDTH;                                 -- duration of trapezoid rise
-    constant C_FLAT_DELAY      : natural := 2 ** G_JORD_M_WIDTH;                                 -- duration of trapezoid top
-    constant C_END_PULSE_DEPTH : natural := 2 * C_RISE_DELAY + C_FLAT_DELAY + G_END_PULSE_GUARD; -- duration of trapezoid + end guard
+    -- Need trapezoid size and its margin to know the total duration of the slow filtered pulse
+    constant C_RISE_DELAY      : natural := 2 ** G_JORD_K_WIDTH;                                 -- duration of slow trapezoid rise
+    constant C_FLAT_DELAY      : natural := 2 ** G_JORD_M_WIDTH;                                 -- duration of slow trapezoid top
+    constant C_END_PULSE_DEPTH : natural := 2 * C_RISE_DELAY + C_FLAT_DELAY + G_END_PULSE_GUARD; -- duration of slow trapezoid + end guard
 
     ----------------------------------------------------------------------------
     -- Signals
@@ -67,7 +67,7 @@ architecture rtl of pileup_detection is
     -- output signal
     signal pulse_valid : std_logic;
 
-    -- cycles left of the last triggered window
+    -- cycles left of the last triggered window to know if the count is disrupted by other pulses
     signal cnt_end_pulse : natural range 0 to C_END_PULSE_DEPTH;
 
     -- a pulse is being processed

@@ -18,7 +18,7 @@
 --      data_mov_d = DATA_JORD_FILT_I delayed by d
 --
 --  Dependencies:
---  data fed sync with CLK_I. Validity handled externally.
+--  trap_filter_pkg.vhd, shift_register.vhd
 --==============================================================================
 
 library ieee;
@@ -30,17 +30,17 @@ use trap_filter.trap_filter_pkg.all;
 
 entity delay_module is
     generic (
-        G_DATA_WIDTH : natural range 4 to 16 := 14; -- Raw ADC data width (unsigned)
-        -- common delay
-        G_COMMON_DELAY_EN : natural range 0 to 1    := 0;
+        G_DATA_WIDTH : natural range 4 to 16 := 14; -- input data width (unsigned)
+        -- Enable and common delay
+        G_COMMON_DELAY_EN : natural range 0 to 1    := 0;  -- Enables a common delay
         G_COMMON_DELAY    : natural range 4 to 4096 := 16; -- Common delay (pulse detection)
-        -- jordanov
-        G_JORD_DELAY_EN : natural range 0 to 1    := 0;
+        -- Enable and jordanov specific delays
+        G_JORD_DELAY_EN : natural range 0 to 1    := 0;   -- Enables jordanov specific delays
         G_JORD_K_DELAY  : natural range 4 to 4096 := 64;  -- k  = 2^k_w
         G_JORD_L_DELAY  : natural range 4 to 4096 := 192; -- l  = k + m
         G_JORD_KL_DELAY : natural range 4 to 4096 := 256; -- kl = k + l
-        -- mov avg
-        G_MOV_DELAY_EN : natural range 0 to 1    := 0;
+        -- Enable and mov avg delay from jordanov data
+        G_MOV_DELAY_EN : natural range 0 to 1    := 0; -- Enables moving average specific delay
         G_MOV_D_DELAY  : natural range 4 to 4096 := 16 -- Moving average depth
     );
     port (
@@ -50,12 +50,12 @@ entity delay_module is
         CLK_I   : in std_logic;
         RST_N_I : in std_logic;
         ------------------------------------------------------------------------
-        -- Control Inputs
+        -- Inputs
         ------------------------------------------------------------------------
         DATA_I           : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Raw unsigned input
         DATA_JORD_FILT_I : in std_logic_vector(G_DATA_WIDTH downto 0);     -- Signed trapezoidal stream
         ------------------------------------------------------------------------
-        -- Delayed data outputs
+        -- Delayed Data Outputs
         ------------------------------------------------------------------------
         DATA_N_O     : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Pulse delayed input (to filters)
         DATA_K_O     : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- v[n-k]  (+ pulse delay)
@@ -76,10 +76,10 @@ architecture rtl of delay_module is
     ----------------------------------------------------------------------------
 
     -- delay values taking into account shift register latency
-    constant C_PULSE_DELAY   : natural := G_COMMON_DELAY - 1;                   -- 16      -> data_n at 17
-    constant C_JORD_DELAY_K  : natural := G_JORD_K_DELAY - 1;                   -- 63      -> data_k at 81 (k - n = 64)
-    constant C_JORD_DELAY_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;  -- 127     -> data_l at 209 (l - k = 128)
-    constant C_JORD_DELAY_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1; -- 63
+    constant C_PULSE_DELAY   : natural := G_COMMON_DELAY - 1;
+    constant C_JORD_DELAY_K  : natural := G_JORD_K_DELAY - 1;
+    constant C_JORD_DELAY_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;
+    constant C_JORD_DELAY_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1;
     constant C_MOV_DELAY_D   : natural := G_MOV_D_DELAY - 1;
 
     ----------------------------------------------------------------------------
@@ -98,6 +98,7 @@ begin
     ----------------------------------------------------------------------------
     -- Assertions
     ----------------------------------------------------------------------------
+
     assert (G_JORD_L_DELAY > G_JORD_K_DELAY + 1) and (G_JORD_KL_DELAY > G_JORD_L_DELAY + 1)
     report "delay_module: Jordanov tap spacing must exceed 1 cycle for chained segments"
         severity failure;
@@ -140,7 +141,7 @@ begin
     end generate g_common_dis;
 
     ----------------------------------------------------------------------------
-    -- Jordanov delay: data_n -> [k] -> k -> [l - k] -> l -> [kl - l] -> kl
+    -- Jordanov delays: data_n -> [k] -> [l - k] -> [kl - l]
     ----------------------------------------------------------------------------
 
     g_jord_en : if G_JORD_DELAY_EN = 1 generate

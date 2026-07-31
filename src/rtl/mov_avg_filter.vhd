@@ -8,20 +8,16 @@
 --  Description:
 --  Moving average filter implemented for the baseline reduction and the height extraction. 
 --  Designed for both unsigned and signed inputs with a latency of 2 cycles.
---  Filtered data is valid after: delay_cycles + 2 cycles (captured data at delay_cycles + 3 cycles)
---
---  Dependencies:
---  Delay module (DATA_D_VALID_I should be triggered just when all delay data fills 
---  so accumulator can access v_d at next cycle)
 --
 --  Moving average equations:
 -- 
 --    acc[n] = acc[n-1] + v[n] - v[n-d]     (running sum)
 --    y[n]   = acc[n] >> log2(d)            (normalization at output)
 -- 
---  Latency comments:
---  Latency (x[n] -> y[n]) = delay cycles + 2 latency cycle = 130 cycles (if delay of 128)
---  Latency (x[n] -> y[n] -> y_captured[n]) = delay cycles + 2 latency cycle + 1 reg cycle = 131 cycles (if delay of 128)
+--  Latency: (x[n] -> y[n]) = 2 cycles
+--
+--  Dependencies:
+--  trap_filter_pkg.vhd
 --==============================================================================
 
 library ieee;
@@ -33,10 +29,10 @@ use trap_filter.trap_filter_pkg.all;
 
 entity mov_avg_filter is
     generic (
-        G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
+        G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream
         G_DELAY_WIDTH     : natural range 0 to 8  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Width of margin given to the accumulator
-        G_DATA_I_SIGNED   : natural range 0 to 1  := 0   -- Data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_I_SIGNED
+        G_DATA_I_SIGNED   : natural range 0 to 1  := 0   -- Input data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_I_SIGNED
     );
     port (
         ------------------------------------------------------------------------
@@ -52,8 +48,8 @@ entity mov_avg_filter is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_FILTERED_O : out std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Output filtered data stream (delay cycles + 2 latency cycle)                                                   -- Indicates an output data has been latched
-        ERROR_OFLOW_O   : out std_logic                                                      -- Indicates an error: bit3 (general error), bit2 (type overflow), bit1 (type delay), bit0(type seu)
+        DATA_FILTERED_O : out std_logic_vector(G_DATA_WIDTH + G_DATA_I_SIGNED - 1 downto 0); -- Output filtered data stream
+        ERROR_OFLOW_O   : out std_logic                                                      -- Overflow error
     );
 end entity mov_avg_filter;
 
