@@ -83,6 +83,8 @@ set RTL_FILES [list \
     [file join $RTL_DIR "trig_gen.vhd"] \
     [file join $RTL_DIR "pileup_detection.vhd"] \
     [file join $RTL_DIR "trig_subsystem.vhd"] \
+    [file join $RTL_DIR "pulse_capture.vhd"] \
+    [file join $RTL_DIR "peak_subsystem.vhd"] \
     [file join $INTEG_DIR "top_trap_zedboard_test.vhd"] \
 ]
 

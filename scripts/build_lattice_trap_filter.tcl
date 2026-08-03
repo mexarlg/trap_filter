@@ -106,6 +106,8 @@ prj_add_source [file join $RTL_DIR "pulse_detection.vhd"]
 prj_add_source [file join $RTL_DIR "trig_gen.vhd"]
 prj_add_source [file join $RTL_DIR "pileup_detection.vhd"]
 prj_add_source [file join $RTL_DIR "trig_subsystem.vhd"]
+prj_add_source [file join $RTL_DIR "pulse_capture.vhd"]
+prj_add_source [file join $RTL_DIR "peak_subsystem.vhd"]
 prj_add_source [file join $RTL_DIR "trap_pulse_shaper_top.vhd"]
 
 #------------------------------------------------------------------------------

@@ -52,6 +52,9 @@ architecture rtl of top_trap_zedboard_test is
     -- Constants
     ----------------------------------------------------------------------------
 
+    -- width of data after trap_subsystem filter
+    constant C_DATA_FILTERED_WIDTH : natural := G_ADC_WIDTH + 1;
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -64,11 +67,11 @@ architecture rtl of top_trap_zedboard_test is
     ----------------------------------------------------------------------------
 
     -- Top output signals
-    signal data_filtered_o    : std_logic_vector(G_ADC_WIDTH downto 0); -- Filtered trapezoidal data output (signed)
-    signal error_trap_oflow_o : std_logic_vector(3 downto 0);           -- overflow errors in trap_subsystem
-    signal error_trig_oflow_o : std_logic_vector(3 downto 0);           -- overflow errors in trig_subsystem
-    signal trigger_o          : std_logic_vector(4 downto 0);           -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
-    signal pulse_valid_o      : std_logic;                              -- Trapezoidal pulse is valid (no pileup)
+    signal pulse_filtered_o : std_logic_vector(G_ADC_WIDTH downto 0); -- Filtered trapezoidal data output (signed)
+    signal pulse_captured_o : std_logic_vector(G_ADC_WIDTH downto 0); -- Captured amplitude of trapezoidal data (signed)
+    signal error_oflow_o    : std_logic_vector(8 downto 0);           -- Overflow error in trap/trig/peak subsystems
+    signal pulse_trigger_o  : std_logic_vector(4 downto 0);           -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
+    signal pulse_valid_o    : std_logic;                              -- Trapezoidal pulse is valid (no pileup, no delays empty, no overflows)
 
     -- rst_n / ce / data_i signals
     signal rst_n  : std_logic;
@@ -76,14 +79,24 @@ architecture rtl of top_trap_zedboard_test is
     signal ce_i   : std_logic;
     signal data_i : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
 
+    -- valid intermidiate signals
+    signal valid_pileup : std_logic; -- Valid indicating no pileups
+    signal valid_delay  : std_logic; -- Valid indicating delay lines have been filled
+
+    -- overflow intermidiate signals
+    signal error_trap_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trap_subsystem (b32 jord, b1 mov_avg, b0 baseline substraction)
+    signal error_trig_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trig_subsystem (b32 jord, b10 cfd)
+    signal error_peak_oflow : std_logic;                    -- Overflow errors in peak_subsystem (b0 mov_avg)
+
     -- Mark as debug for ILA
-    attribute mark_debug                       : string;
-    attribute mark_debug of ce_i               : signal is "true";
-    attribute mark_debug of data_i             : signal is "true";
-    attribute mark_debug of data_filtered_o    : signal is "true";
-    attribute mark_debug of error_trap_oflow_o : signal is "true";
-    attribute mark_debug of trigger_o          : signal is "true";
-    attribute mark_debug of pulse_valid_o      : signal is "true";
+    attribute mark_debug                     : string;
+    attribute mark_debug of data_i           : signal is "true";
+    attribute mark_debug of ce_i             : signal is "true";
+    attribute mark_debug of pulse_filtered_o : signal is "true";
+    attribute mark_debug of pulse_trigger_o  : signal is "true";
+    attribute mark_debug of pulse_captured_o : signal is "true";
+    attribute mark_debug of pulse_valid_o    : signal is "true";
+    attribute mark_debug of error_oflow_o    : signal is "true";
 
 begin
 
@@ -104,6 +117,14 @@ begin
 
     -- Button is active high, rst_n is active low
     rst_n <= not BTN_RST;
+
+    -- overflow error of trap/trig/peak subsystems
+    error_oflow_o(8 downto 5) <= error_trap_oflow;
+    error_oflow_o(4 downto 1) <= error_trig_oflow;
+    error_oflow_o(0)          <= error_peak_oflow;
+
+    -- temporal assertion for testing
+    valid_delay <= '1';
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -164,9 +185,9 @@ begin
             -- Inputs / Outputs
             ------------------------------------------------------------------------
             DATA_I        => data_i,
-            TRIGGER_O     => trigger_o,
-            PULSE_VALID_O => pulse_valid_o,
-            ERROR_OFLOW_O => error_trig_oflow_o
+            TRIGGER_O     => pulse_trigger_o,
+            PULSE_VALID_O => valid_pileup,
+            ERROR_OFLOW_O => error_trig_oflow
         );
 
     -- generates the filtered trapezoid signal
@@ -200,12 +221,44 @@ begin
             -- Inputs
             ------------------------------------------------------------------------
             DATA_I          => data_i,
-            BASELINE_TRIG_I => trigger_o(4),
+            BASELINE_TRIG_I => pulse_trigger_o(4),
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            data_filtered_o => data_filtered_o,
-            error_oflow_o   => error_trap_oflow_o
+            DATA_FILTERED_O => pulse_filtered_o,
+            error_oflow_o   => error_trap_oflow
+        );
+
+    -- captures and validates the filtered amplitude at the top
+    peak_ss_i : entity trap_filter.peak_subsystem
+        generic map(
+            -- General paramaters
+            G_DATA_WIDTH => C_DATA_FILTERED_WIDTH,
+            -- Peak moving average parameters
+            G_MOV_ENABLE          => C_PEAK_MOV_ENABLE,
+            G_MOV_D_WIDTH         => C_PEAK_MOV_D_WIDTH,
+            G_MOV_ACC_MARGIN_BITS => C_PEAK_MOV_ACC_MARGIN_BITS
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => rst_n,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            VALID_PILEUP_I => valid_pileup,
+            VALID_DELAY_I  => valid_delay,
+            ERROR_OFLOW_I  => error_trap_oflow & error_trig_oflow,
+            TRIG_CAPTURE_I => pulse_trigger_o(1),
+            DATA_I         => pulse_filtered_o,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            DATA_O        => pulse_captured_o,
+            VALID_O       => pulse_valid_o,
+            ERROR_OFLOW_O => error_peak_oflow
         );
 
 end architecture rtl;
