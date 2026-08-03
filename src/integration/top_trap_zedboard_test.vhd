@@ -123,9 +123,6 @@ begin
     error_oflow_o(4 downto 1) <= error_trig_oflow;
     error_oflow_o(0)          <= error_peak_oflow;
 
-    -- temporal assertion for testing
-    valid_delay <= '1';
-
     ----------------------------------------------------------------------------
     -- Main sequential process
     ----------------------------------------------------------------------------
@@ -259,6 +256,25 @@ begin
             DATA_O        => pulse_captured_o,
             VALID_O       => pulse_valid_o,
             ERROR_OFLOW_O => error_peak_oflow
+        );
+
+    -- tracks most critical delay pipeline to assert valid
+    valid_delay_i : entity trap_filter.delay_tracker
+        generic map(
+            -- Slow jordanov parameters
+            G_SLOW_JORD_K_WIDTH => G_SLOW_JORD_K_WIDTH,
+            G_SLOW_JORD_M_WIDTH => G_SLOW_JORD_M_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => rst_n,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            VALID_DELAY_O => valid_delay
         );
 
 end architecture rtl;
