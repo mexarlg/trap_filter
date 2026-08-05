@@ -38,9 +38,8 @@ architecture tb of tb_pulse_feed is
     signal tb_rst_n : std_logic := '0';
 
     -- tb signals of dut
-    signal tb_ce         : std_logic                                  := '0';
-    signal tb_data       : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
-    signal tb_data_valid : std_logic                                  := '0';
+    signal tb_ce   : std_logic                                  := '0';
+    signal tb_data : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
 begin
 
@@ -68,9 +67,8 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            CE_I         => tb_ce,
-            DATA_O       => tb_data,
-            DATA_VALID_O => tb_data_valid
+            CE_I   => tb_ce,
+            DATA_O => tb_data
         );
 
     ----------------------------------------------------------------------------

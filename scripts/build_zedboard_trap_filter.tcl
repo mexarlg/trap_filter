@@ -88,7 +88,7 @@ set RTL_FILES [list \
     [file join $RTL_DIR "bram_dp.vhd"] \
     [file join $RTL_DIR "pulse_logger.vhd"] \
     [file join $RTL_DIR "logger_subsystem.vhd"] \
-    [file join $RTL_DIR "delay_tracker.vhd"] \
+    [file join $RTL_DIR "valid_subsystem.vhd"] \
     [file join $INTEG_DIR "top_trap_zedboard_test.vhd"] \
 ]
 

@@ -6,7 +6,8 @@
 --  Last Modified:
 --
 --  Description:
---  Subsystem that ensures the accuracy and validity of the pulse amplitude.
+--  Subsystem that applies a moving average filter if required and captures 
+--  the pulse amplitude and its rise time from triggers.
 --
 --  Dependencies:
 --  trap_filter_pkg.vhd, shift_register.vhd, mov_avg_filter.vhd, pulse_capture.vhd
@@ -37,16 +38,12 @@ entity peak_subsystem is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        VALID_PILEUP_I : in std_logic;                                   -- Pulse is valid regarding pileup
-        VALID_DELAY_I  : in std_logic;                                   -- Pulse is valid regarding filled delays
-        ERROR_OFLOW_I  : in std_logic_vector(7 downto 0);                -- Overflow errors of trap/trig subsystems
         TRIG_CAPTURE_I : in std_logic;                                   -- Trigger to capture amplitude at middle of flat
         DATA_I         : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input (filtered) data
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
         DATA_O        : out std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Captured data amplitude at the middle of the top
-        VALID_O       : out std_logic;                                   -- Trigger that pulse is valid (pileup, delays, overflow)
         ERROR_OFLOW_O : out std_logic                                    -- Overflow flag for accumulator of moving average
     );
 end entity peak_subsystem;
@@ -69,8 +66,7 @@ architecture rtl of peak_subsystem is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal valid : std_logic;                                   -- pulse is valid
-    signal data  : std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- pulse amplitude latched
+    signal data : std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- pulse amplitude latched
 
     -- intermidiate signals
     signal error_oflow_mov : std_logic;                                   -- overflow flag from peak moving average
@@ -88,7 +84,6 @@ begin
     ----------------------------------------------------------------------------
 
     DATA_O        <= data;
-    VALID_O       <= valid;
     ERROR_OFLOW_O <= error_oflow_mov;
 
     ----------------------------------------------------------------------------
@@ -160,16 +155,12 @@ begin
                 ------------------------------------------------------------------------
                 -- Inputs
                 ------------------------------------------------------------------------
-                VALID_PILEUP_I => VALID_PILEUP_I,
-                VALID_DELAY_I  => VALID_DELAY_I,
-                ERROR_OFLOW_I  => ERROR_OFLOW_I & error_oflow_mov,
                 TRIG_CAPTURE_I => TRIG_CAPTURE_I,
                 DATA_I         => data_mov_filt,
                 ------------------------------------------------------------------------
                 -- Outputs
                 ------------------------------------------------------------------------
-                DATA_O  => data,
-                VALID_O => valid
+                DATA_O => data
             );
 
     end generate g_enable;
@@ -194,16 +185,12 @@ begin
                 ------------------------------------------------------------------------
                 -- Inputs
                 ------------------------------------------------------------------------
-                VALID_PILEUP_I => VALID_PILEUP_I,
-                VALID_DELAY_I  => VALID_DELAY_I,
-                ERROR_OFLOW_I  => ERROR_OFLOW_I & error_oflow_mov,
                 TRIG_CAPTURE_I => TRIG_CAPTURE_I,
                 DATA_I         => DATA_I,
                 ------------------------------------------------------------------------
                 -- Outputs
                 ------------------------------------------------------------------------
-                DATA_O  => data,
-                VALID_O => valid
+                DATA_O => data
             );
 
     end generate g_disable;

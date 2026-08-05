@@ -43,8 +43,7 @@ entity pulse_feed is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_O       : out std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-        DATA_VALID_O : out std_logic
+        DATA_O : out std_logic_vector(G_DATA_WIDTH - 1 downto 0)
     );
 end entity pulse_feed;
 
@@ -76,8 +75,7 @@ architecture rtl of pulse_feed is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal data       : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal data_valid : std_logic;
+    signal data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
     -- intermidiate signals (choose pulse data from pkg constants)
     signal rom_pulse : mem_t(0 to C_MEM_DEPTH)(G_DATA_WIDTH - 1 downto 0) := C_INIT_PULSE_MULT;
@@ -93,8 +91,7 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    DATA_O       <= data;
-    DATA_VALID_O <= data_valid;
+    DATA_O <= data;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
@@ -133,15 +130,5 @@ begin
             end if;
         end if;
     end process p_feed;
-
-    -- ff
-    p_valid : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            data_valid <= '0';
-        elsif rising_edge(CLK_I) then
-            data_valid <= CE_I;
-        end if;
-    end process p_valid;
 
 end architecture rtl;

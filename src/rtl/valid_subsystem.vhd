@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        delay_tracker.vhd
+--  Module:        valid_subsystem.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       03/08/2026
@@ -19,7 +19,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity delay_tracker is
+entity valid_subsystem is
     generic (
         -- Slow jordanov trapezoid parameters
         G_SLOW_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of slow filtered trapezoid rising edge
@@ -32,13 +32,18 @@ entity delay_tracker is
         CLK_I   : in std_logic;
         RST_N_I : in std_logic;
         ------------------------------------------------------------------------
+        -- Inputs
+        ------------------------------------------------------------------------
+        PULSE_CLEAN_I : in std_logic;                    -- Pulse is valid regarding pileup
+        ERROR_OFLOW_I : in std_logic_vector(8 downto 0); -- Overflow errors of trap/trig/peak subsystems
+        ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        VALID_DELAY_O : out std_logic -- Valid signal for delays
+        VALID_O : out std_logic -- Trigger that pulse is valid (pileup, delays, overflow)
     );
-end entity delay_tracker;
+end entity valid_subsystem;
 
-architecture rtl of delay_tracker is
+architecture rtl of valid_subsystem is
 
     ----------------------------------------------------------------------------
     -- Functions
@@ -58,17 +63,21 @@ architecture rtl of delay_tracker is
     constant C_CNT_WIDTH : natural                                    := 10;                                                          -- maximum possible width assumming both k and m as 8 bits width
     constant C_CNT_MAX   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_JORD_KL_DELAY, C_CNT_WIDTH)); -- value of max delay in cnt width
     constant C_CNT_ONE   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_CNT_WIDTH));               -- value of 1 in cnt width
-    constant C_CNT_ZERO  : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := (others => '0');                                             -- value of 0 in cnt width
+
+    -- state when no overflow error exists
+    constant C_OFLOW_NO_ERROR : std_logic_vector(8 downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
     -- Signals
     ----------------------------------------------------------------------------
 
     -- Output signals
-    signal valid_delay : std_logic;
+    signal valid : std_logic;
 
-    -- counter of maximum delay
-    signal cnt_delay : std_logic_vector(C_CNT_WIDTH - 1 downto 0);
+    -- intermidiate signals
+    signal cnt_delay    : std_logic_vector(C_CNT_WIDTH - 1 downto 0); -- counter of maximum delay
+    signal delays_ready : std_logic;                                  -- most critical (longest) delay pipeline filled
+    signal overflow     : std_logic;                                  -- no overflow from rest of subsystems
 
 begin
 
@@ -80,11 +89,18 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    VALID_DELAY_O <= valid_delay;
+    VALID_O <= valid;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
     ----------------------------------------------------------------------------
+
+    -- asserts data is not corrupted by overflow
+    overflow <= '0' when (ERROR_OFLOW_I = C_OFLOW_NO_ERROR) else
+        '1';
+
+    -- valid if there is no pileup, delays are filled, and there is no overflow
+    valid <= PULSE_CLEAN_I and delays_ready and not overflow;
 
     ----------------------------------------------------------------------------
     -- Main Sequential Processes
@@ -94,7 +110,7 @@ begin
     p_cnt : process (RST_N_I, CLK_I)
     begin
         if RST_N_I = '0' then
-            cnt_delay <= C_CNT_ZERO;
+            cnt_delay <= (others => '0');
         elsif rising_edge(CLK_I) then
             if (unsigned(cnt_delay) < unsigned(C_CNT_MAX)) then
                 cnt_delay <= std_logic_vector(unsigned(cnt_delay) + unsigned(C_CNT_ONE));
@@ -106,10 +122,10 @@ begin
     p_valid : process (RST_N_I, CLK_I)
     begin
         if RST_N_I = '0' then
-            valid_delay <= '0';
+            delays_ready <= '0';
         elsif rising_edge(CLK_I) then
             if (cnt_delay = C_CNT_MAX) then
-                valid_delay <= '1';
+                delays_ready <= '1';
             end if;
         end if;
     end process p_valid;

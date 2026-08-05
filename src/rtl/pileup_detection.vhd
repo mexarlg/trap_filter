@@ -41,7 +41,7 @@ entity pileup_detection is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_VALID_O : out std_logic -- Trigger of valid filtered pulse
+        PULSE_CLEAN_O : out std_logic -- Trigger of valid filtered pulse
     );
 end entity pileup_detection;
 
@@ -65,7 +65,7 @@ architecture rtl of pileup_detection is
     ----------------------------------------------------------------------------
 
     -- output signal
-    signal pulse_valid : std_logic;
+    signal pulse_clean : std_logic;
 
     -- cycles left of the last triggered window to know if the count is disrupted by other pulses
     signal cnt_end_pulse : natural range 0 to C_END_PULSE_DEPTH;
@@ -86,7 +86,7 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    PULSE_VALID_O <= pulse_valid;
+    PULSE_CLEAN_O <= pulse_clean;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
@@ -97,7 +97,7 @@ begin
         '1';
 
     -- valid conditions
-    pulse_valid <= PULSE_END_I and not pulse_ongoing and not pileup;
+    pulse_clean <= PULSE_END_I and not pulse_ongoing and not pileup;
 
     ----------------------------------------------------------------------------
     -- Main Sequential Processes

@@ -83,9 +83,8 @@ architecture rtl of top_trap_zedboard_test is
     signal ce_i   : std_logic;
     signal ce_vio : std_logic_vector(0 downto 0);
 
-    -- valid intermidiate signals
-    signal valid_pileup : std_logic; -- Valid indicating no pileups
-    signal valid_delay  : std_logic; -- Valid indicating delay lines have been filled
+    -- pulse completed without pileup
+    signal pulse_clean : std_logic; -- Completed pulse with no pileups
 
     -- overflow intermidiate signals
     signal error_trap_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trap_subsystem (b32 jord, b1 mov_avg, b0 baseline substraction)
@@ -167,9 +166,8 @@ begin
             ------------------------------------------------------------------------
             -- Inputs / Outputs
             ------------------------------------------------------------------------
-            CE_I         => ce_i,
-            DATA_O       => data_i,
-            DATA_VALID_O => open
+            CE_I   => ce_i,
+            DATA_O => data_i
         );
 
     -- issues triggers at different stages of the pulse
@@ -196,7 +194,7 @@ begin
             ------------------------------------------------------------------------
             DATA_I        => data_i,
             TRIGGER_O     => pulse_triggers_o,
-            PULSE_VALID_O => valid_pileup,
+            PULSE_CLEAN_O => pulse_clean,
             ERROR_OFLOW_O => error_trig_oflow
         );
 
@@ -258,21 +256,17 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            VALID_PILEUP_I => valid_pileup,
-            VALID_DELAY_I  => valid_delay,
-            ERROR_OFLOW_I  => error_trap_oflow & error_trig_oflow,
             TRIG_CAPTURE_I => pulse_triggers_o(1),
             DATA_I         => trap_data_o,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
             DATA_O        => pulse_amplitude_o,
-            VALID_O       => pulse_valid_o,
             ERROR_OFLOW_O => error_peak_oflow
         );
 
     -- tracks most critical delay pipeline to assert valid
-    valid_delay_i : entity trap_filter.delay_tracker
+    valid_ss_i : entity trap_filter.valid_subsystem
         generic map(
             -- Slow jordanov parameters
             G_SLOW_JORD_K_WIDTH => G_SLOW_JORD_K_WIDTH,
@@ -285,9 +279,14 @@ begin
             CLK_I   => CLK_I,
             RST_N_I => rst_n,
             ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            PULSE_CLEAN_I => pulse_clean,
+            ERROR_OFLOW_I => overflow_flags_o,
+            ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            VALID_DELAY_O => valid_delay
+            VALID_O => pulse_valid_o
         );
 
     -- logs the captured data of a pulse

@@ -69,9 +69,8 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            CE_I         => tb_ce,
-            DATA_O       => tb_data_i,
-            DATA_VALID_O => open
+            CE_I   => tb_ce,
+            DATA_O => tb_data_i
         );
 
     dut : entity trap_filter.trig_subsystem
@@ -92,7 +91,7 @@ begin
             ------------------------------------------------------------------------
             DATA_I        => tb_data_i,
             TRIGGER_O     => tb_trigger,
-            PULSE_VALID_O => tb_pulse_valid,
+            PULSE_CLEAN_O => tb_pulse_valid,
             ERROR_OFLOW_O => tb_error_oflow
         );
 

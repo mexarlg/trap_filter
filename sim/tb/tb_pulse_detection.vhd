@@ -68,9 +68,8 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            CE_I         => tb_ce,
-            DATA_O       => tb_data_i,
-            DATA_VALID_O => open
+            CE_I   => tb_ce,
+            DATA_O => tb_data_i
         );
 
     dut : entity trap_filter.pulse_detection

@@ -47,7 +47,7 @@ entity trig_subsystem is
         -- Outputs
         ------------------------------------------------------------------------
         TRIGGER_O     : out std_logic_vector(4 downto 0); -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-        PULSE_VALID_O : out std_logic;                    -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
+        PULSE_CLEAN_O : out std_logic;                    -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
         ERROR_OFLOW_O : out std_logic_vector(3 downto 0)  -- Overflow error status of trig_subsystem
     );
 end entity trig_subsystem;
@@ -73,7 +73,7 @@ architecture rtl of trig_subsystem is
     -- intermidiate signals
     signal trigger     : std_logic_vector(4 downto 0); -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
     signal pulse_trig  : std_logic;                    -- trigger that a pulse has been detected
-    signal pulse_valid : std_logic;                    -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
+    signal pulse_clean : std_logic;                    -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
 
     -- output signals
     signal error_oflow : std_logic_vector(3 downto 0); -- overflow error of trig_subsystem
@@ -89,7 +89,7 @@ begin
     ----------------------------------------------------------------------------
 
     TRIGGER_O     <= trigger;
-    PULSE_VALID_O <= pulse_valid;
+    PULSE_CLEAN_O <= pulse_clean;
     ERROR_OFLOW_O <= error_oflow;
 
     ----------------------------------------------------------------------------
@@ -179,7 +179,7 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_VALID_O => pulse_valid
+            PULSE_CLEAN_O => pulse_clean
         );
 
 end architecture rtl;
