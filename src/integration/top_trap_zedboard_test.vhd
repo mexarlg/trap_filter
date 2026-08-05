@@ -22,7 +22,7 @@ use trap_filter.trap_filter_pkg.all;
 entity top_trap_zedboard_test is
     generic (
         -- Input data parameters
-        G_ADC_WIDTH : natural range 8 to 16 := 14; -- Width of the incoming data stream from the adc
+        G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
         G_SLOW_JORD_K_WIDTH        : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
         G_SLOW_JORD_M_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
@@ -67,17 +67,21 @@ architecture rtl of top_trap_zedboard_test is
     ----------------------------------------------------------------------------
 
     -- Top output signals
-    signal pulse_filtered_o : std_logic_vector(G_ADC_WIDTH downto 0); -- Filtered trapezoidal data output (signed)
-    signal pulse_captured_o : std_logic_vector(G_ADC_WIDTH downto 0); -- Captured amplitude of trapezoidal data (signed)
-    signal error_oflow_o    : std_logic_vector(8 downto 0);           -- Overflow error in trap/trig/peak subsystems
-    signal pulse_trigger_o  : std_logic_vector(4 downto 0);           -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
-    signal pulse_valid_o    : std_logic;                              -- Trapezoidal pulse is valid (no pileup, no delays empty, no overflows)
+    signal trap_data_o       : std_logic_vector(G_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
+    signal pulse_amplitude_o : std_logic_vector(G_ADC_WIDTH downto 0);               -- Captured amplitude of trapezoidal data (signed)
+    signal pulse_t_rise_o    : std_logic_vector(C_LOG_T_RISE_WIDTH - 1 downto 0);    -- Captured rise time of original pulse
+    signal pulse_triggers_o  : std_logic_vector(4 downto 0);                         -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
+    signal pulse_valid_o     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal time_cnt_o        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal overflow_flags_o  : std_logic_vector(8 downto 0);                         -- Overflow errors in trap/trig/peak subsystems
 
-    -- rst_n / ce / data_i signals
-    signal rst_n  : std_logic;
-    signal ce_vio : std_logic_vector(0 downto 0);
-    signal ce_i   : std_logic;
+    -- input pulse data
     signal data_i : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
+
+    -- control signals
+    signal rst_n  : std_logic;
+    signal ce_i   : std_logic;
+    signal ce_vio : std_logic_vector(0 downto 0);
 
     -- valid intermidiate signals
     signal valid_pileup : std_logic; -- Valid indicating no pileups
@@ -88,15 +92,24 @@ architecture rtl of top_trap_zedboard_test is
     signal error_trig_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trig_subsystem (b32 jord, b10 cfd)
     signal error_peak_oflow : std_logic;                    -- Overflow errors in peak_subsystem (b0 mov_avg)
 
+    -- bram interconnection signals
+    signal bram_en         : std_logic;                                            -- Enable required
+    signal bram_rw         : std_logic;                                            -- Write or read required operation
+    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
+    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
+    signal bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
+
     -- Mark as debug for ILA
-    attribute mark_debug                     : string;
-    attribute mark_debug of data_i           : signal is "true";
-    attribute mark_debug of ce_i             : signal is "true";
-    attribute mark_debug of pulse_filtered_o : signal is "true";
-    attribute mark_debug of pulse_trigger_o  : signal is "true";
-    attribute mark_debug of pulse_captured_o : signal is "true";
-    attribute mark_debug of pulse_valid_o    : signal is "true";
-    attribute mark_debug of error_oflow_o    : signal is "true";
+    attribute mark_debug                      : string;
+    attribute mark_debug of ce_i              : signal is "true";
+    attribute mark_debug of data_i            : signal is "true";
+    attribute mark_debug of trap_data_o       : signal is "true";
+    attribute mark_debug of pulse_triggers_o  : signal is "true";
+    attribute mark_debug of pulse_amplitude_o : signal is "true";
+    attribute mark_debug of pulse_valid_o     : signal is "true";
+    attribute mark_debug of time_cnt_o        : signal is "true";
+    attribute mark_debug of bram_pulse_data   : signal is "true";
+    attribute mark_debug of bram_time_data    : signal is "true";
 
 begin
 
@@ -119,9 +132,9 @@ begin
     rst_n <= not BTN_RST;
 
     -- overflow error of trap/trig/peak subsystems
-    error_oflow_o(8 downto 5) <= error_trap_oflow;
-    error_oflow_o(4 downto 1) <= error_trig_oflow;
-    error_oflow_o(0)          <= error_peak_oflow;
+    overflow_flags_o(8 downto 5) <= error_trap_oflow;
+    overflow_flags_o(4 downto 1) <= error_trig_oflow;
+    overflow_flags_o(0)          <= error_peak_oflow;
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -182,7 +195,7 @@ begin
             -- Inputs / Outputs
             ------------------------------------------------------------------------
             DATA_I        => data_i,
-            TRIGGER_O     => pulse_trigger_o,
+            TRIGGER_O     => pulse_triggers_o,
             PULSE_VALID_O => valid_pileup,
             ERROR_OFLOW_O => error_trig_oflow
         );
@@ -218,11 +231,11 @@ begin
             -- Inputs
             ------------------------------------------------------------------------
             DATA_I          => data_i,
-            BASELINE_TRIG_I => pulse_trigger_o(4),
+            BASELINE_TRIG_I => pulse_triggers_o(4),
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_FILTERED_O => pulse_filtered_o,
+            DATA_FILTERED_O => trap_data_o,
             error_oflow_o   => error_trap_oflow
         );
 
@@ -248,12 +261,12 @@ begin
             VALID_PILEUP_I => valid_pileup,
             VALID_DELAY_I  => valid_delay,
             ERROR_OFLOW_I  => error_trap_oflow & error_trig_oflow,
-            TRIG_CAPTURE_I => pulse_trigger_o(1),
-            DATA_I         => pulse_filtered_o,
+            TRIG_CAPTURE_I => pulse_triggers_o(1),
+            DATA_I         => trap_data_o,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_O        => pulse_captured_o,
+            DATA_O        => pulse_amplitude_o,
             VALID_O       => pulse_valid_o,
             ERROR_OFLOW_O => error_peak_oflow
         );
@@ -275,6 +288,45 @@ begin
             -- Outputs
             ------------------------------------------------------------------------
             VALID_DELAY_O => valid_delay
+        );
+
+    -- logs the captured data of a pulse
+    logger_ss_i : entity trap_filter.logger_subsystem
+        generic map(
+            -- Memory parameters
+            G_BRAM_ADDR_WIDTH => C_LOG_ADDR_WIDTH,
+            G_BRAM_DATA_WIDTH => C_LOG_DATA_WIDTH,
+            -- Pulse parameters
+            G_PULSE_WIDTH  => C_DATA_FILTERED_WIDTH,
+            G_T_RISE_WIDTH => C_LOG_T_RISE_WIDTH,
+            -- Timestamp parameters
+            G_TIMESTAMP_EN    => C_LOG_TIMESTAMP_EN,
+            G_TIMESTAMP_WIDTH => C_LOG_TIMESTAMP_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => rst_n,
+            ------------------------------------------------------------------------
+            -- Pulse inputs
+            ------------------------------------------------------------------------
+            PULSE_VALID_I    => pulse_valid_o,
+            PULSE_CAPTURED_I => pulse_amplitude_o,
+            PULSE_T_RISE_I   => pulse_t_rise_o,
+            ------------------------------------------------------------------------
+            -- Memory inputs
+            ------------------------------------------------------------------------
+            BRAM_B_EN_I   => bram_en,
+            BRAM_B_RW_I   => bram_rw,
+            BRAM_B_ADDR_I => bram_addr,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            BRAM_B_PULSE_DATA_O => bram_pulse_data,
+            BRAM_B_TIME_DATA_O  => bram_time_data,
+            TIME_CNT_O          => time_cnt_o
         );
 
 end architecture rtl;

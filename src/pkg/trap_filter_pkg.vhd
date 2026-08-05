@@ -91,6 +91,27 @@ package trap_filter_pkg is
     constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the peak
 
     ----------------------------------------------------------------------------
+    -- Pulse Logger Parameters
+    ----------------------------------------------------------------------------
+
+    -- configurable (width of log addresses and bit allocation of log data)
+    constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = depth = 2^ADDR_WIDTH)
+    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp 
+    constant C_LOG_TIMESTAMP_WIDTH : natural range 28 to 32 := 32; -- Width of timestamp (counter from rst_n deassertion)
+    constant C_LOG_T_RISE_WIDTH    : natural range 8 to 12  := 12; -- Width of rise time
+
+    -- Fixed (Max allowable widths for pulse logger)
+    constant C_LOG_DATA_WIDTH       : natural := 32; -- Width of a single pulse log
+    constant C_LOG_MAX_AMP_WIDTH    : natural := 16; -- Maximum width of the amplitude for bit preallocation (+1 of max adc_width)
+    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12; -- Maximum width of the rise time for bit preallocation
+
+    -- Fixed (limit bits of amplitude and rise time inside a pulse log)
+    constant C_LOG_AMP_HI    : natural := C_LOG_DATA_WIDTH - 1;                   -- Highest bit of amplitude in log
+    constant C_LOG_AMP_LO    : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH; -- Lowest bit of amplitude in log
+    constant C_LOG_T_RISE_HI : natural := C_LOG_MAX_T_RISE_WIDTH - 1;             -- Highest bit of rise time in log
+    constant C_LOG_T_RISE_LO : natural := 0;                                      -- Lowest bit of amplitude in log
+
+    ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
 

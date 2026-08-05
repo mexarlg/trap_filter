@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Página-1" id="1ZYsEpgyhqWnKlx0Nifp">
-    <mxGraphModel dx="2360" dy="1592" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="2435" dy="1448" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -102,7 +102,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;pulse_capture&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(Pulse data)&lt;/span&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;pulse_capture&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="952" y="326" as="geometry" />
         </mxCell>
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-26" edge="1" parent="1" source="_Hpqdj1wiJ2XXkeTTI4J-30" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" value="">
@@ -117,7 +117,7 @@
             <mxPoint x="-83" y="248" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-28" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;log_pulse_mem&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(x1 DP BRAM)&lt;/span&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-28" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;bram_dp&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="859" y="6" as="geometry" />
         </mxCell>
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-29" edge="1" parent="1" source="_Hpqdj1wiJ2XXkeTTI4J-45" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=2;" value="">
@@ -183,7 +183,7 @@
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-44" edge="1" parent="1" source="_Hpqdj1wiJ2XXkeTTI4J-45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="_Hpqdj1wiJ2XXkeTTI4J-28">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;div&gt;&lt;b&gt;data_formatter&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(Pulse log)&lt;/span&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;b&gt;pulse_logger&lt;/b&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="1020" y="6" as="geometry" />
         </mxCell>
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-46" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="pulse_filtered: yn (15 bit signed)" vertex="1">
@@ -192,7 +192,7 @@
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-47" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=13;" value="&lt;font style=&quot;color: rgb(137, 105, 153);&quot;&gt;&lt;b&gt;trap_subsystem&lt;/b&gt;&lt;/font&gt;" vertex="1">
           <mxGeometry height="30" width="135" x="462.5" y="-36" as="geometry" />
         </mxCell>
-        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-48" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=13;" value="&lt;font style=&quot;color: rgb(137, 105, 153);&quot;&gt;&lt;b&gt;packer_subsystem&lt;/b&gt;&lt;/font&gt;" vertex="1">
+        <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-48" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=13;" value="&lt;font style=&quot;color: rgb(137, 105, 153);&quot;&gt;&lt;b&gt;logger_subsystem&lt;/b&gt;&lt;/font&gt;" vertex="1">
           <mxGeometry height="16" width="112.5" x="938.75" y="-30" as="geometry" />
         </mxCell>
         <mxCell id="_Hpqdj1wiJ2XXkeTTI4J-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=13;" value="&lt;font style=&quot;color: rgb(137, 105, 153);&quot;&gt;&lt;b&gt;peak_subsystem&lt;/b&gt;&lt;/font&gt;" vertex="1">
