@@ -44,17 +44,19 @@ entity logger_subsystem is
         PULSE_CAPTURED_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
         PULSE_T_RISE_I   : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
         ------------------------------------------------------------------------
-        -- Memory inputs
+        -- BRAM Port B
         ------------------------------------------------------------------------
-        BRAM_B_EN_I   : in std_logic;                                        -- Port B enable
-        BRAM_B_RW_I   : in std_logic;                                        -- Port B read/write
-        BRAM_B_ADDR_I : in std_logic_vector(G_BRAM_ADDR_WIDTH - 1 downto 0); -- Port B address
+        BRAM_B_EN_I         : in std_logic;                                         -- Port B enable
+        BRAM_B_RW_I         : in std_logic;                                         -- Port B read/write
+        BRAM_B_ADDR_I       : in std_logic_vector(G_BRAM_ADDR_WIDTH - 1 downto 0);  -- Port B address
+        BRAM_B_PULSE_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port B read data
+        BRAM_B_TIME_DATA_O  : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port B read data
         ------------------------------------------------------------------------
         -- Memory Outputs
         ------------------------------------------------------------------------
-        BRAM_B_PULSE_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port B read data
-        BRAM_B_TIME_DATA_O  : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port B read data
-        TIME_CNT_O          : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp counter
+        PULSE_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port A write data
+        TIME_DATA_O  : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port A write data
+        TIME_CNT_O   : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp stream
     );
 end entity logger_subsystem;
 
@@ -101,6 +103,8 @@ begin
 
     BRAM_B_PULSE_DATA_O <= bram_b_pulse_data_rd;
     BRAM_B_TIME_DATA_O  <= bram_b_timestamp_data_rd;
+    TIME_DATA_O         <= bram_a_timestamp_data_wr;
+    PULSE_DATA_O        <= bram_a_pulse_data_wr;
     TIME_CNT_O          <= timestamp_cnt;
 
     ----------------------------------------------------------------------------
@@ -141,14 +145,17 @@ begin
             PULSE_CAPTURED_I => PULSE_CAPTURED_I,
             PULSE_T_RISE_I   => PULSE_T_RISE_I,
             ------------------------------------------------------------------------
-            -- Outputs
+            -- BRAM Port A (pulse_logger writes)
             ------------------------------------------------------------------------
             BRAM_EN_O             => bram_a_en,
             BRAM_RW_O             => bram_a_rw,
             BRAM_ADDR_O           => bram_a_addr,
             BRAM_PULSE_DATA_O     => bram_a_pulse_data_wr,
             BRAM_TIMESTAMP_DATA_O => bram_a_timestamp_data_wr,
-            TIMESTAMP_CNT_O       => timestamp_cnt
+            ------------------------------------------------------------------------
+            -- Timestamp stream
+            ------------------------------------------------------------------------
+            TIMESTAMP_CNT_O => timestamp_cnt
         );
 
     -- Dual Port BRAM for pulse data logger

@@ -63,7 +63,7 @@ architecture rtl of top_trap_zedboard_test is
     for u_vio : vio_trap use entity xil_defaultlib.vio_trap;
 
     ----------------------------------------------------------------------------
-    -- Signals
+    -- Output Signals
     ----------------------------------------------------------------------------
 
     -- Top output signals
@@ -72,8 +72,14 @@ architecture rtl of top_trap_zedboard_test is
     signal pulse_t_rise_o    : std_logic_vector(C_LOG_T_RISE_WIDTH - 1 downto 0);    -- Captured rise time of original pulse
     signal pulse_triggers_o  : std_logic_vector(4 downto 0);                         -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
     signal pulse_valid_o     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
-    signal time_cnt_o        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal overflow_flags_o  : std_logic_vector(8 downto 0);                         -- Overflow errors in trap/trig/peak subsystems
+    signal log_pulse_o       : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- written pulse data from pulse_logger
+    signal log_time_o        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
+    signal time_cnt_o        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+
+    ----------------------------------------------------------------------------
+    -- Input Signals
+    ----------------------------------------------------------------------------
 
     -- input pulse data
     signal data_i : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
@@ -83,6 +89,21 @@ architecture rtl of top_trap_zedboard_test is
     signal ce_i   : std_logic;
     signal ce_vio : std_logic_vector(0 downto 0);
 
+    -- port B bram external interconnection signals
+    signal bram_en         : std_logic;                                            -- Enable required
+    signal bram_rw         : std_logic;                                            -- Write or read required operation
+    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
+    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
+    signal bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
+
+    ----------------------------------------------------------------------------
+    -- Internal Signals
+    ----------------------------------------------------------------------------
+
+    -- triggers at stages of the pulse
+    signal trig_baseline   : std_logic; -- trigger to capture baseline
+    signal trig_top_center : std_logic; -- trigger to capture amplitude
+
     -- pulse completed without pileup
     signal pulse_clean : std_logic; -- Completed pulse with no pileups
 
@@ -90,13 +111,6 @@ architecture rtl of top_trap_zedboard_test is
     signal error_trap_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trap_subsystem (b32 jord, b1 mov_avg, b0 baseline substraction)
     signal error_trig_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trig_subsystem (b32 jord, b10 cfd)
     signal error_peak_oflow : std_logic;                    -- Overflow errors in peak_subsystem (b0 mov_avg)
-
-    -- bram interconnection signals
-    signal bram_en         : std_logic;                                            -- Enable required
-    signal bram_rw         : std_logic;                                            -- Write or read required operation
-    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
-    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
-    signal bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
 
     -- Mark as debug for ILA
     attribute mark_debug                      : string;
@@ -106,9 +120,8 @@ architecture rtl of top_trap_zedboard_test is
     attribute mark_debug of pulse_triggers_o  : signal is "true";
     attribute mark_debug of pulse_amplitude_o : signal is "true";
     attribute mark_debug of pulse_valid_o     : signal is "true";
-    attribute mark_debug of time_cnt_o        : signal is "true";
-    attribute mark_debug of bram_pulse_data   : signal is "true";
-    attribute mark_debug of bram_time_data    : signal is "true";
+    attribute mark_debug of log_pulse_o       : signal is "true";
+    attribute mark_debug of log_time_o        : signal is "true";
 
 begin
 
@@ -124,16 +137,20 @@ begin
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
-    -- Internal ce
+    -- internal ce
     ce_i <= ce_vio(0);
 
-    -- Button is active high, rst_n is active low
+    -- button is active high, rst_n is active low
     rst_n <= not BTN_RST;
 
     -- overflow error of trap/trig/peak subsystems
     overflow_flags_o(8 downto 5) <= error_trap_oflow;
     overflow_flags_o(4 downto 1) <= error_trig_oflow;
     overflow_flags_o(0)          <= error_peak_oflow;
+
+    -- triggers
+    pulse_triggers_o(4) <= trig_baseline;
+    pulse_triggers_o(1) <= trig_top_center;
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -229,7 +246,7 @@ begin
             -- Inputs
             ------------------------------------------------------------------------
             DATA_I          => data_i,
-            BASELINE_TRIG_I => pulse_triggers_o(4),
+            BASELINE_TRIG_I => trig_baseline,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
@@ -256,7 +273,7 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            TRIG_CAPTURE_I => pulse_triggers_o(1),
+            TRIG_CAPTURE_I => trig_top_center,
             DATA_I         => trap_data_o,
             ------------------------------------------------------------------------
             -- Outputs
@@ -265,10 +282,10 @@ begin
             ERROR_OFLOW_O => error_peak_oflow
         );
 
-    -- tracks most critical delay pipeline to assert valid
+    -- asserts validity of a pulse if all conditions are met
     valid_ss_i : entity trap_filter.valid_subsystem
         generic map(
-            -- Slow jordanov parameters
+            -- Slow jordanov parameters for timing of delays
             G_SLOW_JORD_K_WIDTH => G_SLOW_JORD_K_WIDTH,
             G_SLOW_JORD_M_WIDTH => G_SLOW_JORD_M_WIDTH
         )
@@ -309,23 +326,25 @@ begin
             CLK_I   => CLK_I,
             RST_N_I => rst_n,
             ------------------------------------------------------------------------
-            -- Pulse inputs
+            -- Pulse log inputs
             ------------------------------------------------------------------------
             PULSE_VALID_I    => pulse_valid_o,
             PULSE_CAPTURED_I => pulse_amplitude_o,
             PULSE_T_RISE_I   => pulse_t_rise_o,
             ------------------------------------------------------------------------
-            -- Memory inputs
+            -- Bram Port B external read
             ------------------------------------------------------------------------
-            BRAM_B_EN_I   => bram_en,
-            BRAM_B_RW_I   => bram_rw,
-            BRAM_B_ADDR_I => bram_addr,
-            ------------------------------------------------------------------------
-            -- Outputs
-            ------------------------------------------------------------------------
+            BRAM_B_EN_I         => bram_en,
+            BRAM_B_RW_I         => bram_rw,
+            BRAM_B_ADDR_I       => bram_addr,
             BRAM_B_PULSE_DATA_O => bram_pulse_data,
             BRAM_B_TIME_DATA_O  => bram_time_data,
-            TIME_CNT_O          => time_cnt_o
+            ------------------------------------------------------------------------
+            -- Bram Port A Outputs / Timestamp Stream
+            ------------------------------------------------------------------------
+            TIME_DATA_O  => log_time_o,
+            PULSE_DATA_O => log_pulse_o,
+            TIME_CNT_O   => time_cnt_o
         );
 
 end architecture rtl;
