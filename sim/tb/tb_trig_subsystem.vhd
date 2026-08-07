@@ -39,9 +39,11 @@ architecture tb of tb_trig_subsystem is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
     -- tb dut output signals
-    signal tb_error_oflow : std_logic_vector(3 downto 0) := (others => '0');
-    signal tb_trigger     : std_logic_vector(4 downto 0) := (others => '0');
-    signal tb_pulse_valid : std_logic;
+    signal tb_error_oflow  : std_logic_vector(3 downto 0) := (others => '0');
+    signal tb_trigger      : std_logic_vector(4 downto 0) := (others => '0');
+    signal tb_pulse_valid  : std_logic;
+    signal tb_pileup_event : std_logic;
+    signal tb_pileup_cnt   : std_logic_vector(11 downto 0);
 
 begin
 
@@ -58,7 +60,7 @@ begin
     pulse_feed_i : entity trap_filter.pulse_feed
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_PULSE_WIDTH => 12
+            G_PULSE_WIDTH => 11
         )
         port map(
             ------------------------------------------------------------------------
@@ -75,10 +77,9 @@ begin
 
     dut : entity trap_filter.trig_subsystem
         generic map(
-            G_DATA_WIDTH      => C_ADC_WIDTH,
-            G_CFD_VAL_TH      => 2048,
-            G_CFD_SLOPE_TH    => 100,
-            G_END_PULSE_GUARD => 40
+            G_DATA_WIDTH   => C_ADC_WIDTH,
+            G_CFD_VAL_TH   => 2048,
+            G_CFD_SLOPE_TH => 100
         )
         port map(
             ------------------------------------------------------------------------
@@ -89,10 +90,12 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            DATA_I        => tb_data_i,
-            TRIGGER_O     => tb_trigger,
-            PULSE_CLEAN_O => tb_pulse_valid,
-            ERROR_OFLOW_O => tb_error_oflow
+            DATA_I         => tb_data_i,
+            TRIGGER_O      => tb_trigger,
+            PULSE_CLEAN_O  => tb_pulse_valid,
+            PILEUP_EVENT_O => tb_pileup_event,
+            PILEUP_CNT_O   => tb_pileup_cnt,
+            ERROR_OFLOW_O  => tb_error_oflow
         );
 
     ----------------------------------------------------------------------------
@@ -115,7 +118,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 24000 ns;
+        wait for 28000 ns;
 
         ------------------------------------------------------------------------
         -- Simulation done

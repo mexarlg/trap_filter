@@ -29,9 +29,11 @@ entity trig_subsystem is
         G_SLOW_JORD_K : natural range 2 to 8 := 6; -- Width of delay for rising edge of slow trapezoid for trigger timing
         G_SLOW_JORD_M : natural range 2 to 8 := 8; -- Width of delay for flat top of slow trapezoid for trigger timing
         -- pulse detection tuning parameters
-        G_CFD_VAL_TH      : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
-        G_CFD_SLOPE_TH    : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
-        G_END_PULSE_GUARD : natural range 0 to 128     := 40    -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
+        G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
+        -- pulse and pileup parameters
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
+        G_PILEUP_CNT_WIDTH   : natural range 7 to 12      := 12    -- Width of counter for pileup events
     );
     port (
         ------------------------------------------------------------------------
@@ -46,9 +48,11 @@ entity trig_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O     : out std_logic_vector(4 downto 0); -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-        PULSE_CLEAN_O : out std_logic;                    -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
-        ERROR_OFLOW_O : out std_logic_vector(3 downto 0)  -- Overflow error status of trig_subsystem
+        TRIGGER_O      : out std_logic_vector(4 downto 0);                      -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
+        PULSE_CLEAN_O  : out std_logic;                                         -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
+        PILEUP_EVENT_O : out std_logic;                                         -- Pileup event flag
+        PILEUP_CNT_O   : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- Pileup event counter
+        ERROR_OFLOW_O  : out std_logic_vector(3 downto 0)                       -- Overflow error status of trig_subsystem
     );
 end entity trig_subsystem;
 
@@ -70,13 +74,16 @@ architecture rtl of trig_subsystem is
     -- Signals
     ----------------------------------------------------------------------------
 
-    -- intermidiate signals
-    signal trigger     : std_logic_vector(4 downto 0); -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-    signal pulse_trig  : std_logic;                    -- trigger that a pulse has been detected
-    signal pulse_clean : std_logic;                    -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
-
     -- output signals
-    signal error_oflow : std_logic_vector(3 downto 0); -- overflow error of trig_subsystem
+    signal trigger      : std_logic_vector(4 downto 0);                      -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
+    signal pulse_clean  : std_logic;                                         -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
+    signal pileup_event : std_logic;                                         -- pileup event pulse
+    signal pileup_cnt   : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
+    signal error_oflow  : std_logic_vector(3 downto 0);                      -- overflow error of trig_subsystem
+
+    -- intermidiate signals
+    signal pulse_trig     : std_logic; -- trigger that a pulse has been detected
+    signal pulse_end_trig : std_logic; -- trigger at the end of a pulse
 
 begin
 
@@ -88,13 +95,18 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    TRIGGER_O     <= trigger;
-    PULSE_CLEAN_O <= pulse_clean;
-    ERROR_OFLOW_O <= error_oflow;
+    TRIGGER_O      <= trigger;
+    PULSE_CLEAN_O  <= pulse_clean;
+    PILEUP_EVENT_O <= pileup_event;
+    PILEUP_CNT_O   <= pileup_cnt;
+    ERROR_OFLOW_O  <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
+
+    -- better readibility
+    pulse_end_trig <= trigger(0);
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -131,14 +143,11 @@ begin
     trig_gen_i : entity trap_filter.trig_gen
         generic map(
             -- Delays from pulse detected trigger to baseline and start of filtered pulse
-            G_TRIG_TO_BASELINE => C_TRIG_TO_BASELINE,
-            G_TRIG_TO_START    => C_TRIG_TO_START,
+            G_TRIG_DELAY_BASELINE => C_TRIG_DELAY_BASELINE,
+            G_TRIG_DELAY_START    => C_TRIG_DELAY_START,
             -- Slow jordanov parameters for knowing the filtered pulse timing
             G_JORD_K_WIDTH => G_SLOW_JORD_K,
-            G_JORD_M_WIDTH => G_SLOW_JORD_M,
-            -- Margins of the triggers of the start/end of the filtered pulse
-            G_START_PULSE_GUARD => C_START_PULSE_GUARD,
-            G_END_PULSE_GUARD   => G_END_PULSE_GUARD
+            G_JORD_M_WIDTH => G_SLOW_JORD_M
         )
         port map(
             ------------------------------------------------------------------------
@@ -159,11 +168,9 @@ begin
     --  Asserts if a filtered pulse is valid regarding pileup discrimination
     pileup_detect_i : entity trap_filter.pileup_detection
         generic map(
-            -- Slow jordanov parameters for timing of filtered pulse
-            G_JORD_K_WIDTH => G_SLOW_JORD_K,
-            G_JORD_M_WIDTH => G_SLOW_JORD_M,
-            -- Pileup safety window after pulse has ended to ensure its valid
-            G_END_PULSE_GUARD => G_END_PULSE_GUARD
+            -- Pileup parameters
+            G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
+            G_PILEUP_CNT_WIDTH   => G_PILEUP_CNT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -174,12 +181,14 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            PULSE_TRIG_I => pulse_trig,
-            PULSE_END_I  => trigger(0),
+            PULSE_TRIG_I     => pulse_trig,
+            PULSE_END_TRIG_I => pulse_end_trig,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_CLEAN_O => pulse_clean
+            PULSE_CLEAN_O  => pulse_clean,
+            PILEUP_EVENT_O => pileup_event,
+            PILEUP_CNT_O   => pileup_cnt
         );
 
 end architecture rtl;

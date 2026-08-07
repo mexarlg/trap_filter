@@ -26,21 +26,26 @@ add wave -color white -format Analog-Step -radix unsigned sim:/tb_trig_subsystem
 add wave -divider " pulse_detection"
 add wave -color white -format Analog-Step -radix signed sim:/tb_trig_subsystem/dut/pulse_detect_i/data_jord_filt
 add wave -color white -format Analog-Step -radix signed sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/cfd_signal
+add wave -color green -radix binary sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/zero_cross_flag
 add wave -color green -radix signed sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/data_slope
 add wave -color green -radix binary sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/slope_pos_flag
-add wave -color green -radix binary sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/zero_cross_flag
 add wave -color green -radix binary sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/above_th_flag
 add wave -color green -radix binary sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/pulse_incoming
 add wave -color green -radix unsigned sim:/tb_trig_subsystem/dut/pulse_detect_i/cfd_i/pulse_timeout_cnt
+add wave -color green -radix binary sim:/tb_trig_subsystem/tb_error_oflow
 
 #===========================================================================
-# trig_subsystem
+# pileup_detection
 #===========================================================================
-add wave -divider " trig_subsystem"
-add wave -color white -radix binary sim:/tb_trig_subsystem/dut/pulse_trig
+add wave -divider " pileup_detection"
 add wave -color white -radix binary sim:/tb_trig_subsystem/tb_trigger
+add wave -color white -radix binary sim:/tb_trig_subsystem/dut/pulse_trig
 add wave -color green -radix binary sim:/tb_trig_subsystem/tb_pulse_valid
-add wave -color green -radix binary sim:/tb_trig_subsystem/tb_error_oflow
+add wave -color green -radix binary sim:/tb_trig_subsystem/tb_pileup_event
+add wave -color green -radix unsigned sim:/tb_trig_subsystem/tb_pileup_cnt
+add wave -color green sim:/tb_trig_subsystem/dut/pileup_detect_i/decay_done
+add wave -color green -radix unsigned sim:/tb_trig_subsystem/dut/pileup_detect_i/cnt_decay
+add wave -color green sim:/tb_trig_subsystem/dut/pileup_detect_i/pulse_dirty
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS

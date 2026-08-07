@@ -24,14 +24,11 @@ use trap_filter.trap_filter_pkg.all;
 entity trig_gen is
     generic (
         -- delays from the pulse detected trigger to each stage
-        G_TRIG_TO_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
-        G_TRIG_TO_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
+        G_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
+        G_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
         -- jordanov trapezoid parameters
         G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of slow filtered trapezoid rising edge
-        G_JORD_M_WIDTH : natural range 2 to 8 := 8; -- Width of slow filtered trapezoid flat top
-        -- margins to decrease and increase the start/end triggers of the filtered pulse
-        G_START_PULSE_GUARD : natural range 0 to 16  := 1; -- N of samples to assert earlier the start of the pulse
-        G_END_PULSE_GUARD   : natural range 0 to 128 := 40 -- N of samples to assert later the end of the current pulse (pileup discrimination)
+        G_JORD_M_WIDTH : natural range 2 to 8 := 8  -- Width of slow filtered trapezoid flat top
     );
     port (
         ------------------------------------------------------------------------
@@ -66,11 +63,11 @@ architecture rtl of trig_gen is
     constant C_HALF_FLAT_DELAY : natural := C_FLAT_DELAY / 2;    -- duration of half the trapezoid top
 
     -- depth for each delay of PULSE_TRIG_I to assert each stage of the pulse
-    constant C_BASELINE_DEPTH    : natural := G_TRIG_TO_BASELINE;
-    constant C_START_PULSE_DEPTH : natural := G_TRIG_TO_START - G_START_PULSE_GUARD;
+    constant C_BASELINE_DEPTH    : natural := G_TRIG_DELAY_BASELINE;
+    constant C_START_PULSE_DEPTH : natural := G_TRIG_DELAY_START;
     constant C_START_FLAT_DEPTH  : natural := C_START_PULSE_DEPTH + C_RISE_DELAY;
     constant C_MID_FLAT_DEPTH    : natural := C_START_FLAT_DEPTH + C_HALF_FLAT_DELAY;
-    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * C_RISE_DELAY + C_FLAT_DELAY + G_END_PULSE_GUARD;
+    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * C_RISE_DELAY + C_FLAT_DELAY;
 
     -- separation of baseline from rising edge of pulse
     constant C_BASE_TO_START : natural := C_START_PULSE_DEPTH - C_BASELINE_DEPTH;
@@ -96,12 +93,8 @@ begin
     ----------------------------------------------------------------------------
 
     -- baseline capture before start of pulse
-    assert (G_TRIG_TO_START > G_TRIG_TO_BASELINE)
+    assert (G_TRIG_DELAY_START > G_TRIG_DELAY_BASELINE)
     report "trig_gen: G_TRIG_TO_START should be larger than G_TRIG_TO_BASELINE" severity failure;
-
-    -- assert margin allows minimum depth of 2
-    assert (G_TRIG_TO_START > G_START_PULSE_GUARD + 1)
-    report "trig_gen: G_TRIG_TO_START should be + 2 larger than G_START_PULSE_GUARD" severity failure;
 
     -- baseline capture has enough margin before rising edge of pulse
     assert (C_BASE_TO_START > 8)

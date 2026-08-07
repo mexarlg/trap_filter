@@ -102,7 +102,7 @@ begin
             G_MOV_D_WIDTH         => C_MOV_D_WIDTH,
             G_MOV_ACC_MARGIN_BITS => 2,
             -- Pulse detection params
-            G_PULSE_DELAY_WIDTH => C_PULSE_DELAY_WIDTH
+            G_TRAP_DELAY_WIDTH => C_PULSE_DELAY_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

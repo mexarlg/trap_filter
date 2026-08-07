@@ -30,7 +30,7 @@ package trap_filter_pkg is
     constant C_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 11; -- Bit width needed for the sample depth of the stored input pulse
 
     ----------------------------------------------------------------------------
-    -- Slow Jordanov Parameters
+    -- Trap Subsystem: Slow Jordanov Parameters
     ----------------------------------------------------------------------------
 
     -- Configurable (Margin for internal signals of slow jordanov)
@@ -42,7 +42,7 @@ package trap_filter_pkg is
     constant C_SLOW_JORD_M_EXP_FRAC_WIDTH : natural := 4; -- Number of bits for the fraction part of exponential coefficient M_exp in the slow jordanov
 
     ----------------------------------------------------------------------------
-    -- Baseline Moving Average Parameters
+    -- Trap Subsystem: Baseline Moving Average Parameters
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for baseline substraction)
@@ -53,7 +53,7 @@ package trap_filter_pkg is
     constant C_BASE_MOV_LATENCY : natural := 2; -- latency in number of cycles from the baseline moving average filter
 
     ----------------------------------------------------------------------------
-    -- Pulse Detection Parameters
+    -- Trig Subsystem: Pulse Detection Parameters
     ----------------------------------------------------------------------------
 
     -- Fixed (jordanov parameters of fast jordanov for pulse detection)
@@ -74,24 +74,24 @@ package trap_filter_pkg is
     constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7; -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed (timeout = 2^Timeout_width)
 
     -- Configurable (delays from detection trigger to stages of filtered pulse)
-    constant C_TRIG_TO_BASELINE  : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_TO_START     : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
-    constant C_START_PULSE_GUARD : natural range 0 to 16  := 1;  -- N of samples to assert earlier the rising edge of the filtered pulse
+    constant C_TRIG_DELAY_BASELINE   : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
+    constant C_TRIG_DELAY_START      : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
+    constant C_TRIG_DELAY_TRAP_WIDTH : natural range 4 to 6   := 6;  -- Width of delay given to trap_system to account for the pulse detection latency
 
-    -- Fixed
-    constant C_DETECTION_DELAY_WIDTH : natural := 6; -- Width of delay given to trap_system to account for the pulse detection latency
+    -- Configurable (pileup parameters)
+    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12;
 
     ----------------------------------------------------------------------------
-    -- Peak Moving Average Parameters
+    -- Peak Subsystem: Moving Average Parameters
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for pulse amplitude capture)
     constant C_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter on the top of the filtered trapezoid
-    constant C_PEAK_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the peak (16 samples)
+    constant C_PEAK_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the peak
     constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the peak
 
     ----------------------------------------------------------------------------
-    -- Pulse Logger Parameters
+    -- Logger Subsystem: Logger Parameters
     ----------------------------------------------------------------------------
 
     -- configurable (width of log addresses and bit allocation of log data)
@@ -123,6 +123,14 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     ----------------------------------------------------------------------------
+    -- Functions
+    ----------------------------------------------------------------------------
+
+    -- helpers to get required width
+    function value_to_width (v : natural) return positive;
+    function depth_to_width (n : positive) return positive;
+
+    ----------------------------------------------------------------------------
     -- Component Declaration
     ----------------------------------------------------------------------------
 
@@ -141,5 +149,32 @@ package body trap_filter_pkg is
     ----------------------------------------------------------------------------
     -- Package Body (functions if needed)
     ----------------------------------------------------------------------------
+
+    -- Computes width needed to store value
+    function value_to_width (v : natural) return positive is
+        variable w                 : positive := 1;
+        variable m                 : natural  := v;
+    begin
+        while m > 1 loop
+            m := m / 2;
+            w := w + 1;
+        end loop;
+        return w;
+    end function;
+
+    -- Computes width needed to store depth
+    function depth_to_width (n : positive) return positive is
+        variable w                 : natural  := 0;
+        variable c                 : positive := 1;
+    begin
+        while c < n loop
+            c := c * 2;
+            w := w + 1;
+        end loop;
+        if w = 0 then
+            return 1;
+        end if;
+        return w;
+    end function;
 
 end package body trap_filter_pkg;

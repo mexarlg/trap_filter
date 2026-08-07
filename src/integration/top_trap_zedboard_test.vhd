@@ -28,10 +28,11 @@ entity top_trap_zedboard_test is
         G_SLOW_JORD_M_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE    : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         G_SLOW_JORD_OUT_SHIFT_BITS : natural range 0 to 24    := 17;    -- Number of bits shifted from the 2nd accumulator of jordanov to the width of the output
-        -- Pulse detection params
-        G_CFD_VAL_TH      : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
-        G_CFD_SLOPE_TH    : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
-        G_END_PULSE_GUARD : natural range 0 to 128     := 40    -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        -- Pulse detection parameters
+        G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
+        G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
+        -- Pileup discrimination parameters
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
     );
     port (
         ------------------------------------------------------------------------
@@ -196,9 +197,11 @@ begin
             G_SLOW_JORD_K => G_SLOW_JORD_K_WIDTH,
             G_SLOW_JORD_M => G_SLOW_JORD_M_WIDTH,
             -- pulse detection tuning parameters
-            G_CFD_VAL_TH      => G_CFD_VAL_TH,
-            G_CFD_SLOPE_TH    => G_CFD_SLOPE_TH,
-            G_END_PULSE_GUARD => G_END_PULSE_GUARD
+            G_CFD_VAL_TH   => G_CFD_VAL_TH,
+            G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
+            -- pileup discrimination parameters
+            G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
+            G_PILEUP_CNT_WIDTH   => C_PILEUP_CNT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -234,7 +237,7 @@ begin
             G_MOV_D_WIDTH         => C_BASE_MOV_D_WIDTH,
             G_MOV_ACC_MARGIN_BITS => C_BASE_MOV_ACC_MARGIN_BITS,
             -- Trap_subsystem general due pulse detection
-            G_PULSE_DELAY_WIDTH => C_DETECTION_DELAY_WIDTH
+            G_TRAP_DELAY_WIDTH => C_TRIG_DELAY_TRAP_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
