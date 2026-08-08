@@ -55,7 +55,7 @@ entity pulse_shaper_top is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        DATA_O : out std_logic_vector(G_ADC_WIDTH downto 0) -- Timestamp Bram port B read data
+        DATA_O : out std_logic_vector(G_ADC_WIDTH downto 0) -- Trapezoid filtered output
     );
 end entity pulse_shaper_top;
 
