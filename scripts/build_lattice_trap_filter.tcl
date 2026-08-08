@@ -112,13 +112,13 @@ prj_add_source [file join $RTL_DIR "valid_subsystem.vhd"]
 prj_add_source [file join $RTL_DIR "bram_pd.vhd"]
 prj_add_source [file join $RTL_DIR "pulse_logger.vhd"]
 prj_add_source [file join $RTL_DIR "logger_subsystem.vhd"]
-prj_add_source [file join $RTL_DIR "trap_pulse_shaper_top.vhd"]
+prj_add_source [file join $RTL_DIR "pulse_shaper_top.vhd"]
 
 #------------------------------------------------------------------------------
 # Add RTL Top Wrapper
 #------------------------------------------------------------------------------
 
-prj_set_impl_opt -impl "impl1" "top" "trap_pulse_shaper_top"
+prj_set_impl_opt -impl "impl1" "top" "pulse_shaper_top"
 
 #------------------------------------------------------------------------------
 # Add Constraints (Physical / Timing)

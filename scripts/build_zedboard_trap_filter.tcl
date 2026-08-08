@@ -89,7 +89,8 @@ set RTL_FILES [list \
     [file join $RTL_DIR "pulse_logger.vhd"] \
     [file join $RTL_DIR "logger_subsystem.vhd"] \
     [file join $RTL_DIR "valid_subsystem.vhd"] \
-    [file join $INTEG_DIR "top_trap_zedboard_test.vhd"] \
+    [file join $INTEG_DIR "pulse_shaper_top.vhd"] \
+    [file join $INTEG_DIR "pulse_shaper_test_wrapper.vhd"] \
 ]
 
 set ALL_VHDL [concat $PKG_FILES $RTL_FILES]

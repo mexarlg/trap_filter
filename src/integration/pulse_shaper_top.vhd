@@ -1,12 +1,12 @@
 --==============================================================================
---  Module:        top_trap_zedboard_test.vhd
+--  Module:        pulse_shaper_top.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       17/07/2026
 --  Last Modified: 
 --
 --  Description:
---  top wrapper for the trap_filter system. Added ILA and VIO cores for hw testing.
+--  top wrapper for the trap_filter system.
 --
 --  Dependencies:
 --  All rtl modules and packages
@@ -19,7 +19,7 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity top_trap_zedboard_test is
+entity pulse_shaper_top is
     generic (
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
@@ -39,11 +39,27 @@ entity top_trap_zedboard_test is
         -- Clock / Reset
         ------------------------------------------------------------------------
         CLK_I   : in std_logic;
-        BTN_RST : in std_logic
+        RST_N_I : in std_logic;
+        ------------------------------------------------------------------------
+        -- Inputs
+        ------------------------------------------------------------------------
+        DATA_I : in std_logic_vector(G_ADC_WIDTH - 1 downto 0);
+        ------------------------------------------------------------------------
+        -- BRAM Port B
+        ------------------------------------------------------------------------
+        BRAM_B_EN_I         : in std_logic;                                             -- Port B enable
+        BRAM_B_RW_I         : in std_logic;                                             -- Port B read/write
+        BRAM_B_ADDR_I       : in std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);       -- Port B address
+        BRAM_B_PULSE_DATA_O : out std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Pulse Bram port B read data
+        BRAM_B_TIME_DATA_O  : out std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Timestamp Bram port B read data
+        ------------------------------------------------------------------------
+        -- Outputs
+        ------------------------------------------------------------------------
+        DATA_O : out std_logic_vector(G_ADC_WIDTH downto 0) -- Timestamp Bram port B read data
     );
-end entity top_trap_zedboard_test;
+end entity pulse_shaper_top;
 
-architecture rtl of top_trap_zedboard_test is
+architecture rtl of pulse_shaper_top is
 
     ----------------------------------------------------------------------------
     -- Functions
@@ -59,9 +75,6 @@ architecture rtl of top_trap_zedboard_test is
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
-
-    -- Assert VIO is found at default library (we are in trap_filter)
-    for u_vio : vio_trap use entity xil_defaultlib.vio_trap;
 
     ----------------------------------------------------------------------------
     -- Output Signals
@@ -79,25 +92,6 @@ architecture rtl of top_trap_zedboard_test is
     signal time_cnt_o        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
 
     ----------------------------------------------------------------------------
-    -- Input Signals
-    ----------------------------------------------------------------------------
-
-    -- input pulse data
-    signal data_i : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
-
-    -- control signals
-    signal rst_n  : std_logic;
-    signal ce_i   : std_logic;
-    signal ce_vio : std_logic_vector(0 downto 0);
-
-    -- port B bram external interconnection signals
-    signal bram_en         : std_logic;                                            -- Enable required
-    signal bram_rw         : std_logic;                                            -- Write or read required operation
-    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
-    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
-    signal bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
-
-    ----------------------------------------------------------------------------
     -- Internal Signals
     ----------------------------------------------------------------------------
 
@@ -106,7 +100,9 @@ architecture rtl of top_trap_zedboard_test is
     signal trig_top_center : std_logic; -- trigger to capture amplitude
 
     -- pulse completed without pileup
-    signal pulse_clean : std_logic; -- Completed pulse with no pileups
+    signal pulse_clean  : std_logic;                                         -- Completed pulse with no pileups
+    signal pileup_event : std_logic;                                         -- pileup event pulse
+    signal pileup_cnt   : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
 
     -- overflow intermidiate signals
     signal error_trap_oflow : std_logic_vector(3 downto 0); -- Overflow errors in trap_subsystem (b32 jord, b1 mov_avg, b0 baseline substraction)
@@ -115,8 +111,6 @@ architecture rtl of top_trap_zedboard_test is
 
     -- Mark as debug for ILA
     attribute mark_debug                      : string;
-    attribute mark_debug of ce_i              : signal is "true";
-    attribute mark_debug of data_i            : signal is "true";
     attribute mark_debug of trap_data_o       : signal is "true";
     attribute mark_debug of pulse_triggers_o  : signal is "true";
     attribute mark_debug of pulse_amplitude_o : signal is "true";
@@ -134,15 +128,11 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
+    DATA_O <= trap_data_o;
+
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
-
-    -- internal ce
-    ce_i <= ce_vio(0);
-
-    -- button is active high, rst_n is active low
-    rst_n <= not BTN_RST;
 
     -- overflow error of trap/trig/peak subsystems
     overflow_flags_o(8 downto 5) <= error_trap_oflow;
@@ -160,33 +150,6 @@ begin
     ----------------------------------------------------------------------------
     -- Instantiation
     ----------------------------------------------------------------------------
-
-    -- asserts ce
-    u_vio : vio_trap
-    port map(
-        clk        => CLK_I,
-        probe_out0 => ce_vio
-    );
-
-    -- feeds stored pulse in rom to trap_subsystem
-    pulse_feed_i : entity trap_filter.pulse_feed
-        generic map(
-            -- input pulse parameters
-            G_DATA_WIDTH  => G_ADC_WIDTH,
-            G_PULSE_WIDTH => C_PULSE_SAMPLE_WIDTH
-        )
-        port map(
-            ------------------------------------------------------------------------
-            -- Clock / Reset
-            ------------------------------------------------------------------------
-            CLK_I   => CLK_I,
-            RST_N_I => rst_n,
-            ------------------------------------------------------------------------
-            -- Inputs / Outputs
-            ------------------------------------------------------------------------
-            CE_I   => ce_i,
-            DATA_O => data_i
-        );
 
     -- issues triggers at different stages of the pulse
     trig_ss_i : entity trap_filter.trig_subsystem
@@ -208,14 +171,19 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => rst_n,
+            RST_N_I => RST_N_I,
             ------------------------------------------------------------------------
-            -- Inputs / Outputs
+            -- Inputs
             ------------------------------------------------------------------------
-            DATA_I        => data_i,
-            TRIGGER_O     => pulse_triggers_o,
-            PULSE_CLEAN_O => pulse_clean,
-            ERROR_OFLOW_O => error_trig_oflow
+            DATA_I => DATA_I,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            TRIGGER_O      => pulse_triggers_o,
+            PILEUP_EVENT_O => pileup_event,
+            PILEUP_CNT_O   => pileup_cnt,
+            PULSE_CLEAN_O  => pulse_clean,
+            ERROR_OFLOW_O  => error_trig_oflow
         );
 
     -- generates the filtered trapezoid signal
@@ -244,11 +212,11 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => rst_n,
+            RST_N_I => RST_N_I,
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            DATA_I          => data_i,
+            DATA_I          => DATA_I,
             BASELINE_TRIG_I => trig_baseline,
             ------------------------------------------------------------------------
             -- Outputs
@@ -272,7 +240,7 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => rst_n,
+            RST_N_I => RST_N_I,
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
@@ -297,7 +265,7 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => rst_n,
+            RST_N_I => RST_N_I,
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
@@ -327,7 +295,7 @@ begin
             -- Clock / Reset
             ------------------------------------------------------------------------
             CLK_I   => CLK_I,
-            RST_N_I => rst_n,
+            RST_N_I => RST_N_I,
             ------------------------------------------------------------------------
             -- Pulse log inputs
             ------------------------------------------------------------------------
@@ -337,11 +305,11 @@ begin
             ------------------------------------------------------------------------
             -- Bram Port B external read
             ------------------------------------------------------------------------
-            BRAM_B_EN_I         => bram_en,
-            BRAM_B_RW_I         => bram_rw,
-            BRAM_B_ADDR_I       => bram_addr,
-            BRAM_B_PULSE_DATA_O => bram_pulse_data,
-            BRAM_B_TIME_DATA_O  => bram_time_data,
+            BRAM_B_EN_I         => BRAM_B_EN_I,
+            BRAM_B_RW_I         => BRAM_B_RW_I,
+            BRAM_B_ADDR_I       => BRAM_B_ADDR_I,
+            BRAM_B_PULSE_DATA_O => BRAM_B_PULSE_DATA_O,
+            BRAM_B_TIME_DATA_O  => BRAM_B_TIME_DATA_O,
             ------------------------------------------------------------------------
             -- Bram Port A Outputs / Timestamp Stream
             ------------------------------------------------------------------------
