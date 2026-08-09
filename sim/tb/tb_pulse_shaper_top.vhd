@@ -27,10 +27,10 @@ architecture tb of tb_pulse_shaper_top is
     constant C_ADC_WIDTH    : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
     constant C_SAMPLE_WIDTH : natural range 11 to 12 := 11; -- Width of sample depth
     -- Trapezoidal filter parameters
-    constant C_SLOW_JORD_K_WIDTH        : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
+    constant C_SLOW_JORD_K_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
     constant C_SLOW_JORD_M_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE    : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
-    constant C_SLOW_JORD_OUT_SHIFT_BITS : natural range 0 to 24    := 17;    -- Number of bits shifted from the 2nd accumulator of jordanov to the width of the output
+    constant C_SLOW_JORD_OUT_SHIFT_BITS : natural range 0 to 24    := 19;    -- Number of bits shifted from the 2nd accumulator of jordanov to the width of the output
     -- Pulse detection parameters
     constant C_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
     constant C_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -48,7 +48,6 @@ architecture tb of tb_pulse_shaper_top is
     -- input signals
     signal tb_ce     : std_logic                                  := '0';
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
-    signal tb_data_o : std_logic_vector(C_ADC_WIDTH downto 0);
 
     -- input port b bram signals
     signal tb_bram_en         : std_logic;                                            -- Enable required
@@ -56,6 +55,14 @@ architecture tb of tb_pulse_shaper_top is
     signal tb_bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
     signal tb_bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
     signal tb_bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
+
+    -- Top output signals
+    signal tb_trap_data      : std_logic_vector(C_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
+    signal tb_pulse_triggers : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
+    signal tb_pulse_valid    : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal tb_overflow_flags : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
+    signal tb_time_cnt       : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal tb_pileup_cnt     : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
 
 begin
 
@@ -123,7 +130,12 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_O => tb_data_o
+            TRAP_DATA_O      => tb_trap_data,
+            PULSE_TRIGGERS_O => tb_pulse_triggers,
+            PULSE_VALID_O    => tb_pulse_valid,
+            OVERFLOW_FLAGS_O => tb_overflow_flags,
+            PILEUP_CNT_O     => tb_pileup_cnt,
+            TIME_CNT_O       => tb_time_cnt
         );
 
     ----------------------------------------------------------------------------

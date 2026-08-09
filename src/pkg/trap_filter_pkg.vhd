@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- Version / Metadata
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.1";
+    constant SYSTEM_VERSION : string := "1.2";
 
     ----------------------------------------------------------------------------
     -- General Parameters
@@ -28,6 +28,9 @@ package trap_filter_pkg is
 
     -- Configurable
     constant C_PULSE_SAMPLE_WIDTH : natural range 8 to 16 := 11; -- Bit width needed for the sample depth of the stored input pulse
+
+    -- Fixed
+    constant C_OVERFLOW_FLAGS_DEPTH : natural := 8; -- Amount of bits required for all overflow flags of the system
 
     ----------------------------------------------------------------------------
     -- Trap Subsystem: Slow Jordanov Parameters
@@ -78,8 +81,11 @@ package trap_filter_pkg is
     constant C_TRIG_DELAY_START      : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
     constant C_TRIG_DELAY_TRAP_WIDTH : natural range 4 to 6   := 6;  -- Width of delay given to trap_system to account for the pulse detection latency
 
+    -- Fixed (Amount of triggers)
+    constant C_TRIG_DEPTH : natural := 5; -- Depth / Amount of trigger pulses describing the stages of a pulse
+
     -- Configurable (pileup parameters)
-    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12;
+    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter of pileup events from RST_N deassertion
 
     ----------------------------------------------------------------------------
     -- Peak Subsystem: Moving Average Parameters

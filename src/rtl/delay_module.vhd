@@ -11,11 +11,11 @@
 --  Each registration has an overhead of 1 cycle, and these are accounted for in the delays of the shift_register modules
 --  Moving average delay is fed from trapezoidal output.
 --
---      data_n  = DATA_I delayed by C_PULSE_DELAY
---      data_k  = DATA_I delayed by k + C_PULSE_DELAY
---      data_l  = DATA_I delayed by l + C_PULSE_DELAY
---      data_kl = DATA_I delayed by (k+l) + C_PULSE_DELAY
---      data_mov_d = DATA_JORD_FILT_I delayed by d
+--      data_n  = DATA_I delayed by G_COMMON_DELAY
+--      data_k  = DATA_I delayed by k + G_COMMON_DELAY
+--      data_l  = DATA_I delayed by l + G_COMMON_DELAY
+--      data_kl = DATA_I delayed by (k+l) + G_COMMON_DELAY
+--      data_mov_d = DATA_JORD_FILT_I delayed by G_MOV_D_DELAY
 --
 --  Dependencies:
 --  trap_filter_pkg.vhd, shift_register.vhd

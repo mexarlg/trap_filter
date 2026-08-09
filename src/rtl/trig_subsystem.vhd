@@ -48,11 +48,11 @@ entity trig_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O      : out std_logic_vector(4 downto 0);                      -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-        PULSE_CLEAN_O  : out std_logic;                                         -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
-        PILEUP_EVENT_O : out std_logic;                                         -- Pileup event flag
-        PILEUP_CNT_O   : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- Pileup event counter
-        ERROR_OFLOW_O  : out std_logic_vector(3 downto 0)                       -- Overflow error status of trig_subsystem
+        PULSE_TRIGGERS_O : out std_logic_vector(C_TRIG_DEPTH downto 0);           -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
+        PULSE_CLEAN_O    : out std_logic;                                         -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
+        PILEUP_EVENT_O   : out std_logic;                                         -- Pileup event flag
+        PILEUP_CNT_O     : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- Pileup event counter
+        ERROR_OFLOW_O    : out std_logic_vector(3 downto 0)                       -- Overflow error status of trig_subsystem
     );
 end entity trig_subsystem;
 
@@ -75,15 +75,16 @@ architecture rtl of trig_subsystem is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal trigger      : std_logic_vector(4 downto 0);                      -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-    signal pulse_clean  : std_logic;                                         -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
-    signal pileup_event : std_logic;                                         -- pileup event pulse
-    signal pileup_cnt   : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
-    signal error_oflow  : std_logic_vector(3 downto 0);                      -- overflow error of trig_subsystem
+    signal pulse_triggers : std_logic_vector(C_TRIG_DEPTH downto 0);           -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
+    signal pulse_clean    : std_logic;                                         -- trigger that a filtered pulse is valid (no pileups, asserted after pulse ended)
+    signal pileup_event   : std_logic;                                         -- pileup event pulse
+    signal pileup_cnt     : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
+    signal error_oflow    : std_logic_vector(3 downto 0);                      -- overflow error of trig_subsystem
 
     -- intermidiate signals
-    signal pulse_trig     : std_logic; -- trigger that a pulse has been detected
-    signal pulse_end_trig : std_logic; -- trigger at the end of a pulse
+    signal trigger        : std_logic_vector(C_TRIG_DEPTH - 1 downto 0); -- triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
+    signal pulse_trig     : std_logic;                                   -- trigger that a pulse has been detected
+    signal pulse_end_trig : std_logic;                                   -- trigger at the end of a pulse
 
 begin
 
@@ -95,17 +96,18 @@ begin
     -- Output assignments
     ----------------------------------------------------------------------------
 
-    TRIGGER_O      <= trigger;
-    PULSE_CLEAN_O  <= pulse_clean;
-    PILEUP_EVENT_O <= pileup_event;
-    PILEUP_CNT_O   <= pileup_cnt;
-    ERROR_OFLOW_O  <= error_oflow;
+    PULSE_TRIGGERS_O <= pulse_triggers;
+    PULSE_CLEAN_O    <= pulse_clean;
+    PILEUP_EVENT_O   <= pileup_event;
+    PILEUP_CNT_O     <= pileup_cnt;
+    ERROR_OFLOW_O    <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
     -- better readibility
+    pulse_triggers <= pulse_trig & trigger;
     pulse_end_trig <= trigger(0);
 
     ----------------------------------------------------------------------------

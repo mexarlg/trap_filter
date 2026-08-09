@@ -43,7 +43,7 @@ entity trig_gen is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        TRIGGER_O : out std_logic_vector(4 downto 0) -- Triggers at different stages of a pulse (baseline, start, top, mid-top, end)
+        TRIGGER_O : out std_logic_vector(C_TRIG_DEPTH - 1 downto 0) -- Triggers at different stages of a pulse (baseline, start, top, mid-top, end)
     );
 end entity trig_gen;
 

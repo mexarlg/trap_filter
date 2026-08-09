@@ -39,11 +39,11 @@ architecture tb of tb_trig_subsystem is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
     -- tb dut output signals
-    signal tb_error_oflow  : std_logic_vector(3 downto 0) := (others => '0');
-    signal tb_trigger      : std_logic_vector(4 downto 0) := (others => '0');
+    signal tb_error_oflow  : std_logic_vector(3 downto 0)            := (others => '0');
+    signal tb_trigger      : std_logic_vector(C_TRIG_DEPTH downto 0) := (others => '0');
     signal tb_pulse_valid  : std_logic;
     signal tb_pileup_event : std_logic;
-    signal tb_pileup_cnt   : std_logic_vector(11 downto 0);
+    signal tb_pileup_cnt   : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);
 
 begin
 
@@ -90,12 +90,12 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            DATA_I         => tb_data_i,
-            TRIGGER_O      => tb_trigger,
-            PULSE_CLEAN_O  => tb_pulse_valid,
-            PILEUP_EVENT_O => tb_pileup_event,
-            PILEUP_CNT_O   => tb_pileup_cnt,
-            ERROR_OFLOW_O  => tb_error_oflow
+            DATA_I           => tb_data_i,
+            PULSE_TRIGGERS_O => tb_trigger,
+            PULSE_CLEAN_O    => tb_pulse_valid,
+            PILEUP_EVENT_O   => tb_pileup_event,
+            PILEUP_CNT_O     => tb_pileup_cnt,
+            ERROR_OFLOW_O    => tb_error_oflow
         );
 
     ----------------------------------------------------------------------------

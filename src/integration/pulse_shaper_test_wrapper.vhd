@@ -65,21 +65,35 @@ architecture rtl of pulse_shaper_test_wrapper is
     -- Signals
     ----------------------------------------------------------------------------
 
-    -- input data
-    signal data_i          : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
-    signal bram_en         : std_logic;                                            -- Enable required
-    signal bram_rw         : std_logic;                                            -- Write or read required operation
-    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
-    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
-    signal bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
-
-    -- output data
-    signal data_o : std_logic_vector(G_ADC_WIDTH downto 0);
-
-    -- control test signals
+    -- Control test signals
     signal rst_n  : std_logic;
     signal ce_i   : std_logic;
     signal ce_vio : std_logic_vector(0 downto 0);
+
+    -- Input data to read Bram logger
+    signal data_i          : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
+    signal bram_en         : std_logic;                                       -- Enable required
+    signal bram_rw         : std_logic;                                       -- Write or read required operation
+    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0); -- Required address to read
+    signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from pulse log
+    signal bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
+
+    -- Top output signals
+    signal trap_data      : std_logic_vector(G_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
+    signal pulse_triggers : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
+    signal pulse_valid    : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal overflow_flags : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
+    signal time_cnt       : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal pileup_cnt     : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+
+    -- Mark as debug for ILA
+    attribute mark_debug                   : string;
+    attribute mark_debug of trap_data      : signal is "true";
+    attribute mark_debug of pulse_triggers : signal is "true";
+    attribute mark_debug of pulse_valid    : signal is "true";
+    attribute mark_debug of overflow_flags : signal is "true";
+    attribute mark_debug of time_cnt       : signal is "true";
+    attribute mark_debug of pileup_cnt     : signal is "true";
 
 begin
 
@@ -95,10 +109,8 @@ begin
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
-    -- internal ce
-    ce_i <= ce_vio(0);
-
-    -- button is active high, rst_n is active low
+    -- external
+    ce_i  <= ce_vio(0);
     rst_n <= not BTN_RST;
 
     ----------------------------------------------------------------------------
@@ -173,7 +185,12 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            DATA_O => data_o
+            TRAP_DATA_O      => trap_data,
+            PULSE_TRIGGERS_O => pulse_triggers,
+            PULSE_VALID_O    => pulse_valid,
+            OVERFLOW_FLAGS_O => overflow_flags,
+            PILEUP_CNT_O     => pileup_cnt,
+            TIME_CNT_O       => time_cnt
         );
 
 end architecture rtl;
