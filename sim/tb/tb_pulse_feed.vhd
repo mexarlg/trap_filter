@@ -26,8 +26,7 @@ architecture tb of tb_pulse_feed is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Moving average configuration
-    constant C_ADC_WIDTH   : natural := 14; -- Bit width of adc data
-    constant C_PULSE_WIDTH : natural := 10; -- Bit width of N samples
+    constant C_ADC_WIDTH : natural := 14; -- Bit width of adc data
 
     ----------------------------------------------------------------------------    
     -- DUT Signals

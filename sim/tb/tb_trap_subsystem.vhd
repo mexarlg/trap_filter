@@ -34,9 +34,6 @@ architecture tb of tb_trap_subsystem is
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
 
-    -- Width needed for N (1025) amount of samples of the input pulse
-    constant C_PULSE_SAMPLES_WIDTH : natural := 11;
-
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
