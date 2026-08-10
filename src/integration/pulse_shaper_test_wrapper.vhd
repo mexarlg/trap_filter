@@ -25,10 +25,9 @@ entity pulse_shaper_test_wrapper is
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
-        G_SLOW_JORD_K_WIDTH        : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
-        G_SLOW_JORD_M_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
-        G_SLOW_JORD_M_EXP_VALUE    : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
-        G_SLOW_JORD_OUT_SHIFT_BITS : natural range 0 to 24    := 17;    -- Number of bits shifted from the 2nd accumulator of jordanov to the width of the output
+        G_SLOW_JORD_K_WIDTH     : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_M_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
+        G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Pulse detection parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
         G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -154,10 +153,9 @@ begin
             -- Input data parameters
             G_ADC_WIDTH => G_ADC_WIDTH,
             -- Trapezoidal filter parameters
-            G_SLOW_JORD_K_WIDTH        => G_SLOW_JORD_K_WIDTH,
-            G_SLOW_JORD_M_WIDTH        => G_SLOW_JORD_M_WIDTH,
-            G_SLOW_JORD_M_EXP_VALUE    => G_SLOW_JORD_M_EXP_VALUE,
-            G_SLOW_JORD_OUT_SHIFT_BITS => G_SLOW_JORD_OUT_SHIFT_BITS,
+            G_SLOW_JORD_K_WIDTH     => G_SLOW_JORD_K_WIDTH,
+            G_SLOW_JORD_M_WIDTH     => G_SLOW_JORD_M_WIDTH,
+            G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
             -- Pulse detection parameters
             G_CFD_VAL_TH   => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,

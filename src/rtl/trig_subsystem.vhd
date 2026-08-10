@@ -26,8 +26,9 @@ entity trig_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of streamed input data (adc)
         -- Slow jordanov parameters
-        G_SLOW_JORD_K : natural range 2 to 8 := 6; -- Width of delay for rising edge of slow trapezoid for trigger timing
-        G_SLOW_JORD_M : natural range 2 to 8 := 8; -- Width of delay for flat top of slow trapezoid for trigger timing
+        G_SLOW_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        G_SLOW_JORD_K      : natural range 2 to 8     := 6;     -- Width of delay for rising edge of slow trapezoid for trigger timing
+        G_SLOW_JORD_M      : natural range 2 to 8     := 8;     -- Width of delay for flat top of slow trapezoid for trigger timing
         -- pulse detection tuning parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
         G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -119,6 +120,8 @@ begin
         generic map(
             -- General parameters
             G_DATA_WIDTH => G_DATA_WIDTH,
+            -- Slow jordanov parameters
+            G_SLOW_M_EXP_VALUE => G_SLOW_M_EXP_VALUE,
             -- Cfd tuning parameters for pulse detection
             G_CFD_VAL_TH        => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH      => G_CFD_SLOPE_TH,

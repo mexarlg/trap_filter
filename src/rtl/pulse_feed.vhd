@@ -58,7 +58,7 @@ architecture rtl of pulse_feed is
     ----------------------------------------------------------------------------
 
     -- Address limits
-    constant C_PULSE_WIDTH : natural                                      := depth_to_width(G_PULSE_DEPTH);
+    constant C_PULSE_WIDTH : natural                                      := f_depth_to_width(G_PULSE_DEPTH);
     constant C_ADDR_MAX    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsIgned(G_PULSE_DEPTH - 1, C_PULSE_WIDTH));
     constant C_ADDR_ONE    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_PULSE_WIDTH));
     constant C_ADDR_ZERO   : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := (others => '0');

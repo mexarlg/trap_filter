@@ -41,8 +41,9 @@ add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/pileup_cnt
 #===========================================================================
 add wave -divider " TRAP_SS / PEAK_SS "
 add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/jord_i/acc2
-add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_data
+add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_jord_filt
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/peak_ss_i/data_mov_filt
+add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_filtered
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/pulse_amplitude
 
 #===========================================================================

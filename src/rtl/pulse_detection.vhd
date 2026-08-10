@@ -27,7 +27,9 @@ entity pulse_detection is
     generic (
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
-        -- thresholds and expected zero cross timeout for pulse detetcion
+        -- Slow jordanov parameters
+        G_SLOW_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        -- thresholds and expected zero cross timeout for pulse detection
         G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- threshold to gate value of DATA_I
         G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- threshold to gate slope of DATA_I
         G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- timeout width after thresholds are overcomed for a zero crossing event
@@ -195,17 +197,15 @@ begin
     -- jordanov for offset or pileup discrimination
     jord_i : entity trap_filter.jordanov_filter
         generic map(
+            -- General parameters
+            G_DATA_WIDTH => G_DATA_WIDTH,
             -- Jordanov parameters
-            G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_K_RISE_WIDTH => C_FAST_JORD_K_WIDTH,
-            -- Exponential decay
-            G_M_VALUE      => C_FAST_JORD_M_EXP_VALUE,
-            G_M_FRAC_WIDTH => C_FAST_JORD_M_EXP_FRAC_WIDTH,
+            G_K_WIDTH     => C_FAST_JORD_K_WIDTH,
+            G_M_EXP_VALUE => G_SLOW_M_EXP_VALUE,
             -- Fixed point params
             G_DIFF_MARGIN_BITS => C_FAST_JORD_DIFF_MARGIN_BITS,
             G_ACC1_MARGIN_BITS => C_FAST_JORD_ACC1_MARGIN_BITS,
-            G_ACC2_MARGIN_BITS => C_FAST_JORD_ACC2_MARGIN_BITS,
-            G_OUT_SHIFT        => C_FAST_JORD_OUT_SHIFT_BITS
+            G_ACC2_MARGIN_BITS => C_FAST_JORD_ACC2_MARGIN_BITS
         )
         port map(
             ------------------------------------------------------------------------

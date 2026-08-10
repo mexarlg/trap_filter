@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- Version / Metadata
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.2";
+    constant SYSTEM_VERSION : string := "1.3";
 
     ----------------------------------------------------------------------------
     -- General Parameters
@@ -41,9 +41,6 @@ package trap_filter_pkg is
     constant C_SLOW_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator of the slow jordanov
     constant C_SLOW_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator of the slow jordanov
 
-    -- Fixed
-    constant C_SLOW_JORD_M_EXP_FRAC_WIDTH : natural := 4; -- Number of bits for the fraction part of exponential coefficient M_exp in the slow jordanov
-
     ----------------------------------------------------------------------------
     -- Trap Subsystem: Baseline Moving Average Parameters
     ----------------------------------------------------------------------------
@@ -53,21 +50,18 @@ package trap_filter_pkg is
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     -- fixed
-    constant C_BASE_MOV_LATENCY : natural := 2; -- latency in number of cycles from the baseline moving average filter
+    constant C_BASE_MOV_LATENCY : natural := 2; -- latency in number of cycles of the baseline moving average filter
 
     ----------------------------------------------------------------------------
     -- Trig Subsystem: Pulse Detection Parameters
     ----------------------------------------------------------------------------
 
     -- Fixed (jordanov parameters of fast jordanov for pulse detection)
-    constant C_FAST_JORD_K_WIDTH          : natural := 4;     -- Width of delay for the rising edge of the trapezoid (16 samples)
-    constant C_FAST_JORD_M_WIDTH          : natural := 4;     -- Width of delay for the flat top of the trapezoid (16 samples)
-    constant C_FAST_JORD_M_EXP_VALUE      : natural := 39992; -- Value of decay exponential factor ("M_exp", selected for slowest possible expected pulse)
-    constant C_FAST_JORD_M_EXP_FRAC_WIDTH : natural := 4;     -- Number of bits selected for the fraction part of the coefficient M_exp
-    constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3;     -- Bits of margin given to the delayed difference
-    constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2;     -- Bits of margin given to the 1st accumulator
-    constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;     -- Bits of margin given to the 2nd accumulator
-    constant C_FAST_JORD_OUT_SHIFT_BITS   : natural := 17;    -- Number of bits to shift the 2nd accumulator to the jordanov output (depends on k, M_exp)
+    constant C_FAST_JORD_K_WIDTH          : natural := 4; -- Width of delay for the rising edge of the trapezoid (16 samples)
+    constant C_FAST_JORD_M_WIDTH          : natural := 4; -- Width of delay for the flat top of the trapezoid (16 samples)
+    constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3; -- Bits of margin given to the delayed difference
+    constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2; -- Bits of margin given to the 1st accumulator
+    constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1; -- Bits of margin given to the 2nd accumulator
 
     -- Fixed (constant fraction discriminator parameters for pulse detection)
     constant C_CFD_F_WIDTH            : natural := 2; -- Bit width of the value that scales the input data inside the cfd algorithm -> f = 2^CFD_F_WIDTH* 
@@ -78,7 +72,7 @@ package trap_filter_pkg is
 
     -- Configurable (delays from detection trigger to stages of filtered pulse)
     constant C_TRIG_DELAY_BASELINE   : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_DELAY_START      : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
+    constant C_TRIG_DELAY_START      : natural range 4 to 256 := 20; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
     constant C_TRIG_DELAY_TRAP_WIDTH : natural range 4 to 6   := 6;  -- Width of delay given to trap_system to account for the pulse detection latency
 
     -- Fixed (Amount of triggers)
@@ -133,8 +127,13 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- helpers to get required width
-    function value_to_width (v : natural) return positive;
-    function depth_to_width (n : positive) return positive;
+    function f_value_to_width (v : natural) return positive;
+    function f_depth_to_width (n : positive) return positive;
+
+    -- helpers for jordanov
+    function f_log2_floor (arg : real) return natural;
+    function f_max (a : integer; b : integer) return integer;
+    function f_sat_resize (arg : signed; new_width : natural) return signed;
 
     ----------------------------------------------------------------------------
     -- Component Declaration
@@ -157,9 +156,9 @@ package body trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Computes width needed to store value
-    function value_to_width (v : natural) return positive is
-        variable w                 : positive := 1;
-        variable m                 : natural  := v;
+    function f_value_to_width (v : natural) return positive is
+        variable w                   : positive := 1;
+        variable m                   : natural  := v;
     begin
         while m > 1 loop
             m := m / 2;
@@ -169,9 +168,9 @@ package body trap_filter_pkg is
     end function;
 
     -- Computes width needed to store depth
-    function depth_to_width (n : positive) return positive is
-        variable w                 : natural  := 0;
-        variable c                 : positive := 1;
+    function f_depth_to_width (n : positive) return positive is
+        variable w                   : natural  := 0;
+        variable c                   : positive := 1;
     begin
         while c < n loop
             c := c * 2;
@@ -182,5 +181,48 @@ package body trap_filter_pkg is
         end if;
         return w;
     end function;
+
+    -- Computes floor(log2(x))
+    function f_log2_floor (arg : real) return natural is
+        variable v_val             : real    := arg;
+        variable v_res             : natural := 0;
+    begin
+        while v_val >= 2.0 loop
+            v_val := v_val / 2.0;
+            v_res := v_res + 1;
+        end loop;
+        return v_res;
+    end function f_log2_floor;
+
+    -- Computes the larger of two integers
+    function f_max (a : integer; b : integer) return integer is
+    begin
+        if (a > b) then
+            return a;
+        else
+            return b;
+        end if;
+    end function f_max;
+
+    -- Computes a signed resize with saturation
+    function f_sat_resize (arg : signed; new_width : natural) return signed is
+        constant C_ARG : signed(arg'length - 1 downto 0) := arg;
+        constant C_HI  : signed(new_width - 1 downto 0)  := (new_width - 1 => '0', others => '1');
+        constant C_LO  : signed(new_width - 1 downto 0)  := (new_width - 1 => '1', others => '0');
+        variable v_top : signed(C_ARG'length - new_width downto 0);
+    begin
+        if (C_ARG'length <= new_width) then
+            return resize(C_ARG, new_width);
+        end if;
+        -- bits discarded by the narrowing
+        v_top := C_ARG(C_ARG'length - 1 downto new_width - 1);
+        if (v_top = 0) or (v_top =- 1) then
+            return resize(C_ARG, new_width);
+        elsif (C_ARG(C_ARG'length - 1) = '0') then
+            return C_HI;
+        else
+            return C_LO;
+        end if;
+    end function f_sat_resize;
 
 end package body trap_filter_pkg;

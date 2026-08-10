@@ -58,7 +58,7 @@ architecture rtl of pileup_detection is
     ----------------------------------------------------------------------------
 
     -- Counter limits for the decay time counter
-    constant C_CNT_DECAY_WIDTH : natural                                          := value_to_width(G_PILEUP_DECAY_VALUE);
+    constant C_CNT_DECAY_WIDTH : natural                                          := f_value_to_width(G_PILEUP_DECAY_VALUE);
     constant C_CNT_DECAY_MAX   : std_logic_vector(C_CNT_DECAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(G_PILEUP_DECAY_VALUE, C_CNT_DECAY_WIDTH));
     constant C_CNT_DECAY_ONE   : std_logic_vector(C_CNT_DECAY_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_CNT_DECAY_WIDTH));
     constant C_CNT_DECAY_ZERO  : std_logic_vector(C_CNT_DECAY_WIDTH - 1 downto 0) := (others => '0');

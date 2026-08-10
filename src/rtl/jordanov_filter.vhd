@@ -3,26 +3,30 @@
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       15/07/2026
---  Last Modified: 
+--  Last Modified: 10/08/2026
 --
 --  Description:
 --  Jordanov trapezoidal filter implemented for the pulse shaping transformation. 
---  Designed for unsigned input and signed output with a latency of 6 cycles.
+--  Designed for unsigned input and signed output with a latency of 9 cycles.
 --
---  Dependencies:
---
---  Moving average equations:
+--  Recursive jordanov equations:
 --    
---    diff[n] = v[n] - v_k[n] - v_l[n] + v_kl[n]              (Delayed diff)
---    acc1[n] = acc1[n-1] + diff[n]                           (Running sum 1)
---    Md_full[n] = M_scaled * diff[n]                         (DSP multiplication)
---    Md_full[n] = M_scaled >> X bits                         (Scaling back)
---    acc2[n] = acc2[n-1] + acc1[n] + Md_full[n]              (Running sum 2)
---    y[n]   = acc2[n] >> X bits                              (Normalization at output)
+--    Filtering:
+--    diff[n] = v[n] - v_k[n] - v_l[n] + v_kl[n]              (+1 cycles: Delayed diff)
+--    acc1[n] = acc1[n-1] + diff[n]                           (+2 cycles: Running sum 1)
+--    Md_full[n] = M_scaled * diff[n]                         (+3 cycles: DSP multiplication)
+--    Md_full[n] = M_scaled >> X bits                         (+4 cycles: Scaling back)
+--    acc2[n] = acc2[n-1] + acc1[n] + Md_full[n]              (+5 cycles: Running sum 2)
+--
+--    Normalization:
+--    acc2_shift[n] = acc2[n] << C_NORM_SHIFT                 (+6 cycles: Shift to DSP width)
+--    norm_prod[n] = acc2_shift[n] * C_NORM_COEF              (+7 cycles: Divide by scale factor G)
+--    norm_round[n] = round(norm_prod)                        (+8 cycles: Round output)
+--    y[n]   = saturate (norm_round)                          (+9 cycles: Saturate output)
 -- 
 --  Parameter selection comments:
 --  k -> max 8 bits, recommended (128 < 2^k_width < 256)
---  m -> max 8 bits, recommended (100 < 2^m_width < 256)
+--  M_exp -> represented in 16 bits (12 magnitude, 4 fraction)
 --
 --  Dependencies:
 --  trap_filter_pkg.vhd, shift_register.vhd, delay_module.vhd,
@@ -40,14 +44,12 @@ entity jordanov_filter is
         -- General parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Jordanov parameters
-        G_K_RISE_WIDTH : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
-        G_M_VALUE      : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
-        G_M_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Number of bits selected for the fraction part of the coefficient M_exp
+        G_K_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
+        G_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Fixed point params
-        G_DIFF_MARGIN_BITS : natural range 1 to 3  := 3; -- Bits of margin given to the delayed difference
-        G_ACC1_MARGIN_BITS : natural range 1 to 2  := 2; -- Bits of margin given to the 1st accumulator
-        G_ACC2_MARGIN_BITS : natural range 0 to 1  := 1; -- Bits of margin given to the 2nd accumulator
-        G_OUT_SHIFT        : natural range 0 to 24 := 1  -- Number of bits to shift the 2nd accumulator to the jordanov output (depends on k, M_exp)
+        G_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference
+        G_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator
+        G_ACC2_MARGIN_BITS : natural range 0 to 1 := 1  -- Bits of margin given to the 2nd accumulator
     );
     port (
         ------------------------------------------------------------------------
@@ -80,22 +82,48 @@ architecture rtl of jordanov_filter is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Data output width and coefficient of exponential decay
-    constant C_DATA_O_SIGNED : natural := 1;
-    constant C_M_MAG_WIDTH   : natural := 12;                                               -- Magnitude width (12 bits)
-    constant C_M_WIDTH       : natural := C_M_MAG_WIDTH + G_M_FRAC_WIDTH + C_DATA_O_SIGNED; -- Width of M_exp (17 bits)
+    -- Width of exponential decay factor M_exp
+    constant C_DATA_OUT_SIGN    : natural := 1;                                                        -- Sign bit of output
+    constant C_M_EXP_MAG_WIDTH  : natural := 12;                                                       -- Magnitude width of M_exp (12 bits)
+    constant C_M_EXP_FRAC_WIDTH : natural := 4;                                                        -- Fraction width of M_exp (4 bits)
+    constant C_M_EXP_WIDTH      : natural := C_M_EXP_MAG_WIDTH + C_M_EXP_FRAC_WIDTH + C_DATA_OUT_SIGN; -- Width of M_exp (17 bits)
 
     -- Pipeline signal widths
-    constant C_DIFF_WIDTH          : natural := G_DATA_WIDTH + C_DATA_O_SIGNED + G_DIFF_MARGIN_BITS;                  -- diff: adc (14b) + sign (1b) + margin (3b) = 18b (min is 16b)
-    constant C_ACC1_WIDTH          : natural := G_DATA_WIDTH + C_DATA_O_SIGNED + G_K_RISE_WIDTH + G_ACC1_MARGIN_BITS; -- acc1: adc (14b) + sign (1b) + integ k (8b) + margin (2b) = 25b (min is 24b) 
-    constant C_MDIFF_WIDTH         : natural := C_M_WIDTH + C_DIFF_WIDTH;                                             -- product M*diff: M (17b) * diff (18b) = 35b (min is 33b)
-    constant C_MDIFF_SCALED_WIDTH  : natural := C_MDIFF_WIDTH - G_M_FRAC_WIDTH;                                       -- product M*diff after >> M_FRAC: Mdiff (35b) - M_FRAC (4b) = 31b (min is 29b)
-    constant C_ACC2_WIDTH          : natural := C_MDIFF_SCALED_WIDTH + G_ACC2_MARGIN_BITS + G_K_RISE_WIDTH;           -- acc2: M*diff_scaled (31b) + acc1 (25b) + margin (1b) + integ k (8b) = 40b (min is 39b)
-    constant C_DATA_FILTERED_WIDTH : natural := G_DATA_WIDTH + C_DATA_O_SIGNED;                                       -- filtered data: adc (14b) + sign (1b) = 15b
+    constant C_DIFF_WIDTH          : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN + G_DIFF_MARGIN_BITS;             -- diff: adc (14b) + sign (1b) + margin (3b) = 18b (min is 16b)
+    constant C_ACC1_WIDTH          : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN + G_K_WIDTH + G_ACC1_MARGIN_BITS; -- acc1: adc (14b) + sign (1b) + integ k (8b) + margin (2b) = 25b (min is 24b) 
+    constant C_MDIFF_WIDTH         : natural := C_M_EXP_WIDTH + C_DIFF_WIDTH;                                    -- product M*diff: M (17b) * diff (18b) = 35b (min is 33b)
+    constant C_MDIFF_SCALED_WIDTH  : natural := C_MDIFF_WIDTH - C_M_EXP_FRAC_WIDTH;                              -- product M*diff after >> M_FRAC: Mdiff (35b) - M_FRAC (4b) = 31b (min is 29b)
+    constant C_ACC2_WIDTH          : natural := C_MDIFF_SCALED_WIDTH + G_ACC2_MARGIN_BITS + G_K_WIDTH;           -- acc2: M*diff_scaled (31b) + acc1 (25b) + margin (1b) + integ k (8b) = 40b (min is 39b)
+    constant C_DATA_FILTERED_WIDTH : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN;                                  -- filtered data: adc (14b) + sign (1b) = 15b
 
-    -- Decay exp params (M_exp)
-    constant C_M_FULL_VALUE : signed(C_M_WIDTH - 1 downto 0)     := to_signed(G_M_VALUE, C_M_WIDTH);                     -- Value of M_exp with C_M_WIDTH bits
-    constant C_M_ROUND_LSB  : signed(C_MDIFF_WIDTH - 1 downto 0) := to_signed(2 ** (G_M_FRAC_WIDTH - 1), C_MDIFF_WIDTH); -- Half LSB for rounding
+    -- Decay exponential coefficient as signed (M_exp)
+    constant C_M_EXP_FULL_VALUE : signed(C_M_EXP_WIDTH - 1 downto 0) := to_signed(G_M_EXP_VALUE, C_M_EXP_WIDTH);                 -- Value of M_exp as signed
+    constant C_M_EXP_ROUND_LSB  : signed(C_MDIFF_WIDTH - 1 downto 0) := to_signed(2 ** (C_M_EXP_FRAC_WIDTH - 1), C_MDIFF_WIDTH); -- Half LSB for rounding
+
+    -- DSP operand limits
+    constant C_DSP_A_WIDTH : natural := 25; -- Widest signed operand in multiplier DSP A
+    constant C_DSP_B_WIDTH : natural := 18; -- Widest signed operand in multiplier DSP B
+
+    -- Gain of the filter: G = k * (1 + M_exp) = k * (2^M_FRAC + M_VALUE) / 2^M_FRAC
+    constant C_K_VALUE          : natural := 2 ** G_K_WIDTH;                                   -- Value of delay k
+    constant C_M_EXP_FRAC_VALUE : natural := 2 ** C_M_EXP_FRAC_WIDTH;                          -- M_exp fractional scaling factor, to not admit those bits
+    constant C_GAIN_NUM         : natural := C_K_VALUE * (C_M_EXP_FRAC_VALUE + G_M_EXP_VALUE); -- Gain as exact integer (natural)
+    constant C_GAIN_REAL        : real    := real(C_GAIN_NUM) / real(C_M_EXP_FRAC_VALUE);      -- Gain as a real in compilation (divided by scaling from fraction)
+
+    -- Normalization: out = ((acc2 >> NORM_SHIFT) * NORM_COEF + half LSB) >> NORM_FRAC ~= acc2 / G
+    constant C_NORM_SHIFT    : natural := f_max(0, C_ACC2_WIDTH - C_DSP_A_WIDTH); -- N bits to shift acc2 into the DSP A port (assert ACC2_WIDTH > DSP_A_WIDTH)
+    constant C_NORM_A_WIDTH  : natural := C_ACC2_WIDTH - C_NORM_SHIFT;            -- Width of the shifted acc2 (below DSP_A_WIDTH)
+    constant C_NORM_COEF_MAX : real    := real(2 ** (C_DSP_B_WIDTH - 1) - 1);     -- Largest value of DSP B as real
+
+    -- Largest fractional width keeping the reciprocal coefficient inside the DSP B port
+    constant C_NORM_FRAC : natural                            := f_log2_floor(C_NORM_COEF_MAX * C_GAIN_REAL / 2.0 ** C_NORM_SHIFT); -- Bits needed for reciprocal
+    constant C_NORM_COEF : signed(C_DSP_B_WIDTH - 1 downto 0) :=
+    to_signed(integer(2.0 ** C_NORM_FRAC * 2.0 ** C_NORM_SHIFT / C_GAIN_REAL), C_DSP_B_WIDTH); -- Reciprocal coefficient
+
+    -- Normalization pipeline widths
+    constant C_NORM_PROD_WIDTH  : natural                                 := C_NORM_A_WIDTH + C_DSP_B_WIDTH;                        -- Product width
+    constant C_NORM_ROUND_WIDTH : natural                                 := C_NORM_PROD_WIDTH + 1;                                 -- Product width with addition margin (+ 1 bit)
+    constant C_NORM_ROUND_LSB   : signed(C_NORM_ROUND_WIDTH - 1 downto 0) := to_signed(2 ** (C_NORM_FRAC - 1), C_NORM_ROUND_WIDTH); -- Half LSB for rounding
 
     -- Limits for accumulator1 (signed) overflow error at the last (top) margin bit
     constant C_OFLOW1_PLIM_S : signed(C_ACC1_WIDTH - 1 downto 0) := to_signed(2 ** (C_ACC1_WIDTH - 1 - G_ACC1_MARGIN_BITS) - 1, C_ACC1_WIDTH);
@@ -127,6 +155,11 @@ architecture rtl of jordanov_filter is
     signal acc1_q1      : std_logic_vector(C_ACC1_WIDTH - 1 downto 0);         -- Accumulator 1 + 2 cycles
     signal acc2         : std_logic_vector(C_ACC2_WIDTH - 1 downto 0);         -- Accumulator 2
 
+    -- normalization pipeline signals
+    signal acc2_shift      : std_logic_vector(C_NORM_A_WIDTH - 1 downto 0);     -- Accumulator 2 after the coarse shift
+    signal norm_prod       : std_logic_vector(C_NORM_PROD_WIDTH - 1 downto 0);  -- acc2_shift * NORM_COEF
+    signal norm_prod_round : std_logic_vector(C_NORM_ROUND_WIDTH - 1 downto 0); -- product + half LSB
+
     -- Output data signals and overflow error: bit1 (acc1), bit0(acc2)
     signal data_filtered : std_logic_vector(C_DATA_FILTERED_WIDTH - 1 downto 0);
     signal error_oflow   : std_logic_vector(1 downto 0);
@@ -136,6 +169,21 @@ begin
     ----------------------------------------------------------------------------
     -- Assertions
     ----------------------------------------------------------------------------
+
+    -- The shifted accumulator must fit the DSP multiplier A port
+    assert (C_NORM_A_WIDTH <= C_DSP_A_WIDTH)
+    report "jordanov_filter: normalization operand exceeds the DSP A port width"
+        severity failure;
+
+    -- The reciprocal coefficient must fit the DSP multiplier B port
+    assert (C_NORM_COEF > 0) and (C_NORM_COEF <= to_signed(2 ** (C_DSP_B_WIDTH - 1) - 1, C_DSP_B_WIDTH + 1))
+    report "jordanov_filter: normalization coefficient exceeds the DSP B port width"
+        severity failure;
+
+    -- At least one fractional bit is needed to build the half LSB rounding constant
+    assert (C_NORM_FRAC >= 1)
+    report "jordanov_filter: normalization fractional width is too small"
+        severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments
@@ -202,7 +250,7 @@ begin
             Mdiff <= (others => '0');
         elsif rising_edge(CLK_I) then
             -- multiplier runs at + 3 cycles
-            Mdiff <= std_logic_vector(signed(C_M_FULL_VALUE) * signed(diff));
+            Mdiff <= std_logic_vector(C_M_EXP_FULL_VALUE * signed(diff));
         end if;
     end process p_mult;
 
@@ -215,10 +263,10 @@ begin
             -- rescaler runs at + 4 cycles
             if (signed(Mdiff) >= 0) then
                 Mdiff_scaled <= std_logic_vector(resize(
-                    shift_right(signed(Mdiff) + C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
+                    shift_right(signed(Mdiff) + C_M_EXP_ROUND_LSB, C_M_EXP_FRAC_WIDTH), Mdiff_scaled'length));
             else
                 Mdiff_scaled <= std_logic_vector(resize(
-                    shift_right(signed(Mdiff) - C_M_ROUND_LSB, G_M_FRAC_WIDTH), Mdiff_scaled'length));
+                    shift_right(signed(Mdiff) - C_M_EXP_ROUND_LSB, C_M_EXP_FRAC_WIDTH), Mdiff_scaled'length));
             end if;
         end if;
     end process p_rescale;
@@ -236,14 +284,54 @@ begin
         end if;
     end process p_acc2;
 
-    -- STAGE 6: Divide by G_OUT_SHIFT
+    ----------------------------------------------------------------------------
+    -- Normalization: unity gain from the ADC input to the filtered output
+    ----------------------------------------------------------------------------
+
+    -- STAGE 6: Shift of acc2 down to the DSP A port width
+    p_norm_shift : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            acc2_shift <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            -- shifter runs at + 6 cycles
+            acc2_shift <= std_logic_vector(resize(
+                shift_right(signed(acc2), C_NORM_SHIFT), acc2_shift'length));
+        end if;
+    end process p_norm_shift;
+
+    -- STAGE 7: Gain multiply (norm_prod = acc2_shift * NORM_COEF)
+    p_norm_mult : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            norm_prod <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            -- multiplier runs at + 7 cycles
+            norm_prod <= std_logic_vector(signed(acc2_shift) * C_NORM_COEF);
+        end if;
+    end process p_norm_mult;
+
+    -- STAGE 8: Add the half LSB used for the fine shift
+    p_norm_round : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            norm_prod_round <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            -- rounder runs at + 8 cycles
+            norm_prod_round <= std_logic_vector(
+                resize(signed(norm_prod), norm_prod_round'length) + C_NORM_ROUND_LSB);
+        end if;
+    end process p_norm_round;
+
+    -- STAGE 9: Fine shift (saturated) back to the output width
     p_output : process (CLK_I, RST_N_I)
     begin
         if (RST_N_I = '0') then
             data_filtered <= (others => '0');
         elsif rising_edge(CLK_I) then
-            -- output shifter runs at + 6 cycles
-            data_filtered <= std_logic_vector(resize(shift_right(signed(acc2), G_OUT_SHIFT), data_filtered'length));
+            -- output shifter runs at + 9 cycles
+            data_filtered <= std_logic_vector(f_sat_resize(
+                shift_right(signed(norm_prod_round), C_NORM_FRAC), data_filtered'length));
         end if;
     end process p_output;
 

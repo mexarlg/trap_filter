@@ -26,15 +26,13 @@ entity trap_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Slow jordanov params
-        G_JORD_K_WIDTH          : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
-        G_JORD_M_WIDTH          : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
-        G_JORD_M_EXP_VALUE      : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
-        G_JORD_M_EXP_FRAC_WIDTH : natural range 1 to 4     := 4;     -- Number of bits selected for the fraction part of the coefficient M_exp
+        G_JORD_K_WIDTH     : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
+        G_JORD_M_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
+        G_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Slow jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3  := 3;  -- Bits of margin given to the delayed difference
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2  := 2;  -- Bits of margin given to the 1st accumulator
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1  := 1;  -- Bits of margin given to the 2nd accumulator
-        G_JORD_OUT_SHIFT_BITS   : natural range 0 to 24 := 17; -- Number of bits to shift the 2nd accumulator to the jordanov output (depends on k, M_exp)
+        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference
+        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator
+        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator
         -- Baseline moving average params
         G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline
         G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
@@ -196,16 +194,14 @@ begin
     jord_i : entity trap_filter.jordanov_filter
         generic map(
             -- Jordanov parameters
-            G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_K_RISE_WIDTH => G_JORD_K_WIDTH,
+            G_DATA_WIDTH => G_DATA_WIDTH,
+            G_K_WIDTH    => G_JORD_K_WIDTH,
             -- Exponential decay
-            G_M_VALUE      => G_JORD_M_EXP_VALUE,
-            G_M_FRAC_WIDTH => G_JORD_M_EXP_FRAC_WIDTH,
+            G_M_EXP_VALUE => G_JORD_M_EXP_VALUE,
             -- Fixed point params
             G_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
             G_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
-            G_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS,
-            G_OUT_SHIFT        => G_JORD_OUT_SHIFT_BITS
+            G_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS
         )
         port map(
             ------------------------------------------------------------------------

@@ -74,16 +74,14 @@ begin
     dut : entity trap_filter.jordanov_filter
         generic map(
             -- Jordanov parameters
-            G_DATA_WIDTH   => C_ADC_WIDTH,
-            G_K_RISE_WIDTH => C_K_RISE_WIDTH,
+            G_DATA_WIDTH => C_ADC_WIDTH,
+            G_K_WIDTH    => C_K_RISE_WIDTH,
             -- Exponential decay
-            G_M_VALUE      => C_M_EXP_VALUE,
-            G_M_FRAC_WIDTH => 4,
+            G_M_EXP_VALUE => C_M_EXP_VALUE,
             -- Fixed point params
             G_DIFF_MARGIN_BITS => 3,
             G_ACC1_MARGIN_BITS => 2,
-            G_ACC2_MARGIN_BITS => 1,
-            G_OUT_SHIFT        => 17
+            G_ACC2_MARGIN_BITS => 1
         )
         port map(
             ------------------------------------------------------------------------
