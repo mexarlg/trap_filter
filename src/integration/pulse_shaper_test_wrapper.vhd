@@ -133,7 +133,7 @@ begin
         generic map(
             -- input pulse parameters
             G_DATA_WIDTH  => G_ADC_WIDTH,
-            G_PULSE_WIDTH => C_PULSE_SAMPLE_WIDTH
+            G_PULSE_DEPTH => C_PULSE_SAMPLE_DEPTH
         )
         port map(
             ------------------------------------------------------------------------

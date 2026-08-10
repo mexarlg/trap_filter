@@ -27,8 +27,8 @@ use trap_filter.pulse_mult_data_pkg.all;
 
 entity pulse_feed is
     generic (
-        G_DATA_WIDTH  : natural range 4 to 16 := 14; -- Width of incoming data stream
-        G_PULSE_WIDTH : natural range 7 to 12 := 10  -- Width needed for incoming number of samples
+        G_DATA_WIDTH  : natural range 4 to 16      := 14;  -- Width of incoming data stream
+        G_PULSE_DEPTH : natural range 255 to 65535 := 4095 -- Depth needed for incoming number of samples
     );
     port (
         ------------------------------------------------------------------------
@@ -57,14 +57,11 @@ architecture rtl of pulse_feed is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Amount of samples in pulse rom
-    constant C_PULSE_SAMPLE_DEPTH : std_logic_vector(G_PULSE_WIDTH - 1 downto 0) := (others => '1');
-    constant C_MEM_DEPTH          : integer                                      := to_integer(unsigned(C_PULSE_SAMPLE_DEPTH));
-
     -- Address limits
-    constant C_ADDR_MAX  : std_logic_vector(G_PULSE_WIDTH - 1 downto 0) := C_PULSE_SAMPLE_DEPTH;
-    constant C_ADDR_ONE  : std_logic_vector(G_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_PULSE_WIDTH));
-    constant C_ADDR_ZERO : std_logic_vector(G_PULSE_WIDTH - 1 downto 0) := (others => '0');
+    constant C_PULSE_WIDTH : natural                                      := depth_to_width(G_PULSE_DEPTH);
+    constant C_ADDR_MAX    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsIgned(G_PULSE_DEPTH - 1, C_PULSE_WIDTH));
+    constant C_ADDR_ONE    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_PULSE_WIDTH));
+    constant C_ADDR_ZERO   : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
     -- Types
@@ -78,8 +75,8 @@ architecture rtl of pulse_feed is
     signal data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
     -- intermidiate signals (choose pulse data from pkg constants)
-    signal rom_pulse : mem_t(0 to C_MEM_DEPTH)(G_DATA_WIDTH - 1 downto 0) := C_INIT_PULSE_MULT;
-    signal addr      : std_logic_vector(G_PULSE_WIDTH - 1 downto 0)       := (others => '0');
+    signal rom_pulse : mem_t(0 to G_PULSE_DEPTH - 1)(G_DATA_WIDTH - 1 downto 0) := C_INIT_PULSE_MULT;
+    signal addr      : std_logic_vector(C_PULSE_WIDTH - 1 downto 0)             := (others => '0');
 
 begin
 

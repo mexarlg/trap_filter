@@ -90,7 +90,7 @@ begin
     pulse_feed_i : entity trap_filter.pulse_feed
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_PULSE_WIDTH => 10
+            G_PULSE_DEPTH => 2048
         )
         port map(
             ------------------------------------------------------------------------

@@ -24,8 +24,8 @@ architecture tb of tb_pulse_shaper_top is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Input data parameters
-    constant C_ADC_WIDTH    : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
-    constant C_SAMPLE_WIDTH : natural range 11 to 12 := 11; -- Width of sample depth
+    constant C_ADC_WIDTH    : natural range 12 to 15     := 14;   -- Width of the incoming data stream from the adc
+    constant C_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Depth of input pulse
     -- Trapezoidal filter parameters
     constant C_SLOW_JORD_K_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
     constant C_SLOW_JORD_M_WIDTH        : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
@@ -79,7 +79,7 @@ begin
     pulse_feed_i : entity trap_filter.pulse_feed
         generic map(
             G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_PULSE_WIDTH => C_SAMPLE_WIDTH
+            G_PULSE_DEPTH => C_SAMPLE_DEPTH
         )
         port map(
             ------------------------------------------------------------------------
