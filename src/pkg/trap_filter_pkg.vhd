@@ -27,7 +27,7 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable
-    constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 4096; -- Sample depth of the stored input pulse
+    constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored input pulse
 
     -- Fixed
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 8; -- Amount of bits required for all overflow flags of the system
