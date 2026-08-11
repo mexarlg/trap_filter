@@ -68,12 +68,11 @@ package trap_filter_pkg is
     constant C_CFD_D_WIDTH            : natural := 5; -- Bit width of the delay d inside the cfd algorithm
     constant C_CFD_M_WIDTH            : natural := 3; -- Bit width of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
     constant C_CFD_DIFF_MARGIN_BITS   : natural := 1; -- Bits of margin given to the difference signal in the cfd algorithm
-    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7; -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed (timeout = 2^Timeout_width)
+    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7; -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
 
     -- Configurable (delays from detection trigger to stages of filtered pulse)
-    constant C_TRIG_DELAY_BASELINE   : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_DELAY_START      : natural range 4 to 256 := 20; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
-    constant C_TRIG_DELAY_TRAP_WIDTH : natural range 4 to 6   := 6;  -- Width of delay given to trap_system to account for the pulse detection latency
+    constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
+    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 20; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
 
     -- Fixed (Amount of triggers)
     constant C_TRIG_DEPTH : natural := 5; -- Depth / Amount of trigger pulses describing the stages of a pulse

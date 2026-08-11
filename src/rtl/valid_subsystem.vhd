@@ -21,9 +21,12 @@ use trap_filter.trap_filter_pkg.all;
 
 entity valid_subsystem is
     generic (
-        -- Slow jordanov trapezoid parameters
-        G_SLOW_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of slow filtered trapezoid rising edge
-        G_SLOW_JORD_M_WIDTH : natural range 2 to 8 := 8  -- Width of slow filtered trapezoid flat top
+        -- Pulse detection common delay
+        G_DETECTION_DELAY : natural range 64 to 256 := 64;
+        -- Slow jordanov delay
+        G_SLOW_JORD_K_WIDTH : natural range 2 to 8  := 6; -- Width of slow filtered trapezoid rising edge
+        G_SLOW_JORD_M_WIDTH : natural range 2 to 8  := 8; -- Width of slow filtered trapezoid flat top
+        G_SLOW_JORD_LATENCY : natural range 9 to 10 := 9  -- Latency of jordanov filter
     );
     port (
         ------------------------------------------------------------------------
@@ -53,16 +56,19 @@ architecture rtl of valid_subsystem is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- Delay values (most critical is kl)
+    -- Total delay for jordanov algorithm 
     constant C_JORD_K_DELAY  : natural := 2 ** G_SLOW_JORD_K_WIDTH;        -- k  = 2^K_WIDTH
     constant C_JORD_M_DELAY  : natural := 2 ** G_SLOW_JORD_M_WIDTH;        -- m  = 2^M_WIDTH
     constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
 
+    -- Total delay until a pulse is valid
+    constant C_TOTAL_DELAY : natural := 2 * C_JORD_KL_DELAY + G_DETECTION_DELAY + G_SLOW_JORD_LATENCY;
+
     -- counter limits
-    constant C_CNT_WIDTH : natural                                    := 10;                                                          -- maximum possible width assumming both k and m as 8 bits width
-    constant C_CNT_MAX   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_JORD_KL_DELAY, C_CNT_WIDTH)); -- value of max delay in cnt width
-    constant C_CNT_ONE   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_CNT_WIDTH));               -- value of 1 in cnt width
+    constant C_CNT_WIDTH : natural                                    := f_value_to_width(C_TOTAL_DELAY);                           -- maximum possible width assumming both k and m as 8 bits width
+    constant C_CNT_MAX   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(C_TOTAL_DELAY, C_CNT_WIDTH)); -- value of max delay in cnt width
+    constant C_CNT_ONE   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_CNT_WIDTH));             -- value of 1 in cnt width
 
     -- state when no overflow error exists
     constant C_OFLOW_NO_ERROR : std_logic_vector(8 downto 0) := (others => '0');

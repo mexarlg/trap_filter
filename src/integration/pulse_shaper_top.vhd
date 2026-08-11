@@ -76,6 +76,11 @@ architecture rtl of pulse_shaper_top is
     -- width of data after trap_subsystem filter
     constant C_DATA_FILTERED_WIDTH : natural := G_ADC_WIDTH + 1;
 
+    -- delay given to trap_ss due pulse detection
+    constant C_FAST_JORD_DELAY : natural := 2 ** C_FAST_JORD_K_WIDTH + 2 ** C_FAST_JORD_M_WIDTH; -- delay from fast jordanov
+    constant C_CFD_DELAY       : natural := 2 ** C_CFD_D_WIDTH;                                  -- delay from cfd
+    constant C_DETECTION_DELAY : natural := C_FAST_JORD_DELAY + C_CFD_DELAY;                     -- total delay in N of samples
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -215,8 +220,8 @@ begin
             -- Baseline moving average parameters
             G_MOV_D_WIDTH         => C_BASE_MOV_D_WIDTH,
             G_MOV_ACC_MARGIN_BITS => C_BASE_MOV_ACC_MARGIN_BITS,
-            -- Trap_subsystem general due pulse detection
-            G_TRAP_DELAY_WIDTH => C_TRIG_DELAY_TRAP_WIDTH
+            -- Trap_subsystem common delay due to pulse detection
+            G_DETECTION_DELAY => C_DETECTION_DELAY
         )
         port map(
             ------------------------------------------------------------------------
@@ -267,9 +272,12 @@ begin
     -- asserts validity of a pulse if all conditions are met
     valid_ss_i : entity trap_filter.valid_subsystem
         generic map(
+            -- Trap_ss general delay
+            G_DETECTION_DELAY => C_DETECTION_DELAY,
             -- Slow jordanov parameters for timing of delays
             G_SLOW_JORD_K_WIDTH => G_SLOW_JORD_K_WIDTH,
-            G_SLOW_JORD_M_WIDTH => G_SLOW_JORD_M_WIDTH
+            G_SLOW_JORD_M_WIDTH => G_SLOW_JORD_M_WIDTH,
+            G_SLOW_JORD_LATENCY => 9
         )
         port map(
             ------------------------------------------------------------------------

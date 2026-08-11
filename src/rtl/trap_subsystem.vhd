@@ -37,7 +37,7 @@ entity trap_subsystem is
         G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline
         G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
         -- Common delay due to pulse detection system
-        G_TRAP_DELAY_WIDTH : natural range 4 to 6 := 5 -- Width of delay given to trap_system to account for the pulse detection latency
+        G_DETECTION_DELAY : natural range 64 to 256 := 64 -- N of samples of delay given to trap_system due pulse detection latency
     );
     port (
         ------------------------------------------------------------------------
@@ -74,7 +74,6 @@ architecture rtl of trap_subsystem is
     constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
     constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
     constant C_MOV_D_DELAY   : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
-    constant C_PULSE_DELAY   : natural := 2 ** G_TRAP_DELAY_WIDTH;         -- Value of delay for both paths
 
     ----------------------------------------------------------------------------
     -- Types
@@ -135,7 +134,7 @@ begin
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
             G_COMMON_DELAY_EN => 1,
-            G_COMMON_DELAY    => C_PULSE_DELAY,
+            G_COMMON_DELAY    => G_DETECTION_DELAY,
             G_JORD_DELAY_EN   => 1,
             G_JORD_K_DELAY    => C_JORD_K_DELAY,
             G_JORD_L_DELAY    => C_JORD_L_DELAY,

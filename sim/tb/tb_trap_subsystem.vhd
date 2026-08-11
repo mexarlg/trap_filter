@@ -24,11 +24,11 @@ architecture tb of tb_trap_subsystem is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Jordanov params configuration
-    constant C_ADC_WIDTH         : natural := 14;
-    constant C_JORD_K_WIDTH      : natural := 6; -- k  = 2^K_RISE_WIDTH
-    constant C_JORD_M_WIDTH      : natural := 7; -- m  = 2^M_FLAT_WIDTH
-    constant C_MOV_D_WIDTH       : natural := 4; -- d  = 2^C_DELAY_WIDTH
-    constant C_PULSE_DELAY_WIDTH : natural := 4; -- d  = 2^C_PULSE_DELAY_WIDTH
+    constant C_ADC_WIDTH       : natural := 14;
+    constant C_JORD_K_WIDTH    : natural := 6;  -- k  = 2^K_RISE_WIDTH
+    constant C_JORD_M_WIDTH    : natural := 7;  -- m  = 2^M_FLAT_WIDTH
+    constant C_MOV_D_WIDTH     : natural := 4;  -- d  = 2^C_DELAY_WIDTH
+    constant C_DETECTION_DELAY : natural := 64; -- d  = 2^C_PULSE_DELAY_WIDTH
 
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
@@ -96,7 +96,7 @@ begin
             G_MOV_D_WIDTH         => C_MOV_D_WIDTH,
             G_MOV_ACC_MARGIN_BITS => 2,
             -- Pulse detection params
-            G_TRAP_DELAY_WIDTH => C_PULSE_DELAY_WIDTH
+            G_DETECTION_DELAY => C_DETECTION_DELAY
         )
         port map(
             ------------------------------------------------------------------------
