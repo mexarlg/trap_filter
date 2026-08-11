@@ -49,7 +49,6 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for baseline substraction)
-    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 5 := 4; -- Width of samples averaged in the moving average for the baseline
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     ----------------------------------------------------------------------------
@@ -70,7 +69,7 @@ package trap_filter_pkg is
     constant C_CFD_DIFF_MARGIN_BITS   : natural := 1;  -- Bits of margin given to the difference signal in the cfd algorithm
     constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7;  -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
 
-    -- Configurable (delays from detection trigger to stages of filtered pulse)
+    -- Fixed (delays from detection trigger to stages of filtered pulse)
     constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
     constant C_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
 
@@ -85,8 +84,6 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for pulse amplitude capture)
-    constant C_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter on the top of the filtered trapezoid
-    constant C_PEAK_MOV_DELAY_WIDTH     : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the peak
     constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the peak
 
     ----------------------------------------------------------------------------

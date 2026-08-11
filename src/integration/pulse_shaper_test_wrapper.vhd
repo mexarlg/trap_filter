@@ -28,6 +28,10 @@ entity pulse_shaper_test_wrapper is
         G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for rising edge of filtered trapezoid
         G_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        -- Moving average parameters
+        G_BASE_MOV_DELAY_WIDTH : natural range 2 to 5 := 4; -- Width of samples averaged in moving average for the baseline
+        G_PEAK_MOV_EN          : natural range 0 to 1 := 1; -- Moving average enable for peak
+        G_PEAK_MOV_DELAY_WIDTH : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
         -- Pulse detection parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
         G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -156,6 +160,10 @@ begin
             G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
             G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
+            -- Moving average parameters
+            G_BASE_MOV_DELAY_WIDTH => G_BASE_MOV_DELAY_WIDTH,
+            G_PEAK_MOV_EN          => G_PEAK_MOV_EN,
+            G_PEAK_MOV_DELAY_WIDTH => G_PEAK_MOV_DELAY_WIDTH,
             -- Pulse detection parameters
             G_CFD_VAL_TH   => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
