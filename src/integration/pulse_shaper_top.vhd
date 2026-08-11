@@ -78,7 +78,6 @@ architecture rtl of pulse_shaper_top is
 
     -- delay given to trap_ss due pulse detection
     constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY; -- delay from fast jordanov
-    constant C_CFD_DELAY          : natural := 2 ** C_CFD_D_WIDTH;                        -- delay from cfd
     constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY;        -- total delay in N of samples
 
     ----------------------------------------------------------------------------

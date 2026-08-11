@@ -128,9 +128,9 @@ begin
             -- general data
             G_DATA_WIDTH => C_DATA_FILTERED_WIDTH,
             -- delays and coefficients for cfd
-            G_CFD_F_WIDTH => C_CFD_F_WIDTH,
-            G_CFD_D_WIDTH => C_CFD_D_WIDTH,
-            G_CFD_M_WIDTH => C_CFD_M_WIDTH,
+            G_CFD_F_WIDTH     => C_CFD_F_WIDTH,
+            G_CFD_DELAY       => C_CFD_DELAY,
+            G_CFD_SLOPE_DELAY => C_CFD_SLOPE_DELAY,
             -- margins for internal cfd signal
             G_CFD_MARGIN_BITS => C_CFD_DIFF_MARGIN_BITS,
             -- thresholds and expected timeout after th activation

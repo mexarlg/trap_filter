@@ -63,11 +63,11 @@ package trap_filter_pkg is
     constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;  -- Bits of margin given to the 2nd accumulator
 
     -- Fixed (constant fraction discriminator parameters for pulse detection)
-    constant C_CFD_F_WIDTH            : natural := 2; -- Bit width of the value that scales the input data inside the cfd algorithm -> f = 2^CFD_F_WIDTH* 
-    constant C_CFD_D_WIDTH            : natural := 5; -- Bit width of the delay d inside the cfd algorithm
-    constant C_CFD_M_WIDTH            : natural := 3; -- Bit width of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
-    constant C_CFD_DIFF_MARGIN_BITS   : natural := 1; -- Bits of margin given to the difference signal in the cfd algorithm
-    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7; -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
+    constant C_CFD_F_WIDTH            : natural := 2;  -- Bit width of the value that scales the input data inside the cfd algorithm -> f = 2^CFD_F_WIDTH* 
+    constant C_CFD_DELAY              : natural := 32; -- Value of the delay d inside the cfd algorithm
+    constant C_CFD_SLOPE_DELAY        : natural := 8;  -- Value of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
+    constant C_CFD_DIFF_MARGIN_BITS   : natural := 1;  -- Bits of margin given to the difference signal in the cfd algorithm
+    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7;  -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
 
     -- Configurable (delays from detection trigger to stages of filtered pulse)
     constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse

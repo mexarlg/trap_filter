@@ -26,10 +26,10 @@ entity cfd is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 15; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Cfd parameters
-        G_CFD_F_WIDTH     : natural range 1 to 3 := 2; -- scalar factor f (1 = 0.5; 2 = 0.25; 3 = 0.125)
-        G_CFD_D_WIDTH     : natural range 4 to 6 := 5; -- width of delay (4 for fast, 6 for slow pulses)
-        G_CFD_M_WIDTH     : natural range 3 to 4 := 3; -- Bit width of delay used to compute slope of data for gating on rising edges
-        G_CFD_MARGIN_BITS : natural range 1 to 3 := 1; -- Number of bits of margin to internal difference signal
+        G_CFD_F_WIDTH     : natural range 1 to 3   := 2;  -- scalar factor f (1 = 0.5; 2 = 0.25; 3 = 0.125)
+        G_CFD_DELAY       : natural range 16 to 64 := 32; -- cfd delay (16 for fast, 64 for slow pulses)
+        G_CFD_SLOPE_DELAY : natural range 8 to 16  := 8;  -- slope delay used to compute slope of data for gating on rising edges
+        G_CFD_MARGIN_BITS : natural range 1 to 3   := 1;  -- Number of bits of margin to internal difference signal
         -- thresholds and expected pulse timeout
         G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- threshold to gate value of DATA_I
         G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- threshold to gate slope of DATA_I
@@ -65,8 +65,8 @@ architecture rtl of cfd is
     ----------------------------------------------------------------------------
 
     -- delay values (-1 due REG_INPUT generic asserted on shift_register)
-    constant C_CFD_D_DELAY : natural := 2 ** G_CFD_D_WIDTH - 1;
-    constant C_CFD_M_DELAY : natural := 2 ** G_CFD_M_WIDTH - 1;
+    constant C_CFD_D_DELAY : natural := G_CFD_DELAY - 1;
+    constant C_CFD_M_DELAY : natural := G_CFD_SLOPE_DELAY - 1;
 
     -- internal arithmetic width (data + margin)
     constant C_CFD_WIDTH : natural := G_DATA_WIDTH + G_CFD_MARGIN_BITS;
