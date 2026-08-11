@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- Version / Metadata
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.3";
+    constant SYSTEM_VERSION : string := "1.4";
 
     ----------------------------------------------------------------------------
     -- General Parameters
@@ -49,7 +49,7 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for baseline substraction)
-    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 5 := 4; -- Width of samples averaged in the moving average for the baseline (16 samples)
+    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 5 := 4; -- Width of samples averaged in the moving average for the baseline
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     ----------------------------------------------------------------------------
@@ -57,14 +57,14 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Fixed (jordanov parameters of fast jordanov for pulse detection)
-    constant C_FAST_JORD_K_DELAY          : natural := 16; -- Width of delay for the rising edge of the trapezoid (16 samples)
-    constant C_FAST_JORD_M_DELAY          : natural := 16; -- Width of delay for the flat top of the trapezoid (16 samples)
+    constant C_FAST_JORD_K_DELAY          : natural := 16; -- Delay for the rising edge of the trapezoid
+    constant C_FAST_JORD_M_DELAY          : natural := 16; -- Delay for the flat top of the trapezoid
     constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3;  -- Bits of margin given to the delayed difference
     constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2;  -- Bits of margin given to the 1st accumulator
     constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;  -- Bits of margin given to the 2nd accumulator
 
     -- Fixed (constant fraction discriminator parameters for pulse detection)
-    constant C_CFD_F_WIDTH            : natural := 2;  -- Bit width of the value that scales the input data inside the cfd algorithm -> f = 2^CFD_F_WIDTH* 
+    constant C_CFD_F_WIDTH            : natural := 2;  -- Bit width of the value that scales the input data
     constant C_CFD_DELAY              : natural := 32; -- Value of the delay d inside the cfd algorithm
     constant C_CFD_SLOPE_DELAY        : natural := 8;  -- Value of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
     constant C_CFD_DIFF_MARGIN_BITS   : natural := 1;  -- Bits of margin given to the difference signal in the cfd algorithm

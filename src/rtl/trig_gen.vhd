@@ -57,6 +57,9 @@ architecture rtl of trig_gen is
     -- Constants
     ----------------------------------------------------------------------------
 
+    --margin for end of pulse
+    constant C_END_PULSE_MARGIN : natural := 30; -- Additional samples after pulse ended to assert trigger
+
     -- trapezoid specific durations
     constant C_HALF_FLAT_DELAY : natural := G_SLOW_JORD_M_DELAY / 2; -- duration of half the trapezoid top
 
@@ -65,7 +68,7 @@ architecture rtl of trig_gen is
     constant C_START_PULSE_DEPTH : natural := G_TRIG_DELAY_START;
     constant C_START_FLAT_DEPTH  : natural := C_START_PULSE_DEPTH + G_SLOW_JORD_K_DELAY;
     constant C_MID_FLAT_DEPTH    : natural := C_START_FLAT_DEPTH + C_HALF_FLAT_DELAY;
-    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY;
+    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY + C_END_PULSE_MARGIN;
 
     -- separation of baseline from rising edge of pulse
     constant C_BASE_TO_START : natural := C_START_PULSE_DEPTH - C_BASELINE_DEPTH;
