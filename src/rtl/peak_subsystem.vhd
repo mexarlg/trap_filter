@@ -26,7 +26,7 @@ entity peak_subsystem is
         G_DATA_WIDTH : natural range 8 to 16 := 15; -- Width of filtered input data
         -- Peak moving average params
         G_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter of the peak
-        G_PEAK_MOV_DELAY_WIDTH     : natural range 2 to 8 := 3; -- Width of samples averaged in the moving average for the peak
+        G_PEAK_MOV_DELAY_WIDTH     : natural range 3 to 5 := 3; -- Width of samples averaged in the moving average for the peak
         G_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2  -- Margin bits given to the accumulator inside the moving average for the peak
     );
     port (
@@ -59,7 +59,7 @@ architecture rtl of peak_subsystem is
     ----------------------------------------------------------------------------
 
     -- delay value for moving average filter
-    constant C_MOV_D_DELAY : natural := 2 ** G_PEAK_MOV_DELAY_WIDTH - 1;
+    constant C_PEAK_MOV_DELAY : natural := 2 ** G_PEAK_MOV_DELAY_WIDTH - 1;
 
     ----------------------------------------------------------------------------
     -- Signals
@@ -105,7 +105,7 @@ begin
         sr_d_i : entity trap_filter.shift_register
             generic map(
                 G_DATA_WIDTH  => G_DATA_WIDTH,
-                G_DELAY_VALUE => C_MOV_D_DELAY,
+                G_DELAY_VALUE => C_PEAK_MOV_DELAY,
                 G_REG_INPUT   => 1
             )
             port map(

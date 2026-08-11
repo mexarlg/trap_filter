@@ -30,7 +30,7 @@ use trap_filter.trap_filter_pkg.all;
 entity mov_avg_filter is
     generic (
         G_DATA_WIDTH      : natural range 4 to 16 := 14; -- Width of incoming data stream
-        G_DELAY_WIDTH     : natural range 0 to 8  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
+        G_DELAY_WIDTH     : natural range 3 to 5  := 4;  -- Width of samples averaged (all bits -> '1' for multiple of 2^N)
         G_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Width of margin given to the accumulator
         G_DATA_I_SIGNED   : natural range 0 to 1  := 0   -- Input data signed (1) or unsigned (0) -> DATA_OUT_WIDTH = DATA_WIDTH + DATA_I_SIGNED
     );

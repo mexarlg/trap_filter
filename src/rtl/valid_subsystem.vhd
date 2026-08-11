@@ -24,9 +24,9 @@ entity valid_subsystem is
         -- Pulse detection common delay
         G_DETECTION_DELAY : natural range 64 to 256 := 64;
         -- Slow jordanov delay
-        G_SLOW_JORD_K_DELAY : natural range 4 to 256 := 256; -- Value of slow filtered trapezoid rising edge
-        G_SLOW_JORD_M_DELAY : natural range 4 to 256 := 256; -- Value of slow filtered trapezoid flat top
-        G_SLOW_JORD_LATENCY : natural range 9 to 10  := 9    -- Latency of jordanov filter
+        G_SLOW_JORD_K_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid rising edge
+        G_SLOW_JORD_M_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid flat top
+        G_SLOW_JORD_LATENCY : natural range 9 to 10   := 9    -- Latency of jordanov filter
     );
     port (
         ------------------------------------------------------------------------
@@ -60,8 +60,11 @@ architecture rtl of valid_subsystem is
     constant C_SLOW_JORD_L_DELAY  : natural := G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY; -- l  = k + m
     constant C_SLOW_JORD_KL_DELAY : natural := G_SLOW_JORD_K_DELAY + C_SLOW_JORD_L_DELAY; -- k + l = 2k + m
 
+    -- margin cycles for any extra latency for redundancy
+    constant C_MARGIN_DELAY : natural := 30;
+
     -- Total delay until a pulse is valid
-    constant C_TOTAL_DELAY : natural := 2 * C_SLOW_JORD_KL_DELAY + G_DETECTION_DELAY + G_SLOW_JORD_LATENCY;
+    constant C_TOTAL_DELAY : natural := 2 * C_SLOW_JORD_KL_DELAY + G_DETECTION_DELAY + G_SLOW_JORD_LATENCY + C_MARGIN_DELAY;
 
     -- counter limits
     constant C_CNT_WIDTH : natural                                    := f_value_to_width(C_TOTAL_DELAY);                           -- maximum possible width assumming both k and m as 8 bits width

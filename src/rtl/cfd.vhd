@@ -114,6 +114,10 @@ begin
     assert (2 ** G_CFD_TIMEOUT_WIDTH - 1 > C_CFD_D_DELAY)
     report "cfd: timeout window G_CFD_TIMEOUT_WIDTH must be longer than C_CFD_D_DELAY delay" severity failure;
 
+    assert (G_CFD_SLOPE_DELAY < G_CFD_DELAY)
+    report "cfd: G_CFD_SLOPE_DELAY exceeds G_CFD_DELAY"
+        severity failure;
+
     ----------------------------------------------------------------------------
     -- Output assignments
     ----------------------------------------------------------------------------

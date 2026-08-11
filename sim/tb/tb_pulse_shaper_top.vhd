@@ -27,8 +27,8 @@ architecture tb of tb_pulse_shaper_top is
     constant C_ADC_WIDTH    : natural range 12 to 15     := 14;   -- Width of the incoming data stream from the adc
     constant C_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Depth of input pulse
     -- Trapezoidal filter parameters
-    constant C_SLOW_JORD_K_DELAY     : natural range 4 to 256   := 128;   -- Value of the delay for rising edge of filtered trapezoid
-    constant C_SLOW_JORD_M_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for flat top of filtered trapezoid
+    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 64;    -- Value of the delay for rising edge of filtered trapezoid
+    constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
     -- Pulse detection parameters
     constant C_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection

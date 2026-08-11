@@ -40,8 +40,8 @@ entity delay_module is
         G_JORD_L_DELAY  : natural range 4 to 4096 := 192; -- l  = k + m
         G_JORD_KL_DELAY : natural range 4 to 4096 := 256; -- kl = k + l
         -- Enable and mov avg delay from jordanov data
-        G_MOV_DELAY_EN : natural range 0 to 1    := 0; -- Enables moving average specific delay
-        G_MOV_D_DELAY  : natural range 4 to 4096 := 16 -- Moving average depth
+        G_MOV_DELAY_EN    : natural range 0 to 1    := 0; -- Enables moving average specific delay
+        G_MOV_DELAY_DELAY : natural range 4 to 4096 := 16 -- Moving average depth
     );
     port (
         ------------------------------------------------------------------------
@@ -80,7 +80,7 @@ architecture rtl of delay_module is
     constant C_JORD_DELAY_K  : natural := G_JORD_K_DELAY - 1;
     constant C_JORD_DELAY_L  : natural := G_JORD_L_DELAY - G_JORD_K_DELAY - 1;
     constant C_JORD_DELAY_KL : natural := G_JORD_KL_DELAY - G_JORD_L_DELAY - 1;
-    constant C_MOV_DELAY_D   : natural := G_MOV_D_DELAY - 1;
+    constant C_MOV_DELAY_D   : natural := G_MOV_DELAY_DELAY - 1;
 
     ----------------------------------------------------------------------------
     -- Signals

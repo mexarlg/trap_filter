@@ -31,8 +31,9 @@ package trap_filter_pkg is
 
     -- Fixed (latencies and number of overflow flags)
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 8; -- Amount of bits required for all overflow flags of the system
-    constant C_JORDANOV_LATENCY     : natural := 9;
-    constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the baseline moving average filter
+    constant C_JORDANOV_LATENCY     : natural := 9; -- latency in number of cycles of the jordanov filter
+    constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the moving average filter
+    constant C_CFD_LATENCY          : natural := 3; -- latency in number of cycles of the cfd module
 
     ----------------------------------------------------------------------------
     -- Trap Subsystem: Slow Jordanov Parameters
@@ -48,7 +49,7 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for baseline substraction)
-    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline (16 samples)
+    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 5 := 4; -- Width of samples averaged in the moving average for the baseline (16 samples)
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     ----------------------------------------------------------------------------
@@ -71,7 +72,7 @@ package trap_filter_pkg is
 
     -- Configurable (delays from detection trigger to stages of filtered pulse)
     constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 20; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
+    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
 
     -- Fixed (Amount of triggers)
     constant C_TRIG_DEPTH : natural := 5; -- Depth / Amount of trigger pulses describing the stages of a pulse

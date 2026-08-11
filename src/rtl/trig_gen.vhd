@@ -27,8 +27,8 @@ entity trig_gen is
         G_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
         G_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
         -- jordanov slow trapezoid parameters for timing
-        G_SLOW_JORD_K_DELAY : natural range 4 to 256 := 256; -- Value of slow filtered trapezoid rising edge
-        G_SLOW_JORD_M_DELAY : natural range 4 to 256 := 256  -- Value of slow filtered trapezoid flat top
+        G_SLOW_JORD_K_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid rising edge
+        G_SLOW_JORD_M_DELAY : natural range 16 to 256 := 256  -- Value of slow filtered trapezoid flat top
     );
     port (
         ------------------------------------------------------------------------

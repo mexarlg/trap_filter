@@ -114,7 +114,7 @@ begin
             G_JORD_L_DELAY    => C_L_DELAY,
             G_JORD_KL_DELAY   => C_KL_DELAY,
             G_MOV_DELAY_EN    => 1,
-            G_MOV_D_DELAY     => 8
+            G_MOV_DELAY_DELAY => 8
         )
         port map(
             ------------------------------------------------------------------------

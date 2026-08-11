@@ -24,8 +24,8 @@ entity pulse_shaper_top is
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
-        G_SLOW_JORD_K_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for rising edge of filtered trapezoid
-        G_SLOW_JORD_M_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for flat top of filtered trapezoid
+        G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Pulse detection parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
@@ -77,8 +77,8 @@ architecture rtl of pulse_shaper_top is
     constant C_DATA_FILTERED_WIDTH : natural := G_ADC_WIDTH + 1;
 
     -- delay given to trap_ss due pulse detection
-    constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY; -- delay from fast jordanov
-    constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY;        -- total delay in N of samples
+    constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY;                               -- delay from fast jordanov
+    constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY + C_JORDANOV_LATENCY + C_CFD_LATENCY; -- total delay in N of samples
 
     ----------------------------------------------------------------------------
     -- Types
