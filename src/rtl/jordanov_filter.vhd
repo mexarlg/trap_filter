@@ -44,7 +44,7 @@ entity jordanov_filter is
         -- General parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Jordanov parameters
-        G_K_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for rising edge of filtered trapezoid
+        G_K_DELAY     : natural range 4 to 256   := 256;   -- Value of delay for rising edge of filtered trapezoid
         G_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Fixed point params
         G_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference
@@ -82,6 +82,9 @@ architecture rtl of jordanov_filter is
     -- Constants
     ----------------------------------------------------------------------------
 
+    -- width of rising delay for jordanov k
+    constant C_K_WIDTH : natural := f_depth_to_width(G_K_DELAY);
+
     -- Width of exponential decay factor M_exp
     constant C_DATA_OUT_SIGN    : natural := 1;                                                        -- Sign bit of output
     constant C_M_EXP_MAG_WIDTH  : natural := 12;                                                       -- Magnitude width of M_exp (12 bits)
@@ -90,10 +93,10 @@ architecture rtl of jordanov_filter is
 
     -- Pipeline signal widths
     constant C_DIFF_WIDTH          : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN + G_DIFF_MARGIN_BITS;             -- diff: adc (14b) + sign (1b) + margin (3b) = 18b (min is 16b)
-    constant C_ACC1_WIDTH          : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN + G_K_WIDTH + G_ACC1_MARGIN_BITS; -- acc1: adc (14b) + sign (1b) + integ k (8b) + margin (2b) = 25b (min is 24b) 
+    constant C_ACC1_WIDTH          : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN + C_K_WIDTH + G_ACC1_MARGIN_BITS; -- acc1: adc (14b) + sign (1b) + integ k (8b) + margin (2b) = 25b (min is 24b) 
     constant C_MDIFF_WIDTH         : natural := C_M_EXP_WIDTH + C_DIFF_WIDTH;                                    -- product M*diff: M (17b) * diff (18b) = 35b (min is 33b)
     constant C_MDIFF_SCALED_WIDTH  : natural := C_MDIFF_WIDTH - C_M_EXP_FRAC_WIDTH;                              -- product M*diff after >> M_FRAC: Mdiff (35b) - M_FRAC (4b) = 31b (min is 29b)
-    constant C_ACC2_WIDTH          : natural := C_MDIFF_SCALED_WIDTH + G_ACC2_MARGIN_BITS + G_K_WIDTH;           -- acc2: M*diff_scaled (31b) + acc1 (25b) + margin (1b) + integ k (8b) = 40b (min is 39b)
+    constant C_ACC2_WIDTH          : natural := C_MDIFF_SCALED_WIDTH + G_ACC2_MARGIN_BITS + C_K_WIDTH;           -- acc2: M*diff_scaled (31b) + acc1 (25b) + margin (1b) + integ k (8b) = 40b (min is 39b)
     constant C_DATA_FILTERED_WIDTH : natural := G_DATA_WIDTH + C_DATA_OUT_SIGN;                                  -- filtered data: adc (14b) + sign (1b) = 15b
 
     -- Decay exponential coefficient as signed (M_exp)
@@ -105,9 +108,8 @@ architecture rtl of jordanov_filter is
     constant C_DSP_B_WIDTH : natural := 18; -- Widest signed operand in multiplier DSP B
 
     -- Gain of the filter: G = k * (1 + M_exp) = k * (2^M_FRAC + M_VALUE) / 2^M_FRAC
-    constant C_K_VALUE          : natural := 2 ** G_K_WIDTH;                                   -- Value of delay k
     constant C_M_EXP_FRAC_VALUE : natural := 2 ** C_M_EXP_FRAC_WIDTH;                          -- M_exp fractional scaling factor, to not admit those bits
-    constant C_GAIN_NUM         : natural := C_K_VALUE * (C_M_EXP_FRAC_VALUE + G_M_EXP_VALUE); -- Gain as exact integer (natural)
+    constant C_GAIN_NUM         : natural := G_K_DELAY * (C_M_EXP_FRAC_VALUE + G_M_EXP_VALUE); -- Gain as exact integer (natural)
     constant C_GAIN_REAL        : real    := real(C_GAIN_NUM) / real(C_M_EXP_FRAC_VALUE);      -- Gain as a real in compilation (divided by scaling from fraction)
 
     -- Normalization: out = ((acc2 >> NORM_SHIFT) * NORM_COEF + half LSB) >> NORM_FRAC ~= acc2 / G

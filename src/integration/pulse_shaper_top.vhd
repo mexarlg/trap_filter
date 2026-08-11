@@ -24,8 +24,8 @@ entity pulse_shaper_top is
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
-        G_SLOW_JORD_K_WIDTH     : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
-        G_SLOW_JORD_M_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
+        G_SLOW_JORD_K_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_M_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Pulse detection parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
@@ -77,9 +77,9 @@ architecture rtl of pulse_shaper_top is
     constant C_DATA_FILTERED_WIDTH : natural := G_ADC_WIDTH + 1;
 
     -- delay given to trap_ss due pulse detection
-    constant C_FAST_JORD_DELAY : natural := 2 ** C_FAST_JORD_K_WIDTH + 2 ** C_FAST_JORD_M_WIDTH; -- delay from fast jordanov
-    constant C_CFD_DELAY       : natural := 2 ** C_CFD_D_WIDTH;                                  -- delay from cfd
-    constant C_DETECTION_DELAY : natural := C_FAST_JORD_DELAY + C_CFD_DELAY;                     -- total delay in N of samples
+    constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY; -- delay from fast jordanov
+    constant C_CFD_DELAY          : natural := 2 ** C_CFD_D_WIDTH;                        -- delay from cfd
+    constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY;        -- total delay in N of samples
 
     ----------------------------------------------------------------------------
     -- Types
@@ -174,9 +174,9 @@ begin
             -- general parameters
             G_DATA_WIDTH => G_ADC_WIDTH,
             -- slow jordanov parameters for timing
-            G_SLOW_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
-            G_SLOW_JORD_K      => G_SLOW_JORD_K_WIDTH,
-            G_SLOW_JORD_M      => G_SLOW_JORD_M_WIDTH,
+            G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
+            G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
+            G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             -- pulse detection tuning parameters
             G_CFD_VAL_TH   => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
@@ -210,16 +210,16 @@ begin
             -- General parameters
             G_DATA_WIDTH => G_ADC_WIDTH,
             -- Slow jordanov parameters
-            G_JORD_K_WIDTH     => G_SLOW_JORD_K_WIDTH,
-            G_JORD_M_WIDTH     => G_SLOW_JORD_M_WIDTH,
-            G_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
+            G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
+            G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
+            G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
             -- Slow jordanov fixed point parameters
-            G_JORD_DIFF_MARGIN_BITS => C_SLOW_JORD_DIFF_MARGIN_BITS,
-            G_JORD_ACC1_MARGIN_BITS => C_SLOW_JORD_ACC1_MARGIN_BITS,
-            G_JORD_ACC2_MARGIN_BITS => C_SLOW_JORD_ACC2_MARGIN_BITS,
+            G_SLOW_JORD_DIFF_MARGIN_BITS => C_SLOW_JORD_DIFF_MARGIN_BITS,
+            G_SLOW_JORD_ACC1_MARGIN_BITS => C_SLOW_JORD_ACC1_MARGIN_BITS,
+            G_SLOW_JORD_ACC2_MARGIN_BITS => C_SLOW_JORD_ACC2_MARGIN_BITS,
             -- Baseline moving average parameters
-            G_MOV_D_WIDTH         => C_BASE_MOV_D_WIDTH,
-            G_MOV_ACC_MARGIN_BITS => C_BASE_MOV_ACC_MARGIN_BITS,
+            G_BASE_MOV_DELAY_WIDTH     => C_BASE_MOV_DELAY_WIDTH,
+            G_BASE_MOV_ACC_MARGIN_BITS => C_BASE_MOV_ACC_MARGIN_BITS,
             -- Trap_subsystem common delay due to pulse detection
             G_DETECTION_DELAY => C_DETECTION_DELAY
         )
@@ -247,9 +247,9 @@ begin
             -- General paramaters
             G_DATA_WIDTH => C_DATA_FILTERED_WIDTH,
             -- Peak moving average parameters
-            G_MOV_ENABLE          => C_PEAK_MOV_ENABLE,
-            G_MOV_D_WIDTH         => C_PEAK_MOV_D_WIDTH,
-            G_MOV_ACC_MARGIN_BITS => C_PEAK_MOV_ACC_MARGIN_BITS
+            G_PEAK_MOV_ENABLE          => C_PEAK_MOV_ENABLE,
+            G_PEAK_MOV_DELAY_WIDTH     => C_PEAK_MOV_DELAY_WIDTH,
+            G_PEAK_MOV_ACC_MARGIN_BITS => C_PEAK_MOV_ACC_MARGIN_BITS
         )
         port map(
             ------------------------------------------------------------------------
@@ -275,9 +275,9 @@ begin
             -- Trap_ss general delay
             G_DETECTION_DELAY => C_DETECTION_DELAY,
             -- Slow jordanov parameters for timing of delays
-            G_SLOW_JORD_K_WIDTH => G_SLOW_JORD_K_WIDTH,
-            G_SLOW_JORD_M_WIDTH => G_SLOW_JORD_M_WIDTH,
-            G_SLOW_JORD_LATENCY => 9
+            G_SLOW_JORD_K_DELAY => G_SLOW_JORD_K_DELAY,
+            G_SLOW_JORD_M_DELAY => G_SLOW_JORD_M_DELAY,
+            G_SLOW_JORD_LATENCY => C_JORDANOV_LATENCY
         )
         port map(
             ------------------------------------------------------------------------

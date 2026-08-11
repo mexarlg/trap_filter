@@ -26,9 +26,9 @@ entity trig_gen is
         -- delays from the pulse detected trigger to each stage
         G_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from trigger to baseline capture
         G_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from trigger to start of pulse
-        -- jordanov trapezoid parameters
-        G_JORD_K_WIDTH : natural range 2 to 8 := 6; -- Width of slow filtered trapezoid rising edge
-        G_JORD_M_WIDTH : natural range 2 to 8 := 8  -- Width of slow filtered trapezoid flat top
+        -- jordanov slow trapezoid parameters for timing
+        G_SLOW_JORD_K_DELAY : natural range 4 to 256 := 256; -- Value of slow filtered trapezoid rising edge
+        G_SLOW_JORD_M_DELAY : natural range 4 to 256 := 256  -- Value of slow filtered trapezoid flat top
     );
     port (
         ------------------------------------------------------------------------
@@ -58,16 +58,14 @@ architecture rtl of trig_gen is
     ----------------------------------------------------------------------------
 
     -- trapezoid specific durations
-    constant C_RISE_DELAY      : natural := 2 ** G_JORD_K_WIDTH; -- duration of trapezoid rise
-    constant C_FLAT_DELAY      : natural := 2 ** G_JORD_M_WIDTH; -- duration of trapezoid top
-    constant C_HALF_FLAT_DELAY : natural := C_FLAT_DELAY / 2;    -- duration of half the trapezoid top
+    constant C_HALF_FLAT_DELAY : natural := G_SLOW_JORD_M_DELAY / 2; -- duration of half the trapezoid top
 
     -- depth for each delay of PULSE_TRIG_I to assert each stage of the pulse
     constant C_BASELINE_DEPTH    : natural := G_TRIG_DELAY_BASELINE;
     constant C_START_PULSE_DEPTH : natural := G_TRIG_DELAY_START;
-    constant C_START_FLAT_DEPTH  : natural := C_START_PULSE_DEPTH + C_RISE_DELAY;
+    constant C_START_FLAT_DEPTH  : natural := C_START_PULSE_DEPTH + G_SLOW_JORD_K_DELAY;
     constant C_MID_FLAT_DEPTH    : natural := C_START_FLAT_DEPTH + C_HALF_FLAT_DELAY;
-    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * C_RISE_DELAY + C_FLAT_DELAY;
+    constant C_END_PULSE_DEPTH   : natural := C_START_PULSE_DEPTH + 2 * G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY;
 
     -- separation of baseline from rising edge of pulse
     constant C_BASE_TO_START : natural := C_START_PULSE_DEPTH - C_BASELINE_DEPTH;

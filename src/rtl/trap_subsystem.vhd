@@ -26,16 +26,16 @@ entity trap_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Slow jordanov params
-        G_JORD_K_WIDTH     : natural range 2 to 8     := 6;     -- Width of the delay for rising edge of filtered trapezoid
-        G_JORD_M_WIDTH     : natural range 2 to 8     := 8;     -- Width of the delay for flat top of filtered trapezoid
-        G_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
+        G_SLOW_JORD_K_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_M_DELAY     : natural range 4 to 256   := 256;   -- Value of the delay for flat top of filtered trapezoid
+        G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Slow jordanov fixed point params
-        G_JORD_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference
-        G_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator
-        G_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator
+        G_SLOW_JORD_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference
+        G_SLOW_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator
+        G_SLOW_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator
         -- Baseline moving average params
-        G_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline
-        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
+        G_BASE_MOV_DELAY_WIDTH     : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline
+        G_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
         -- Common delay due to pulse detection system
         G_DETECTION_DELAY : natural range 64 to 256 := 64 -- N of samples of delay given to trap_system due pulse detection latency
     );
@@ -69,11 +69,9 @@ architecture rtl of trap_subsystem is
     ----------------------------------------------------------------------------
 
     -- Delay values
-    constant C_JORD_K_DELAY  : natural := 2 ** G_JORD_K_WIDTH;             -- k  = 2^K_RISE_WIDTH
-    constant C_JORD_M_DELAY  : natural := 2 ** G_JORD_M_WIDTH;             -- m  = 2^M_FLAT_WIDTH
-    constant C_JORD_L_DELAY  : natural := C_JORD_K_DELAY + C_JORD_M_DELAY; -- l  = k + m
-    constant C_JORD_KL_DELAY : natural := C_JORD_K_DELAY + C_JORD_L_DELAY; -- k + l = 2k + m
-    constant C_MOV_D_DELAY   : natural := 2 ** G_MOV_D_WIDTH;              -- Value of delay for mov avg
+    constant C_SLOW_JORD_L_DELAY  : natural := G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY; -- l  = k + m
+    constant C_SLOW_JORD_KL_DELAY : natural := G_SLOW_JORD_K_DELAY + C_SLOW_JORD_L_DELAY; -- k + l = 2k + m
+    constant C_MOV_D_DELAY        : natural := 2 ** G_BASE_MOV_DELAY_WIDTH;               -- Value of delay for mov avg
 
     ----------------------------------------------------------------------------
     -- Types
@@ -136,9 +134,9 @@ begin
             G_COMMON_DELAY_EN => 1,
             G_COMMON_DELAY    => G_DETECTION_DELAY,
             G_JORD_DELAY_EN   => 1,
-            G_JORD_K_DELAY    => C_JORD_K_DELAY,
-            G_JORD_L_DELAY    => C_JORD_L_DELAY,
-            G_JORD_KL_DELAY   => C_JORD_KL_DELAY,
+            G_JORD_K_DELAY    => G_SLOW_JORD_K_DELAY,
+            G_JORD_L_DELAY    => C_SLOW_JORD_L_DELAY,
+            G_JORD_KL_DELAY   => C_SLOW_JORD_KL_DELAY,
             G_MOV_DELAY_EN    => 1,
             G_MOV_D_DELAY     => C_MOV_D_DELAY
         )
@@ -167,8 +165,8 @@ begin
     mov_avg_i : entity trap_filter.mov_avg_filter
         generic map(
             G_DATA_WIDTH      => G_DATA_WIDTH,
-            G_DELAY_WIDTH     => G_MOV_D_WIDTH,
-            G_ACC_MARGIN_BITS => G_MOV_ACC_MARGIN_BITS,
+            G_DELAY_WIDTH     => G_BASE_MOV_DELAY_WIDTH,
+            G_ACC_MARGIN_BITS => G_BASE_MOV_ACC_MARGIN_BITS,
             G_DATA_I_SIGNED   => 1
         )
         port map(
@@ -194,13 +192,13 @@ begin
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH => G_DATA_WIDTH,
-            G_K_WIDTH    => G_JORD_K_WIDTH,
+            G_K_DELAY    => G_SLOW_JORD_K_DELAY,
             -- Exponential decay
-            G_M_EXP_VALUE => G_JORD_M_EXP_VALUE,
+            G_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
             -- Fixed point params
-            G_DIFF_MARGIN_BITS => G_JORD_DIFF_MARGIN_BITS,
-            G_ACC1_MARGIN_BITS => G_JORD_ACC1_MARGIN_BITS,
-            G_ACC2_MARGIN_BITS => G_JORD_ACC2_MARGIN_BITS
+            G_DIFF_MARGIN_BITS => G_SLOW_JORD_DIFF_MARGIN_BITS,
+            G_ACC1_MARGIN_BITS => G_SLOW_JORD_ACC1_MARGIN_BITS,
+            G_ACC2_MARGIN_BITS => G_SLOW_JORD_ACC2_MARGIN_BITS
         )
         port map(
             ------------------------------------------------------------------------
@@ -226,7 +224,7 @@ begin
     baseline_i : entity trap_filter.baseline_restorer
         generic map(
             G_DATA_WIDTH   => G_DATA_WIDTH,
-            G_LATENCY_SKEW => C_BASE_MOV_LATENCY
+            G_LATENCY_SKEW => C_MOVING_AVG_LATENCY
         )
         port map(
             ------------------------------------------------------------------------

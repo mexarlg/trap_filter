@@ -25,9 +25,9 @@ entity peak_subsystem is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 15; -- Width of filtered input data
         -- Peak moving average params
-        G_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter of the peak
-        G_MOV_D_WIDTH         : natural range 2 to 8 := 3; -- Width of samples averaged in the moving average for the peak
-        G_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2  -- Margin bits given to the accumulator inside the moving average for the peak
+        G_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter of the peak
+        G_PEAK_MOV_DELAY_WIDTH     : natural range 2 to 8 := 3; -- Width of samples averaged in the moving average for the peak
+        G_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2  -- Margin bits given to the accumulator inside the moving average for the peak
     );
     port (
         ------------------------------------------------------------------------
@@ -59,7 +59,7 @@ architecture rtl of peak_subsystem is
     ----------------------------------------------------------------------------
 
     -- delay value for moving average filter
-    constant C_MOV_D_DELAY : natural := 2 ** G_MOV_D_WIDTH - 1;
+    constant C_MOV_D_DELAY : natural := 2 ** G_PEAK_MOV_DELAY_WIDTH - 1;
 
     ----------------------------------------------------------------------------
     -- Signals
@@ -99,7 +99,7 @@ begin
     ----------------------------------------------------------------------------
 
     -- prefiltering enabled
-    g_enable : if G_MOV_ENABLE = 1 generate
+    g_enable : if G_PEAK_MOV_ENABLE = 1 generate
 
         -- delay for moving average
         sr_d_i : entity trap_filter.shift_register
@@ -119,8 +119,8 @@ begin
         mov_avg_i : entity trap_filter.mov_avg_filter
             generic map(
                 G_DATA_WIDTH      => G_DATA_WIDTH - 1,
-                G_DELAY_WIDTH     => G_MOV_D_WIDTH,
-                G_ACC_MARGIN_BITS => G_MOV_ACC_MARGIN_BITS,
+                G_DELAY_WIDTH     => G_PEAK_MOV_DELAY_WIDTH,
+                G_ACC_MARGIN_BITS => G_PEAK_MOV_ACC_MARGIN_BITS,
                 G_DATA_I_SIGNED   => 1
             )
             port map(
@@ -166,7 +166,7 @@ begin
     end generate g_enable;
 
     -- prefiltering disabled
-    g_disable : if G_MOV_ENABLE = 0 generate
+    g_disable : if G_PEAK_MOV_ENABLE = 0 generate
 
         -- prefiltering disabled, no overflow
         error_oflow_mov <= '0';

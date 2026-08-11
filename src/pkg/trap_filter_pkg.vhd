@@ -29,8 +29,10 @@ package trap_filter_pkg is
     -- Configurable
     constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored input pulse
 
-    -- Fixed
+    -- Fixed (latencies and number of overflow flags)
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 8; -- Amount of bits required for all overflow flags of the system
+    constant C_JORDANOV_LATENCY     : natural := 9;
+    constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the baseline moving average filter
 
     ----------------------------------------------------------------------------
     -- Trap Subsystem: Slow Jordanov Parameters
@@ -46,22 +48,19 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for baseline substraction)
-    constant C_BASE_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline (16 samples)
+    constant C_BASE_MOV_DELAY_WIDTH     : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the baseline (16 samples)
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
-
-    -- fixed
-    constant C_BASE_MOV_LATENCY : natural := 2; -- latency in number of cycles of the baseline moving average filter
 
     ----------------------------------------------------------------------------
     -- Trig Subsystem: Pulse Detection Parameters
     ----------------------------------------------------------------------------
 
     -- Fixed (jordanov parameters of fast jordanov for pulse detection)
-    constant C_FAST_JORD_K_WIDTH          : natural := 4; -- Width of delay for the rising edge of the trapezoid (16 samples)
-    constant C_FAST_JORD_M_WIDTH          : natural := 4; -- Width of delay for the flat top of the trapezoid (16 samples)
-    constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3; -- Bits of margin given to the delayed difference
-    constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2; -- Bits of margin given to the 1st accumulator
-    constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1; -- Bits of margin given to the 2nd accumulator
+    constant C_FAST_JORD_K_DELAY          : natural := 16; -- Width of delay for the rising edge of the trapezoid (16 samples)
+    constant C_FAST_JORD_M_DELAY          : natural := 16; -- Width of delay for the flat top of the trapezoid (16 samples)
+    constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3;  -- Bits of margin given to the delayed difference
+    constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2;  -- Bits of margin given to the 1st accumulator
+    constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;  -- Bits of margin given to the 2nd accumulator
 
     -- Fixed (constant fraction discriminator parameters for pulse detection)
     constant C_CFD_F_WIDTH            : natural := 2; -- Bit width of the value that scales the input data inside the cfd algorithm -> f = 2^CFD_F_WIDTH* 
@@ -86,7 +85,7 @@ package trap_filter_pkg is
 
     -- Configurable (Moving average parameters for pulse amplitude capture)
     constant C_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter on the top of the filtered trapezoid
-    constant C_PEAK_MOV_D_WIDTH         : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the peak
+    constant C_PEAK_MOV_DELAY_WIDTH     : natural range 2 to 8 := 4; -- Width of samples averaged in the moving average for the peak
     constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the peak
 
     ----------------------------------------------------------------------------

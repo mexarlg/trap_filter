@@ -23,13 +23,11 @@ architecture tb of tb_jordanov_filter is
     ----------------------------------------------------------------------------
 
     -- Jordanov params configuration
-    constant C_ADC_WIDTH    : natural := 14;
-    constant C_K_RISE_WIDTH : natural := 6; -- k  = 2^K_RISE_WIDTH
-    constant C_M_FLAT_WIDTH : natural := 7; -- m  = 2^M_FLAT_WIDTH
+    constant C_ADC_WIDTH : natural := 14;
 
     -- Delay values
-    constant C_K_RISE_DELAY : natural := 2 ** C_K_RISE_WIDTH;             -- k  = 2^K_RISE_WIDTH
-    constant C_M_FLAT_DELAY : natural := 2 ** C_M_FLAT_WIDTH;             -- m  = 2^M_FLAT_WIDTH
+    constant C_K_RISE_DELAY : natural := 256;                             -- k  = 2^K_RISE_WIDTH
+    constant C_M_FLAT_DELAY : natural := 256;                             -- m  = 2^M_FLAT_WIDTH
     constant C_L_DELAY      : natural := C_K_RISE_DELAY + C_M_FLAT_DELAY; -- l  = k + m
     constant C_KL_DELAY     : natural := C_K_RISE_DELAY + C_L_DELAY;      -- k + l = 2k + m
 
@@ -75,7 +73,7 @@ begin
         generic map(
             -- Jordanov parameters
             G_DATA_WIDTH => C_ADC_WIDTH,
-            G_K_WIDTH    => C_K_RISE_WIDTH,
+            G_K_DELAY    => C_K_RISE_DELAY,
             -- Exponential decay
             G_M_EXP_VALUE => C_M_EXP_VALUE,
             -- Fixed point params
