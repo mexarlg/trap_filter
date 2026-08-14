@@ -25,8 +25,8 @@ entity risetime_capture is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of raw input data
         -- Rise time parameters
-        G_T_RISE_WIDTH   : natural range 8 to 12     := 12; -- Width of rise time counter
-        G_T_RISE_TIMEOUT : natural range 100 to 4095 := 100 -- Value of timeout for waiting states
+        G_T_RISE_WIDTH   : natural range 8 to 12   := 12; -- Width of rise time counter
+        G_T_RISE_TIMEOUT : natural range 50 to 512 := 50  -- Value of timeout in n samples for rise time capture
     );
     port (
         ------------------------------------------------------------------------
@@ -57,7 +57,7 @@ architecture rtl of risetime_capture is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- multiplication constants for thresholds
+    -- multiplication constants for amplitude thresholds
     constant C_FRAC_BITS : natural                        := 10;                                                                      -- number of fractional bits (1024 depth)
     constant C_ROUND     : natural                        := 50;                                                                      -- value to round off (50/1024)
     constant C_MUL_10    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((10 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 10%
@@ -67,7 +67,7 @@ architecture rtl of risetime_capture is
     constant C_T_RISE_CNT_ONE  : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_T_RISE_WIDTH)); -- unit value of counter in its width
     constant C_T_RISE_CNT_ZERO : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := (others => '0');                                  -- zero value of counter in its width
 
-    -- timeout of counter
+    -- timeout value of counter
     constant C_TIMEOUT_VALUE : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(G_T_RISE_TIMEOUT, G_T_RISE_WIDTH)); -- timeout counter limit
 
     ----------------------------------------------------------------------------
@@ -91,10 +91,10 @@ architecture rtl of risetime_capture is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal pulse_t_rise : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- rise time captured
+    signal pulse_t_rise : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- rise time value captured
 
     -- threshold values
-    signal amplitude       : unsigned(G_DATA_WIDTH downto 0);         -- amplitude convertion to unsigned
+    signal amplitude       : unsigned(G_DATA_WIDTH downto 0);         -- amplitude convertion to unsigned for comparison
     signal amplitude_th_90 : std_logic_vector(G_DATA_WIDTH downto 0); -- 90% high amplitude threshold
     signal amplitude_th_10 : std_logic_vector(G_DATA_WIDTH downto 0); -- 10% low amplitude threshold
 

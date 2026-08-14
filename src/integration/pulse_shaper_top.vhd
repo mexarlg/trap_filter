@@ -85,6 +85,10 @@ architecture rtl of pulse_shaper_top is
     constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY;                               -- delay from fast jordanov
     constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY + C_JORDANOV_LATENCY + C_CFD_LATENCY; -- total delay in N of samples
 
+    -- delay given to t_rise_capture to synchronize input data with top_mid trigger 
+    constant C_T_RISE_DELAY_TRAP : natural := G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY / 2;
+    constant C_T_RISE_DELAY      : natural := C_DETECTION_DELAY + C_T_RISE_DELAY_MARGIN + C_MOVING_AVG_LATENCY + C_T_RISE_DELAY_TRAP;
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -99,7 +103,7 @@ architecture rtl of pulse_shaper_top is
     signal pulse_valid     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
     signal overflow_flags  : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
     signal time_cnt        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
-    signal pileup_cnt      : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    signal pileup_cnt      : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
 
     ----------------------------------------------------------------------------
     -- Internal Signals
@@ -130,11 +134,19 @@ architecture rtl of pulse_shaper_top is
     signal pulse_amplitude : std_logic_vector(C_DATA_FILTERED_WIDTH - 1 downto 0); -- Captured amplitude of trapezoidal data (signed)
     signal pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0);        -- Captured rise time of original pulse
 
+    attribute mark_debug                    : string;
+    attribute mark_debug of pulse_amplitude : signal is "true";
+    attribute mark_debug of pulse_t_rise    : signal is "true";
+
 begin
 
     ----------------------------------------------------------------------------
     -- Assertions
     ----------------------------------------------------------------------------
+
+    -- Assert maximum timeout arrives earlier than the pulse_valid signal
+    assert (C_T_RISE_TIMEOUT / 2 < C_T_RISE_DELAY_TRAP)
+    report "risetime_capture: C_T_RISE_TIMEOUT / 2 should be smaller than C_T_RISE_DELAY_TRAP. Rise time capture has not completed before the valid arrival" severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments
@@ -245,17 +257,18 @@ begin
             error_oflow_o   => error_trap_ss_oflow
         );
 
-    -- captures and validates the filtered amplitude at the top
-    peak_ss_i : entity trap_filter.peak_subsystem
+    -- captures and validates the pulse amplitude and its rise time
+    capture_ss_i : entity trap_filter.capture_subsystem
         generic map(
             -- Data width paramaters
             G_DATA_WIDTH          => G_ADC_WIDTH,
             G_DATA_FILTERED_WIDTH => C_DATA_FILTERED_WIDTH,
-            -- Time rise parameters
-            G_T_RISE_WIDTH           => C_T_RISE_WIDTH,
-            G_T_RISE_TIMEOUT         => C_T_RISE_TIMEOUT,
-            G_T_RISE_DELAY           => C_T_RISE_DELAY,
-            G_T_RISE_MOV_DELAY_WIDTH => G_T_RISE_MOV_DELAY_WIDTH,
+            -- Rise time parameters
+            G_T_RISE_WIDTH               => C_T_RISE_WIDTH,
+            G_T_RISE_TIMEOUT             => C_T_RISE_TIMEOUT,
+            G_T_RISE_DELAY               => C_T_RISE_DELAY,
+            G_T_RISE_MOV_DELAY_WIDTH     => G_T_RISE_MOV_DELAY_WIDTH,
+            G_T_RISE_MOV_ACC_MARGIN_BITS => C_T_RISE_MOV_ACC_MARGIN_BITS,
             -- Peak moving average parameters
             G_PEAK_MOV_ENABLE          => G_PEAK_MOV_EN,
             G_PEAK_MOV_DELAY_WIDTH     => G_PEAK_MOV_DELAY_WIDTH,

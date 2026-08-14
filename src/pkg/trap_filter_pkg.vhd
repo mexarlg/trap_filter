@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- Version / Metadata
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.5";
+    constant SYSTEM_VERSION : string := "1.6";
 
     ----------------------------------------------------------------------------
     -- General Parameters
@@ -83,13 +83,14 @@ package trap_filter_pkg is
     -- Peak Subsystem: Moving Average and Capture Parameters
     ----------------------------------------------------------------------------
 
-    -- Configurable (Moving average parameters for pulse amplitude capture)
-    constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5      := 2;   -- Margin bits given to the accumulator inside the moving average for the peak
-    constant C_T_RISE_WIDTH             : natural range 8 to 12     := 12;  -- Width of rise time
-    constant C_T_RISE_TIMEOUT           : natural range 100 to 4095 := 100; -- Timeout value for capture of rise time
+    -- Configurable
+    constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5    := 2;  -- Margin bits given to the accumulator inside the moving average for the peak
+    constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5    := 2;  -- Margin bits given to the accumulator inside the moving average for the t_rise capture
+    constant C_T_RISE_WIDTH               : natural range 8 to 12   := 12; -- Width of rise time
+    constant C_T_RISE_TIMEOUT             : natural range 50 to 256 := 50; -- Timeout value in n samples for capture of rise time
 
-    -- Fixed
-    constant C_T_RISE_DELAY : natural := 275; -- Delay of input data for rise time capture
+    -- fixed
+    constant C_T_RISE_DELAY_MARGIN : natural := 8; -- Additional delay given to t_rise_capture for synchronization
 
     ----------------------------------------------------------------------------
     -- Logger Subsystem: Logger Parameters

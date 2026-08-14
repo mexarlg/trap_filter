@@ -42,7 +42,7 @@ add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/pileup_cnt
 add wave -divider " TRAP_SS "
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/jord_i/acc2
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_jord_filt
-add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/peak_ss_i/data_mov_filt
+add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_mov_filt
 add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_filtered
 
 #===========================================================================
@@ -50,15 +50,15 @@ add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top
 #===========================================================================
 add wave -divider " PEAK_SS "
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/pulse_amplitude
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/data_i_d
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/data_i_t_rise
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/amplitude_th_90
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/amplitude_th_10
-add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/is_below_90
-add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/is_above_10
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/state
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/t_rise_cnt
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/peak_ss_i/rise_capture_i/pulse_t_rise
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_d
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_t_rise
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude_th_90
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude_th_10
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/is_below_90
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/is_above_10
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/state
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/t_rise_cnt
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/pulse_t_rise
 
 #===========================================================================
 # VALID_SS

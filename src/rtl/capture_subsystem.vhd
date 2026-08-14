@@ -1,5 +1,5 @@
 --==============================================================================
---  Module:        peak_subsystem.vhd
+--  Module:        capture_subsystem.vhd
 --  Project:       trap_filter
 --  Author:        aldo lupio
 --  Created:       03/08/2026
@@ -10,7 +10,8 @@
 --  the pulse amplitude and its rise time from triggers.
 --
 --  Dependencies:
---  trap_filter_pkg.vhd, shift_register.vhd, mov_avg_filter.vhd, pulse_capture.vhd
+--  trap_filter_pkg.vhd, shift_register.vhd, mov_avg_filter.vhd, 
+--  pulse_capture.vhd, risetime_capture.vhd
 --==============================================================================
 
 library ieee;
@@ -20,16 +21,17 @@ use ieee.numeric_std.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 
-entity peak_subsystem is
+entity capture_subsystem is
     generic (
         -- Data width parameters
         G_DATA_WIDTH          : natural range 8 to 16 := 14; -- Width of filtered input data
         G_DATA_FILTERED_WIDTH : natural range 9 to 17 := 15; -- Width of filtered data
         -- Time rise parameters
-        G_T_RISE_WIDTH           : natural range 8 to 12     := 12;  -- Width of rise time counter
-        G_T_RISE_TIMEOUT         : natural range 100 to 4095 := 100; -- Timeout for threshold
-        G_T_RISE_DELAY           : natural range 64 to 512   := 300; -- Delay of input data for rise time capture
-        G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5      := 4;   -- Width of samples averaged for rise time mov avg
+        G_T_RISE_WIDTH               : natural range 8 to 12   := 12;  -- Width of rise time counter
+        G_T_RISE_TIMEOUT             : natural range 50 to 256 := 50;  -- Timeout for rise time in n samples
+        G_T_RISE_DELAY               : natural range 64 to 512 := 300; -- Delay of input data for rise time capture
+        G_T_RISE_MOV_DELAY_WIDTH     : natural range 3 to 5    := 4;   -- Width of samples averaged for rise time mov avg
+        G_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5    := 2;   -- Margin bits given to the accumulator inside the moving average for the t_rise
         -- Peak moving average params
         G_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter of the peak
         G_PEAK_MOV_DELAY_WIDTH     : natural range 3 to 5 := 3; -- Width of samples averaged in the moving average for the peak
@@ -54,9 +56,9 @@ entity peak_subsystem is
         PULSE_T_RISE_O    : out std_logic_vector(G_T_RISE_WIDTH - 1 downto 0);        -- Captured rise time
         ERROR_OFLOW_O     : out std_logic_vector(1 downto 0)                          -- Overflow flag for accumulator of both moving average filters
     );
-end entity peak_subsystem;
+end entity capture_subsystem;
 
-architecture rtl of peak_subsystem is
+architecture rtl of capture_subsystem is
 
     ----------------------------------------------------------------------------
     -- Functions
@@ -263,7 +265,7 @@ begin
             G_DATA_WIDTH => G_DATA_WIDTH,
             -- Moving average parameters
             G_DELAY_WIDTH     => G_T_RISE_MOV_DELAY_WIDTH,
-            G_ACC_MARGIN_BITS => G_PEAK_MOV_ACC_MARGIN_BITS,
+            G_ACC_MARGIN_BITS => G_T_RISE_MOV_ACC_MARGIN_BITS,
             G_DATA_I_SIGNED   => 0
         )
         port map(
