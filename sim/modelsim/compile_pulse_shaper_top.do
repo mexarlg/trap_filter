@@ -56,6 +56,7 @@ vcom -2008 -work trap_filter ../../src/rtl/trig_gen.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pileup_detection.vhd
 vcom -2008 -work trap_filter ../../src/rtl/trig_subsystem.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_capture.vhd
+vcom -2008 -work trap_filter ../../src/rtl/risetime_capture.vhd
 vcom -2008 -work trap_filter ../../src/rtl/peak_subsystem.vhd
 vcom -2008 -work trap_filter ../../src/rtl/pulse_logger.vhd
 vcom -2008 -work trap_filter ../../src/rtl/bram_dp.vhd

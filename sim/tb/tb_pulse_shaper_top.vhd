@@ -31,8 +31,10 @@ architecture tb of tb_pulse_shaper_top is
     constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
     -- Moving average parameters
-    constant C_BASE_MOV_DELAY_WIDTH : natural range 3 to 5 := 4; -- Width average in baseline
-    constant C_PEAK_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
+    constant C_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width average in baseline
+    constant C_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width average in peak
+    constant C_PEAK_MOV_EN            : natural range 0 to 1 := 1; -- Width average in peak
+    constant C_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
     -- Pulse detection parameters
     constant C_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
     constant C_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -105,8 +107,10 @@ begin
             G_SLOW_JORD_M_DELAY     => C_SLOW_JORD_M_DELAY,
             G_SLOW_JORD_M_EXP_VALUE => C_SLOW_JORD_M_EXP_VALUE,
             -- Moving average parameters
-            G_BASE_MOV_DELAY_WIDTH => C_BASE_MOV_DELAY_WIDTH,
-            G_PEAK_MOV_DELAY_WIDTH => C_PEAK_MOV_DELAY_WIDTH,
+            G_BASE_MOV_DELAY_WIDTH   => C_BASE_MOV_DELAY_WIDTH,
+            G_PEAK_MOV_EN            => C_PEAK_MOV_EN,
+            G_PEAK_MOV_DELAY_WIDTH   => C_PEAK_MOV_DELAY_WIDTH,
+            G_T_RISE_MOV_DELAY_WIDTH => C_T_RISE_MOV_DELAY_WIDTH,
             -- Pulse detection parameters
             G_CFD_VAL_TH   => C_CFD_VAL_TH,
             G_CFD_SLOPE_TH => C_CFD_SLOPE_TH,
@@ -134,12 +138,12 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            TRAP_DATA_O      => tb_trap_data,
-            PULSE_TRIGGERS_O => tb_pulse_triggers,
-            PULSE_VALID_O    => tb_pulse_valid,
-            OVERFLOW_FLAGS_O => tb_overflow_flags,
-            PILEUP_CNT_O     => tb_pileup_cnt,
-            TIME_CNT_O       => tb_time_cnt
+            PULSE_TRAPEZOID_O => tb_trap_data,
+            PULSE_TRIGGERS_O  => tb_pulse_triggers,
+            PULSE_VALID_O     => tb_pulse_valid,
+            OVERFLOW_FLAGS_O  => tb_overflow_flags,
+            PILEUP_CNT_O      => tb_pileup_cnt,
+            TIME_CNT_O        => tb_time_cnt
         );
 
     ----------------------------------------------------------------------------

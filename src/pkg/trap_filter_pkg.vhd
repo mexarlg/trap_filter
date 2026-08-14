@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- Version / Metadata
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.4";
+    constant SYSTEM_VERSION : string := "1.5";
 
     ----------------------------------------------------------------------------
     -- General Parameters
@@ -30,7 +30,7 @@ package trap_filter_pkg is
     constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored input pulse
 
     -- Fixed (latencies and number of overflow flags)
-    constant C_OVERFLOW_FLAGS_DEPTH : natural := 8; -- Amount of bits required for all overflow flags of the system
+    constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of bits required for all overflow flags of the system
     constant C_JORDANOV_LATENCY     : natural := 9; -- latency in number of cycles of the jordanov filter
     constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the moving average filter
     constant C_CFD_LATENCY          : natural := 3; -- latency in number of cycles of the cfd module
@@ -80,11 +80,16 @@ package trap_filter_pkg is
     constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter of pileup events from RST_N deassertion
 
     ----------------------------------------------------------------------------
-    -- Peak Subsystem: Moving Average Parameters
+    -- Peak Subsystem: Moving Average and Capture Parameters
     ----------------------------------------------------------------------------
 
     -- Configurable (Moving average parameters for pulse amplitude capture)
-    constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the peak
+    constant C_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5      := 2;   -- Margin bits given to the accumulator inside the moving average for the peak
+    constant C_T_RISE_WIDTH             : natural range 8 to 12     := 12;  -- Width of rise time
+    constant C_T_RISE_TIMEOUT           : natural range 100 to 4095 := 100; -- Timeout value for capture of rise time
+
+    -- Fixed
+    constant C_T_RISE_DELAY : natural := 275; -- Delay of input data for rise time capture
 
     ----------------------------------------------------------------------------
     -- Logger Subsystem: Logger Parameters
@@ -94,7 +99,6 @@ package trap_filter_pkg is
     constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = depth = 2^ADDR_WIDTH)
     constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp 
     constant C_LOG_TIMESTAMP_WIDTH : natural range 28 to 32 := 32; -- Width of timestamp (counter from rst_n deassertion)
-    constant C_LOG_T_RISE_WIDTH    : natural range 8 to 12  := 12; -- Width of rise time
 
     -- Fixed (Max allowable widths for pulse logger)
     constant C_LOG_DATA_WIDTH       : natural := 32; -- Width of a single pulse log

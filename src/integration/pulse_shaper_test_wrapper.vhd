@@ -29,9 +29,10 @@ entity pulse_shaper_test_wrapper is
         G_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Moving average parameters
-        G_BASE_MOV_DELAY_WIDTH : natural range 2 to 5 := 4; -- Width of samples averaged in moving average for the baseline
-        G_PEAK_MOV_EN          : natural range 0 to 1 := 1; -- Moving average enable for peak
-        G_PEAK_MOV_DELAY_WIDTH : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
+        G_BASE_MOV_DELAY_WIDTH   : natural range 2 to 5 := 4; -- Width of samples averaged in moving average for the baseline
+        G_PEAK_MOV_EN            : natural range 0 to 1 := 1; -- Moving average enable for peak
+        G_PEAK_MOV_DELAY_WIDTH   : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
+        G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Pulse detection parameters
         G_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
         G_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
@@ -82,21 +83,21 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
 
     -- Top output signals
-    signal trap_data      : std_logic_vector(G_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
-    signal pulse_triggers : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
-    signal pulse_valid    : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
-    signal overflow_flags : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
-    signal time_cnt       : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
-    signal pileup_cnt     : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    signal pulse_trapezoid : std_logic_vector(G_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
+    signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
+    signal pulse_valid     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal overflow_flags  : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
+    signal time_cnt        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal pileup_cnt      : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
 
     -- Mark as debug for ILA
-    attribute mark_debug                   : string;
-    attribute mark_debug of trap_data      : signal is "true";
-    attribute mark_debug of pulse_triggers : signal is "true";
-    attribute mark_debug of pulse_valid    : signal is "true";
-    attribute mark_debug of overflow_flags : signal is "true";
-    attribute mark_debug of time_cnt       : signal is "true";
-    attribute mark_debug of pileup_cnt     : signal is "true";
+    attribute mark_debug                    : string;
+    attribute mark_debug of pulse_trapezoid : signal is "true";
+    attribute mark_debug of pulse_triggers  : signal is "true";
+    attribute mark_debug of pulse_valid     : signal is "true";
+    attribute mark_debug of overflow_flags  : signal is "true";
+    attribute mark_debug of time_cnt        : signal is "true";
+    attribute mark_debug of pileup_cnt      : signal is "true";
 
 begin
 
@@ -161,9 +162,10 @@ begin
             G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
             -- Moving average parameters
-            G_BASE_MOV_DELAY_WIDTH => G_BASE_MOV_DELAY_WIDTH,
-            G_PEAK_MOV_EN          => G_PEAK_MOV_EN,
-            G_PEAK_MOV_DELAY_WIDTH => G_PEAK_MOV_DELAY_WIDTH,
+            G_BASE_MOV_DELAY_WIDTH   => G_BASE_MOV_DELAY_WIDTH,
+            G_PEAK_MOV_EN            => G_PEAK_MOV_EN,
+            G_PEAK_MOV_DELAY_WIDTH   => G_PEAK_MOV_DELAY_WIDTH,
+            G_T_RISE_MOV_DELAY_WIDTH => G_T_RISE_MOV_DELAY_WIDTH,
             -- Pulse detection parameters
             G_CFD_VAL_TH   => G_CFD_VAL_TH,
             G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
@@ -191,12 +193,12 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            TRAP_DATA_O      => trap_data,
-            PULSE_TRIGGERS_O => pulse_triggers,
-            PULSE_VALID_O    => pulse_valid,
-            OVERFLOW_FLAGS_O => overflow_flags,
-            PILEUP_CNT_O     => pileup_cnt,
-            TIME_CNT_O       => time_cnt
+            PULSE_TRAPEZOID_O => pulse_trapezoid,
+            PULSE_TRIGGERS_O  => pulse_triggers,
+            PULSE_VALID_O     => pulse_valid,
+            OVERFLOW_FLAGS_O  => overflow_flags,
+            PILEUP_CNT_O      => pileup_cnt,
+            TIME_CNT_O        => time_cnt
         );
 
 end architecture rtl;

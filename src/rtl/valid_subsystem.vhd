@@ -37,8 +37,8 @@ entity valid_subsystem is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        PULSE_CLEAN_I : in std_logic;                    -- Pulse is valid regarding pileup
-        ERROR_OFLOW_I : in std_logic_vector(8 downto 0); -- Overflow errors of trap/trig/peak subsystems
+        PULSE_CLEAN_I : in std_logic;                                         -- Pulse is valid regarding pileup
+        ERROR_OFLOW_I : in std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0); -- Overflow errors of trap/trig/peak subsystems
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
@@ -72,7 +72,7 @@ architecture rtl of valid_subsystem is
     constant C_CNT_ONE   : std_logic_vector(C_CNT_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_CNT_WIDTH));             -- value of 1 in cnt width
 
     -- state when no overflow error exists
-    constant C_OFLOW_NO_ERROR : std_logic_vector(8 downto 0) := (others => '0');
+    constant C_OFLOW_NO_ERROR : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
     -- Signals

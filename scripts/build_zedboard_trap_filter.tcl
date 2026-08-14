@@ -84,6 +84,7 @@ set RTL_FILES [list \
     [file join $RTL_DIR "pileup_detection.vhd"] \
     [file join $RTL_DIR "trig_subsystem.vhd"] \
     [file join $RTL_DIR "pulse_capture.vhd"] \
+    [file join $RTL_DIR "risetime_capture.vhd"] \
     [file join $RTL_DIR "peak_subsystem.vhd"] \
     [file join $RTL_DIR "bram_dp.vhd"] \
     [file join $RTL_DIR "pulse_logger.vhd"] \
