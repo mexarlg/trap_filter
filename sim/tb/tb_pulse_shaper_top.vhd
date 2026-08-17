@@ -60,13 +60,22 @@ architecture tb of tb_pulse_shaper_top is
     signal tb_bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
     signal tb_bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
 
-    -- Top output signals
-    signal tb_trap_data      : std_logic_vector(C_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
-    signal tb_pulse_triggers : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
-    signal tb_pulse_valid    : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
-    signal tb_overflow_flags : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
-    signal tb_time_cnt       : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
-    signal tb_pileup_cnt     : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    -- pulse output signals
+    signal tb_pulse_trapezoid : std_logic_vector(C_ADC_WIDTH downto 0);        -- Filtered trapezoidal data output (signed)
+    signal tb_pulse_amplitude : std_logic_vector(C_ADC_WIDTH downto 0);        -- Captured amplitude (signed)
+    signal tb_pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0); -- Captured time rise
+    signal tb_pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
+    signal tb_pulse_valid     : std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+
+    -- system outputs signals
+    signal tb_pileup_event  : std_logic;                                            -- flag of pileup events
+    signal tb_pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    signal tb_timestamp_cnt : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal tb_error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
+
+    -- logger outputs
+    signal tb_log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
+    signal tb_log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
 
 begin
 
@@ -138,12 +147,21 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_TRAPEZOID_O => tb_trap_data,
+            -- Pulse outputs
+            PULSE_TRAPEZOID_O => tb_pulse_trapezoid,
+            PULSE_AMPLITUDE_O => tb_pulse_amplitude,
+            PULSE_T_RISE_O    => tb_pulse_t_rise,
             PULSE_TRIGGERS_O  => tb_pulse_triggers,
             PULSE_VALID_O     => tb_pulse_valid,
-            OVERFLOW_FLAGS_O  => tb_overflow_flags,
-            PILEUP_CNT_O      => tb_pileup_cnt,
-            TIME_CNT_O        => tb_time_cnt
+            -- System outputs
+            PILEUP_EVENT_O  => tb_pileup_event,
+            PILEUP_CNT_O    => tb_pileup_cnt,
+            TIMESTAMP_CNT_O => tb_timestamp_cnt,
+            ERROR_OFLOW_O   => tb_error_oflow,
+            -- Logger outputs
+            LOG_PULSE_DATA_O     => tb_log_pulse_data,
+            LOG_TIMESTAMP_DATA_O => tb_log_timestamp_data
+
         );
 
     ----------------------------------------------------------------------------

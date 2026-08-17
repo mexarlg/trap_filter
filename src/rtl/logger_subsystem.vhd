@@ -54,9 +54,9 @@ entity logger_subsystem is
         ------------------------------------------------------------------------
         -- Memory Outputs
         ------------------------------------------------------------------------
-        PULSE_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port A write data
-        TIME_DATA_O  : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port A write data
-        TIME_CNT_O   : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp stream
+        LOG_PULSE_DATA_O     : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port A write data
+        LOG_TIMESTAMP_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port A write data
+        TIMESTAMP_CNT_O      : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp stream
     );
 end entity logger_subsystem;
 
@@ -101,11 +101,11 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    BRAM_B_PULSE_DATA_O <= bram_b_pulse_data_rd;
-    BRAM_B_TIME_DATA_O  <= bram_b_timestamp_data_rd;
-    TIME_DATA_O         <= bram_a_timestamp_data_wr;
-    PULSE_DATA_O        <= bram_a_pulse_data_wr;
-    TIME_CNT_O          <= timestamp_cnt;
+    BRAM_B_PULSE_DATA_O  <= bram_b_pulse_data_rd;
+    BRAM_B_TIME_DATA_O   <= bram_b_timestamp_data_rd;
+    LOG_TIMESTAMP_DATA_O <= bram_a_timestamp_data_wr;
+    LOG_PULSE_DATA_O     <= bram_a_pulse_data_wr;
+    TIMESTAMP_CNT_O      <= timestamp_cnt;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes

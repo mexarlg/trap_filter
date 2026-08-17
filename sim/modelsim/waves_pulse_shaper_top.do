@@ -33,8 +33,8 @@ add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/cfd_signal
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_triggers
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_clean
-add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pileup_event
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/pileup_cnt
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/tb_pileup_event
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/tb_pileup_cnt
 
 #===========================================================================
 # TRAP_SS
@@ -43,13 +43,13 @@ add wave -divider " TRAP_SS "
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/jord_i/acc2
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_jord_filt
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_mov_filt
-add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/dut/trap_ss_i/data_filtered
+add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top/tb_pulse_trapezoid
 
 #===========================================================================
 # PEAK_SS
 #===========================================================================
 add wave -divider " PEAK_SS "
-add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/pulse_amplitude
+add wave -color green -radix signed sim:/tb_pulse_shaper_top/tb_pulse_amplitude
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_d
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_t_rise
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude_th_90
@@ -57,24 +57,23 @@ add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/is_below_90
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/is_above_10
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/state
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/t_rise_cnt
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/pulse_t_rise
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/tb_pulse_t_rise
 
 #===========================================================================
 # VALID_SS
 #===========================================================================
 add wave -divider " VALID_SS "
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/valid_ss_i/delays_ready
-add wave -color white -radix binary sim:/tb_pulse_shaper_top/dut/pulse_valid
-add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/overflow_flags
+add wave -color white -radix binary sim:/tb_pulse_shaper_top/tb_pulse_valid
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/tb_error_oflow
 
 #===========================================================================
 # LOGGER_SS
 #===========================================================================
 add wave -divider " LOGGER_SS "
-add wave -color green -radix hex sim:/tb_pulse_shaper_top/dut/log_time
-add wave -color green -radix hex sim:/tb_pulse_shaper_top/dut/log_pulse
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/time_cnt
+add wave -color green -radix hex sim:/tb_pulse_shaper_top/tb_log_pulse_data
+add wave -color green -radix hex sim:/tb_pulse_shaper_top/tb_log_timestamp_data
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/tb_timestamp_cnt
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS

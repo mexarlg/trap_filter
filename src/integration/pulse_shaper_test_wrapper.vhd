@@ -6,7 +6,7 @@
 --  Last Modified: 
 --
 --  Description:
---  test top wrapper for the trap_filter system with added ILA and VIO cores.
+--  test top wrapper for the "pulse_shaper_top.vhd" system with added ILA and VIO cores.
 --  Aimed for Zedboard Evaluation board.
 --
 --  Dependencies:
@@ -25,7 +25,7 @@ entity pulse_shaper_test_wrapper is
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
-        G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
         G_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Moving average parameters
@@ -82,22 +82,43 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from pulse log
     signal bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
 
-    -- Top output signals
-    signal pulse_trapezoid : std_logic_vector(G_ADC_WIDTH downto 0);               -- Filtered trapezoidal data output (signed)
-    signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
-    signal pulse_valid     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
-    signal overflow_flags  : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
-    signal time_cnt        : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
-    signal pileup_cnt      : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    -- Top pulse output signals
+    signal pulse_trapezoid : std_logic_vector(G_ADC_WIDTH downto 0);        -- Filtered trapezoidal data output (signed)
+    signal pulse_amplitude : std_logic_vector(G_ADC_WIDTH downto 0);        -- Captured amplitude of trapezoidal data (signed)
+    signal pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0); -- Captured rise time of original pulse
+    signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
+    signal pulse_valid     : std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+
+    -- Top system output signals
+    signal pileup_event  : std_logic;                                            -- pileup event pulse
+    signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
+    signal timestamp_cnt : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
+
+    -- Top logger output signals
+    signal log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
+    signal log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
 
     -- Mark as debug for ILA
-    attribute mark_debug                    : string;
+    attribute mark_debug : string;
+
+    -- pulse data
+    attribute mark_debug of data_i          : signal is "true";
     attribute mark_debug of pulse_trapezoid : signal is "true";
+    attribute mark_debug of pulse_amplitude : signal is "true";
+    attribute mark_debug of pulse_t_rise    : signal is "true";
     attribute mark_debug of pulse_triggers  : signal is "true";
     attribute mark_debug of pulse_valid     : signal is "true";
-    attribute mark_debug of overflow_flags  : signal is "true";
-    attribute mark_debug of time_cnt        : signal is "true";
-    attribute mark_debug of pileup_cnt      : signal is "true";
+
+    -- system data
+    attribute mark_debug of pileup_event  : signal is "true";
+    attribute mark_debug of pileup_cnt    : signal is "true";
+    attribute mark_debug of timestamp_cnt : signal is "true";
+    attribute mark_debug of error_oflow   : signal is "true";
+
+    -- logger data
+    attribute mark_debug of log_pulse_data     : signal is "true";
+    attribute mark_debug of log_timestamp_data : signal is "true";
 
 begin
 
@@ -191,14 +212,25 @@ begin
             BRAM_B_PULSE_DATA_O => bram_pulse_data,
             BRAM_B_TIME_DATA_O  => bram_time_data,
             ------------------------------------------------------------------------
-            -- Outputs
+            -- Pulse Outputs
             ------------------------------------------------------------------------
             PULSE_TRAPEZOID_O => pulse_trapezoid,
+            PULSE_AMPLITUDE_O => pulse_amplitude,
+            PULSE_T_RISE_O    => pulse_t_rise,
             PULSE_TRIGGERS_O  => pulse_triggers,
             PULSE_VALID_O     => pulse_valid,
-            OVERFLOW_FLAGS_O  => overflow_flags,
-            PILEUP_CNT_O      => pileup_cnt,
-            TIME_CNT_O        => time_cnt
+            ------------------------------------------------------------------------
+            -- System Outputs
+            ------------------------------------------------------------------------
+            PILEUP_EVENT_O  => pileup_event,
+            PILEUP_CNT_O    => pileup_cnt,
+            TIMESTAMP_CNT_O => timestamp_cnt,
+            ERROR_OFLOW_O   => error_oflow,
+            ------------------------------------------------------------------------
+            -- Logger Outputs
+            ------------------------------------------------------------------------
+            LOG_PULSE_DATA_O     => log_pulse_data,
+            LOG_TIMESTAMP_DATA_O => log_timestamp_data
         );
 
 end architecture rtl;

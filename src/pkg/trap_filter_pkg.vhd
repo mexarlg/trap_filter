@@ -7,7 +7,7 @@
 --
 --  Description:
 --  Package containing types, constants, and component declarations
---  for the trap_filter system
+--  for the "pulse_shaper_top.vhd" system
 --==============================================================================
 
 library ieee;
@@ -17,70 +17,68 @@ use ieee.numeric_std.all;
 package trap_filter_pkg is
 
     ----------------------------------------------------------------------------
-    -- Version / Metadata
+    -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant SYSTEM_VERSION : string := "1.6";
+    constant C_SYSTEM_VERSION : string := "1.7";
 
     ----------------------------------------------------------------------------
-    -- General Parameters
+    -- TESTING PARAMETERS:
     ----------------------------------------------------------------------------
 
     -- Configurable
-    constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored input pulse
+    constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored (rom) input pulse for testing
 
-    -- Fixed (latencies and number of overflow flags)
-    constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of bits required for all overflow flags of the system
+    ----------------------------------------------------------------------------
+    -- GENERAL SYSTEM PARAMETERS:
+    ----------------------------------------------------------------------------
+
+    -- Fixed
+    constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of overflow flags of the system
+    constant C_TRIG_DEPTH           : natural := 5; -- Amount of triggers describing the stages of a pulse
     constant C_JORDANOV_LATENCY     : natural := 9; -- latency in number of cycles of the jordanov filter
     constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the moving average filter
     constant C_CFD_LATENCY          : natural := 3; -- latency in number of cycles of the cfd module
 
     ----------------------------------------------------------------------------
-    -- Trap Subsystem: Slow Jordanov Parameters
+    -- TRAP SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
-    -- Configurable (Margin for internal signals of slow jordanov)
+    -- Configurable
     constant C_SLOW_JORD_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference of the slow jordanov
     constant C_SLOW_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator of the slow jordanov
     constant C_SLOW_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator of the slow jordanov
 
-    ----------------------------------------------------------------------------
-    -- Trap Subsystem: Baseline Moving Average Parameters
-    ----------------------------------------------------------------------------
-
-    -- Configurable (Moving average parameters for baseline substraction)
+    -- Configurable
     constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     ----------------------------------------------------------------------------
-    -- Trig Subsystem: Pulse Detection Parameters
+    -- TRIG SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
-    -- Fixed (jordanov parameters of fast jordanov for pulse detection)
+    -- Configurable
+    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter width of pileup events since RST_N deassertion
+
+    -- Configurable
+    constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
+    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
+
+    -- Fixed
     constant C_FAST_JORD_K_DELAY          : natural := 16; -- Delay for the rising edge of the trapezoid
     constant C_FAST_JORD_M_DELAY          : natural := 16; -- Delay for the flat top of the trapezoid
     constant C_FAST_JORD_DIFF_MARGIN_BITS : natural := 3;  -- Bits of margin given to the delayed difference
     constant C_FAST_JORD_ACC1_MARGIN_BITS : natural := 2;  -- Bits of margin given to the 1st accumulator
     constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;  -- Bits of margin given to the 2nd accumulator
 
-    -- Fixed (constant fraction discriminator parameters for pulse detection)
+    -- Fixed
     constant C_CFD_F_WIDTH            : natural := 2;  -- Bit width of the value that scales the input data
     constant C_CFD_DELAY              : natural := 32; -- Value of the delay d inside the cfd algorithm
     constant C_CFD_SLOPE_DELAY        : natural := 8;  -- Value of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
     constant C_CFD_DIFF_MARGIN_BITS   : natural := 1;  -- Bits of margin given to the difference signal in the cfd algorithm
     constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7;  -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
 
-    -- Fixed (delays from detection trigger to stages of filtered pulse)
-    constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
-
-    -- Fixed (Amount of triggers)
-    constant C_TRIG_DEPTH : natural := 5; -- Depth / Amount of trigger pulses describing the stages of a pulse
-
-    -- Configurable (pileup parameters)
-    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter of pileup events from RST_N deassertion
-
     ----------------------------------------------------------------------------
-    -- Peak Subsystem: Moving Average and Capture Parameters
+    -- CAPTURE SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
     -- Configurable
@@ -90,27 +88,25 @@ package trap_filter_pkg is
     constant C_T_RISE_TIMEOUT             : natural range 50 to 256 := 50; -- Timeout value in n samples for capture of rise time
 
     -- fixed
-    constant C_T_RISE_DELAY_MARGIN : natural := 8; -- Additional delay given to t_rise_capture for synchronization
+    constant C_T_RISE_DELAY_MARGIN : natural := 8; -- Additional delay given to rise_capture for synchronization
 
     ----------------------------------------------------------------------------
-    -- Logger Subsystem: Logger Parameters
+    -- LOGGER SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
-    -- configurable (width of log addresses and bit allocation of log data)
-    constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = depth = 2^ADDR_WIDTH)
-    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp 
-    constant C_LOG_TIMESTAMP_WIDTH : natural range 28 to 32 := 32; -- Width of timestamp (counter from rst_n deassertion)
+    -- Configurable
+    constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
+    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp counter
+    constant C_LOG_TIMESTAMP_WIDTH : natural range 28 to 32 := 32; -- Width of timestamp counter
 
-    -- Fixed (Max allowable widths for pulse logger)
-    constant C_LOG_DATA_WIDTH       : natural := 32; -- Width of a single pulse log
-    constant C_LOG_MAX_AMP_WIDTH    : natural := 16; -- Maximum width of the amplitude for bit preallocation (+1 of max adc_width)
-    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12; -- Maximum width of the rise time for bit preallocation
-
-    -- Fixed (limit bits of amplitude and rise time inside a pulse log)
-    constant C_LOG_AMP_HI    : natural := C_LOG_DATA_WIDTH - 1;                   -- Highest bit of amplitude in log
-    constant C_LOG_AMP_LO    : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH; -- Lowest bit of amplitude in log
-    constant C_LOG_T_RISE_HI : natural := C_LOG_MAX_T_RISE_WIDTH - 1;             -- Highest bit of rise time in log
-    constant C_LOG_T_RISE_LO : natural := 0;                                      -- Lowest bit of amplitude in log
+    -- Fixed
+    constant C_LOG_DATA_WIDTH       : natural := 32;                                     -- Width of a single pulse log
+    constant C_LOG_MAX_AMP_WIDTH    : natural := 16;                                     -- Maximum width of the amplitude for preallocation
+    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12;                                     -- Maximum width of the rise time for preallocation
+    constant C_LOG_AMP_HI           : natural := C_LOG_DATA_WIDTH - 1;                   -- Highest bit of amplitude in log
+    constant C_LOG_AMP_LO           : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH; -- Lowest bit of amplitude in log
+    constant C_LOG_T_RISE_HI        : natural := C_LOG_MAX_T_RISE_WIDTH - 1;             -- Highest bit of rise time in log
+    constant C_LOG_T_RISE_LO        : natural := 0;                                      -- Lowest bit of amplitude in log
 
     ----------------------------------------------------------------------------
     -- Types
