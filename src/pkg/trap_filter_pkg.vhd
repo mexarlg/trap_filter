@@ -59,9 +59,9 @@ package trap_filter_pkg is
     -- Configurable
     constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter width of pileup events since RST_N deassertion
 
-    -- Configurable
-    constant C_TRIG_DELAY_BASELINE : natural range 2 to 128 := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
-    constant C_TRIG_DELAY_START    : natural range 4 to 256 := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
+    -- Fixed
+    constant C_TRIG_DELAY_BASELINE : natural := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
+    constant C_TRIG_DELAY_START    : natural := 30; -- N of samples from a pulse detected trigger to the rising edge of the filtered pulse
 
     -- Fixed
     constant C_FAST_JORD_K_DELAY          : natural := 16; -- Delay for the rising edge of the trapezoid
