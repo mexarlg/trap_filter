@@ -96,8 +96,9 @@ package trap_filter_pkg is
 
     -- Configurable
     constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
-    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp counter
-    constant C_LOG_TIMESTAMP_WIDTH : natural range 28 to 32 := 32; -- Width of timestamp counter
+    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp
+    constant C_TIMESTAMP_CNT_WIDTH : natural range 40 to 48 := 48; -- Width of timestamp counter
+    constant C_TIMESTAMP_DIV       : natural range 0 to 6   := 4;  -- N of bits shifted in the counter to achieve higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
 
     -- Fixed
     constant C_LOG_DATA_WIDTH       : natural := 32;                                     -- Width of a single pulse log

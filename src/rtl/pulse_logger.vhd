@@ -29,7 +29,7 @@ entity pulse_logger is
         G_T_RISE_WIDTH : natural range 8 to 12 := 12; -- Width of the unsigned captured pulse rise time
         -- Timestamp parameters
         G_TIMESTAMP_EN    : natural range 0 to 1   := 1; -- Enable of timestamp
-        G_TIMESTAMP_WIDTH : natural range 24 to 32 := 32 -- Width of timestamp
+        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48 -- Width of timestamp counter
     );
     port (
         ------------------------------------------------------------------------
@@ -159,7 +159,7 @@ begin
                 bram_addr <= std_logic_vector(bram_ptr);
                 -- data stored
                 bram_pulse_data     <= pack_log(PULSE_CAPTURED_I, PULSE_T_RISE_I);
-                bram_timestamp_data <= timestamp_cnt;
+                bram_timestamp_data <= timestamp_cnt(G_BRAM_DATA_WIDTH + C_TIMESTAMP_DIV - 1 downto C_TIMESTAMP_DIV);
                 -- ptr increase
                 bram_ptr <= bram_ptr + 1;
             end if;

@@ -90,14 +90,14 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal pulse_valid     : std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
 
     -- Top system output signals
-    signal pileup_event  : std_logic;                                            -- pileup event pulse
-    signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
-    signal timestamp_cnt : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal pileup_event  : std_logic;                                            -- Pileup event pulse
+    signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
+    signal timestamp_cnt : std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
 
     -- Top logger output signals
-    signal log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
-    signal log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
+    signal log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Written pulse data from pulse_logger
+    signal log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Written timestamp data from pulse_logger
 
     -- Mark as debug for ILA
     attribute mark_debug : string;

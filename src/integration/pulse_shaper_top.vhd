@@ -69,7 +69,7 @@ entity pulse_shaper_top is
         ------------------------------------------------------------------------
         PILEUP_EVENT_O  : out std_logic;                                            -- Pileup event flag
         PILEUP_CNT_O    : out std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
-        TIMESTAMP_CNT_O : out std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Counter of timestamp from rst_n
+        TIMESTAMP_CNT_O : out std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Counter of timestamp from rst_n
         ERROR_OFLOW_O   : out std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/capture subsystems
         ------------------------------------------------------------------------
         -- Logger Outputs
@@ -118,7 +118,7 @@ architecture rtl of pulse_shaper_top is
     -- Top system output signals
     signal pileup_event  : std_logic;                                            -- pileup event pulse
     signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
-    signal timestamp_cnt : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal timestamp_cnt : std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
 
     -- Top logger output signals
@@ -349,7 +349,7 @@ begin
             G_T_RISE_WIDTH => C_T_RISE_WIDTH,
             -- Timestamp parameters
             G_TIMESTAMP_EN    => C_LOG_TIMESTAMP_EN,
-            G_TIMESTAMP_WIDTH => C_LOG_TIMESTAMP_WIDTH
+            G_TIMESTAMP_WIDTH => C_TIMESTAMP_CNT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

@@ -54,11 +54,15 @@ architecture tb of tb_pulse_shaper_top is
     signal tb_data_i : std_logic_vector(C_ADC_WIDTH - 1 downto 0) := (others => '0');
 
     -- input port b bram signals
-    signal tb_bram_en         : std_logic;                                            -- Enable required
-    signal tb_bram_rw         : std_logic;                                            -- Write or read required operation
-    signal tb_bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);      -- Required address to read
-    signal tb_bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0);      -- Read data from pulse log
-    signal tb_bram_time_data  : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Read data from timestamp log
+    signal tb_bram_en         : std_logic;                                       -- Enable required
+    signal tb_bram_rw         : std_logic;                                       -- Write or read required operation
+    signal tb_bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0); -- Required address to read
+    signal tb_bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from pulse log
+    signal tb_bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
+
+    -- logger bram outputs
+    signal tb_log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
+    signal tb_log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
 
     -- pulse output signals
     signal tb_pulse_trapezoid : std_logic_vector(C_ADC_WIDTH downto 0);        -- Filtered trapezoidal data output (signed)
@@ -70,12 +74,8 @@ architecture tb of tb_pulse_shaper_top is
     -- system outputs signals
     signal tb_pileup_event  : std_logic;                                            -- flag of pileup events
     signal tb_pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- counter of pileup events
-    signal tb_timestamp_cnt : std_logic_vector(C_LOG_TIMESTAMP_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
+    signal tb_timestamp_cnt : std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal tb_error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
-
-    -- logger outputs
-    signal tb_log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
-    signal tb_log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
 
 begin
 

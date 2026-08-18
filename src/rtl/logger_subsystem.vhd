@@ -29,7 +29,7 @@ entity logger_subsystem is
         G_T_RISE_WIDTH : natural range 8 to 12 := 12; -- Width of the unsigned captured pulse rise time
         -- Timestamp parameters
         G_TIMESTAMP_EN    : natural range 0 to 1   := 1; -- Enable of timestamp
-        G_TIMESTAMP_WIDTH : natural range 24 to 32 := 32 -- Width of timestamp
+        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48 -- Width of timestamp counter
     );
     port (
         ------------------------------------------------------------------------
@@ -86,7 +86,7 @@ architecture rtl of logger_subsystem is
     -- port B Bram connection signals
     signal bram_b_data_open         : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- unused write data from port B
     signal bram_b_pulse_data_rd     : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- data read from port B of pulse bram
-    signal bram_b_timestamp_data_rd : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- data read from port B of time bram
+    signal bram_b_timestamp_data_rd : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- data read from port B of time bram
 
     -- output timestamp
     signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- stream of timestamp counter
@@ -197,7 +197,7 @@ begin
             generic map(
                 -- Memory parameters
                 G_ADDR_WIDTH    => G_BRAM_ADDR_WIDTH,
-                G_DATA_WIDTH    => G_TIMESTAMP_WIDTH,
+                G_DATA_WIDTH    => G_BRAM_DATA_WIDTH,
                 G_OUTREG_ENABLE => True
             )
             port map(
