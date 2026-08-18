@@ -65,8 +65,7 @@ set_property target_language VHDL [current_project]
 # Packages
 set PKG_FILES [list \
     [file join $PKG_DIR "trap_filter_pkg.vhd"] \
-    [file join $PKG_DIR "pulse_data_pkg.vhd"] \
-    [file join $PKG_DIR "pulse_mult_data_pkg.vhd"] \
+    [file join $PKG_DIR "pulse_rom_pkg.vhd"] \
 ]
 
 # RTL
