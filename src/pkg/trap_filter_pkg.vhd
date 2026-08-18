@@ -113,9 +113,6 @@ package trap_filter_pkg is
     -- Types
     ----------------------------------------------------------------------------
 
-    -- unconstrained rom memory type for the input pulse
-    type mem_t is array (natural range <>) of std_logic_vector;
-
     ----------------------------------------------------------------------------
     -- Records
     ----------------------------------------------------------------------------

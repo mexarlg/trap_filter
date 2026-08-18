@@ -319,7 +319,9 @@ begin
             -- Slow jordanov parameters for timing of delays
             G_SLOW_JORD_K_DELAY => G_SLOW_JORD_K_DELAY,
             G_SLOW_JORD_M_DELAY => G_SLOW_JORD_M_DELAY,
-            G_SLOW_JORD_LATENCY => C_JORDANOV_LATENCY
+            G_SLOW_JORD_LATENCY => C_JORDANOV_LATENCY,
+            -- Pileup decay time
+            G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE
         )
         port map(
             ------------------------------------------------------------------------
