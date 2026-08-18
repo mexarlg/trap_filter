@@ -12,6 +12,7 @@ use std.textio.all;
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
 use trap_filter.tb_jordanov_filter_pkg.all;
+use trap_filter.pulse_rom_pkg.all;
 
 entity tb_jordanov_filter is
 end entity;
@@ -139,8 +140,7 @@ begin
 
     pulse_feed_i : entity trap_filter.pulse_feed
         generic map(
-            G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_PULSE_DEPTH => 2048
+            G_DATA_WIDTH => C_ADC_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

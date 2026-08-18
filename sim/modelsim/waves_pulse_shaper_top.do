@@ -31,6 +31,9 @@ add wave -color white -format Analog-Step -radix unsigned sim:/tb_pulse_shaper_t
 add wave -divider " TRIG_SS "
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/data_jord_filt
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/cfd_signal
+add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/above_th_flag
+add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/slope_pos_flag
+add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/pulse_incoming
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_triggers
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_clean
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/tb_pileup_event

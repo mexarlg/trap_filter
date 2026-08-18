@@ -11,6 +11,7 @@ use std.textio.all;
 
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
+use trap_filter.pulse_rom_pkg.all;
 
 entity tb_pulse_shaper_top is
 end entity;
@@ -23,11 +24,11 @@ architecture tb of tb_pulse_shaper_top is
 
     constant CLK_PERIOD : time := 8 ns;
 
-    -- Input data parameters
-    constant C_ADC_WIDTH    : natural range 12 to 15     := 14;   -- Width of the incoming data stream from the adc
-    constant C_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Depth of input pulse
+    -- Input data parameters from pulse_rom_pkg
+    constant C_ADC_WIDTH    : natural range 12 to 15     := ADC_WIDTH; -- Width of the incoming data stream from the adc
+    constant C_SAMPLE_DEPTH : natural range 255 to 65535 := ROM_DEPTH; -- Depth of input pulse
     -- Trapezoidal filter parameters
-    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 64;    -- Value of the delay for rising edge of filtered trapezoid
+    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
     constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
     -- Moving average parameters
@@ -36,10 +37,13 @@ architecture tb of tb_pulse_shaper_top is
     constant C_PEAK_MOV_EN            : natural range 0 to 1 := 1; -- Width average in peak
     constant C_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
     -- Pulse detection parameters
-    constant C_CFD_VAL_TH   : natural range 1024 to 4096 := 2048; -- Threshold level of the fast jordanov output to gate pulse detection
-    constant C_CFD_SLOPE_TH : natural range 50 to 500    := 100;  -- Threshold slope of the fast jordanov output to gate pulse detection
+    constant C_CFD_VAL_TH   : natural range 10 to 4096 := 1000; -- Threshold level of the fast jordanov output to gate pulse detection
+    constant C_CFD_SLOPE_TH : natural range 10 to 500  := 10;   -- Threshold slope of the fast jordanov output to gate pulse detection
     -- Pileup discrimination parameters
-    constant C_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+    constant C_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := C_SAMPLE_DEPTH * CLK_PERIOD;
 
     ----------------------------------------------------------------------------    
     -- DUT Signals
@@ -91,8 +95,7 @@ begin
 
     pulse_feed_i : entity trap_filter.pulse_feed
         generic map(
-            G_DATA_WIDTH  => C_ADC_WIDTH,
-            G_PULSE_DEPTH => C_SAMPLE_DEPTH
+            G_DATA_WIDTH => C_ADC_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -184,7 +187,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 30000 ns;
+        wait for C_WINDOW_TIME;
 
         ------------------------------------------------------------------------
         -- Simulation done

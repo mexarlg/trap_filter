@@ -22,13 +22,11 @@ use ieee.numeric_std.all;
 
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
-use trap_filter.pulse_data_pkg.all;
-use trap_filter.pulse_mult_data_pkg.all;
+use trap_filter.pulse_rom_pkg.all;
 
 entity pulse_feed is
     generic (
-        G_DATA_WIDTH  : natural range 4 to 16      := 14;  -- Width of incoming data stream
-        G_PULSE_DEPTH : natural range 255 to 65535 := 4095 -- Depth needed for incoming number of samples
+        G_DATA_WIDTH : natural range 4 to 16 := 14 -- Width of incoming data stream
     );
     port (
         ------------------------------------------------------------------------
@@ -58,8 +56,8 @@ architecture rtl of pulse_feed is
     ----------------------------------------------------------------------------
 
     -- Address limits
-    constant C_PULSE_WIDTH : natural                                      := f_depth_to_width(G_PULSE_DEPTH);
-    constant C_ADDR_MAX    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsIgned(G_PULSE_DEPTH - 1, C_PULSE_WIDTH));
+    constant C_PULSE_WIDTH : natural                                      := f_depth_to_width(ROM_DEPTH);
+    constant C_ADDR_MAX    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(ROM_DEPTH - 1, C_PULSE_WIDTH));
     constant C_ADDR_ONE    : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, C_PULSE_WIDTH));
     constant C_ADDR_ZERO   : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := (others => '0');
 
@@ -75,8 +73,8 @@ architecture rtl of pulse_feed is
     signal data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 
     -- intermidiate signals (choose pulse data from pkg constants)
-    signal rom_pulse : mem_t(0 to G_PULSE_DEPTH - 1)(G_DATA_WIDTH - 1 downto 0) := C_INIT_PULSE_MULT;
-    signal addr      : std_logic_vector(C_PULSE_WIDTH - 1 downto 0)             := (others => '0');
+    signal rom_pulse : pulse_rom_t                                  := PULSE_ROM;
+    signal addr      : std_logic_vector(C_PULSE_WIDTH - 1 downto 0) := (others => '0');
 
 begin
 
@@ -123,7 +121,7 @@ begin
             data <= (others => '0');
         elsif rising_edge(CLK_I) then
             if (CE_I = '1') then
-                data <= rom_pulse(to_integer(unsigned(addr)));
+                data <= std_logic_vector(to_unsigned(rom_pulse(to_integer(unsigned(addr))), G_DATA_WIDTH));
             end if;
         end if;
     end process p_feed;

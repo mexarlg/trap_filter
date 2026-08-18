@@ -31,9 +31,9 @@ entity cfd is
         G_CFD_SLOPE_DELAY : natural range 8 to 16  := 8;  -- slope delay used to compute slope of data for gating on rising edges
         G_CFD_MARGIN_BITS : natural range 1 to 3   := 1;  -- Number of bits of margin to internal difference signal
         -- thresholds and expected pulse timeout
-        G_CFD_VAL_TH        : natural range 1024 to 4096 := 2048; -- threshold to gate value of DATA_I
-        G_CFD_SLOPE_TH      : natural range 50 to 500    := 100;  -- threshold to gate slope of DATA_I
-        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10      := 7     -- timeout width after thresholds are overcomed for a zero crossing event
+        G_CFD_VAL_TH        : natural range 10 to 4096 := 100; -- threshold to gate value of DATA_I
+        G_CFD_SLOPE_TH      : natural range 10 to 500  := 10;  -- threshold to gate slope of DATA_I
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10    := 7    -- timeout width after thresholds are overcomed for a zero crossing event
     );
     port (
         ------------------------------------------------------------------------
