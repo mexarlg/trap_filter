@@ -25,8 +25,7 @@ architecture tb of tb_pulse_shaper_top is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Input data parameters from pulse_rom_pkg
-    constant C_ADC_WIDTH    : natural range 12 to 15     := ADC_WIDTH; -- Width of the incoming data stream from the adc
-    constant C_SAMPLE_DEPTH : natural range 255 to 65535 := ROM_DEPTH; -- Depth of input pulse
+    constant C_ADC_WIDTH : natural range 12 to 15 := ADC_WIDTH; -- Width of the incoming data stream from the adc
     -- Trapezoidal filter parameters
     constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
     constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
@@ -43,7 +42,7 @@ architecture tb of tb_pulse_shaper_top is
     constant C_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
 
     -- time to wait for simulation
-    constant C_WINDOW_TIME : time := C_SAMPLE_DEPTH * CLK_PERIOD;
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
 
     ----------------------------------------------------------------------------    
     -- DUT Signals

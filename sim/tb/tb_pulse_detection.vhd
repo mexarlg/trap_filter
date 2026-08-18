@@ -27,6 +27,9 @@ architecture tb of tb_pulse_detection is
     -- Jordanov params configuration
     constant C_ADC_WIDTH : natural := 14;
 
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
+
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -110,7 +113,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 24000 ns;
+        wait for C_WINDOW_TIME;
 
         ------------------------------------------------------------------------
         -- Simulation done

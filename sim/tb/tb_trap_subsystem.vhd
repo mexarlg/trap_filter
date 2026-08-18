@@ -34,6 +34,9 @@ architecture tb of tb_trap_subsystem is
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
 
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
+
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -146,7 +149,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_baseline_trig <= '0';
 
-        wait for 16000 ns;
+        wait for C_WINDOW_TIME;
 
         ------------------------------------------------------------------------
         -- Simulation done

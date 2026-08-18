@@ -11,7 +11,6 @@ use std.textio.all;
 
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
-use trap_filter.tb_mov_avg_filter_pkg.all;
 use trap_filter.pulse_rom_pkg.all;
 
 entity tb_mov_avg_filter is
@@ -23,6 +22,8 @@ architecture tb of tb_mov_avg_filter is
     -- Test configuration
     ----------------------------------------------------------------------------
 
+    constant CLK_PERIOD : time := 8 ns;
+
     -- Moving average configuration
     constant C_DELAY_WIDTH     : natural := 6;                  -- Bit width of delay
     constant C_DELAY_VALUE     : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
@@ -31,6 +32,9 @@ architecture tb of tb_mov_avg_filter is
 
     -- Sign configuration of input pulse -> Needs to be changed in waveform
     constant C_DATA_I_SIGNED : natural := 0; -- '1' if signed, '0' if unsigned
+
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
 
     ----------------------------------------------------------------------------    
     -- DUT Signals
@@ -147,7 +151,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 9000 ns;
+        wait for C_WINDOW_TIME;
 
         ------------------------------------------------------------------------
         -- Simulation done

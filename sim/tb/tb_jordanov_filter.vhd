@@ -11,7 +11,6 @@ use std.textio.all;
 
 library trap_filter;
 use trap_filter.trap_filter_pkg.all;
-use trap_filter.tb_jordanov_filter_pkg.all;
 use trap_filter.pulse_rom_pkg.all;
 
 entity tb_jordanov_filter is
@@ -22,6 +21,8 @@ architecture tb of tb_jordanov_filter is
     ----------------------------------------------------------------------------
     -- Test configuration
     ----------------------------------------------------------------------------
+
+    constant CLK_PERIOD : time := 8 ns;
 
     -- Jordanov params configuration
     constant C_ADC_WIDTH : natural := 14;
@@ -34,6 +35,9 @@ architecture tb of tb_jordanov_filter is
 
     -- Exp decay
     constant C_M_EXP_VALUE : natural := 39992; -- round(2499.5 * 2^4), M_FRAC = 4
+
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
 
     ----------------------------------------------------------------------------    
     -- DUT Signals
@@ -175,7 +179,7 @@ begin
         wait until rising_edge(tb_clk);
         tb_ce <= '1';
 
-        wait for 9000 ns;
+        wait for C_WINDOW_TIME;
 
         -- toggle of CE
         tb_ce <= '0';

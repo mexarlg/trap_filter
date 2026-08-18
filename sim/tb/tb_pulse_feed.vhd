@@ -28,6 +28,9 @@ architecture tb of tb_pulse_feed is
     -- Moving average configuration
     constant C_ADC_WIDTH : natural := 14; -- Bit width of adc data
 
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
+
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -93,7 +96,7 @@ begin
         -- Simulation done
         ------------------------------------------------------------------------
 
-        wait for 9000 ns;
+        wait for C_WINDOW_TIME;
         assert false report "Simulation finished" severity failure;
         wait;
     end process p_stimulus;

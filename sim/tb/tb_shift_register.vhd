@@ -33,6 +33,9 @@ architecture tb of tb_shift_register is
     -- Sign configuration of input pulse -> Needs to be changed in waveform
     constant C_DATA_SIGNED : natural := 0; -- '1' if signed, '0' if unsigned
 
+    -- time to wait for simulation
+    constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
+
     ----------------------------------------------------------------------------    
     -- DUT Signals
     ----------------------------------------------------------------------------
@@ -138,7 +141,7 @@ begin
         tb_ce    <= '1';
         tb_rst_n <= '1';
 
-        wait for 9000 ns;
+        wait for C_WINDOW_TIME;
 
         ------------------------------------------------------------------------
         -- Simulation done
