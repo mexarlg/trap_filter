@@ -53,8 +53,8 @@ add wave -color white -format Analog-Step -radix signed sim:/tb_pulse_shaper_top
 #===========================================================================
 add wave -divider " PEAK_SS "
 add wave -color green -radix signed sim:/tb_pulse_shaper_top/tb_pulse_amplitude
-add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_d
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/data_i_t_rise
+add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude_th_90
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/amplitude_th_10
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/capture_ss_i/rise_capture_i/is_below_90

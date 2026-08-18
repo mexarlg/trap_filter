@@ -46,9 +46,10 @@ entity capture_subsystem is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        DATA_I          : in std_logic_vector(G_DATA_WIDTH - 1 downto 0);          -- Input (raw) data
-        TRIG_TOP_MID_I  : in std_logic;                                            -- Trigger to capture amplitude at middle of top
-        DATA_FILTERED_I : in std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- Input (filtered) data
+        DATA_I           : in std_logic_vector(G_DATA_WIDTH - 1 downto 0);          -- Input (raw) data
+        TRIG_TOP_MID_I   : in std_logic;                                            -- Trigger to capture amplitude at middle of top
+        TRIG_PULSE_END_I : in std_logic;                                            -- Trigger when trapezoid pulse has ended (timeout of rise time cnt)
+        DATA_FILTERED_I  : in std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- Input (filtered) data
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
@@ -306,6 +307,7 @@ begin
             ------------------------------------------------------------------------
             DATA_I            => data_i_t_rise,
             TRIG_TOP_MID_I    => TRIG_TOP_MID_I,
+            TRIG_PULSE_END_I  => TRIG_PULSE_END_I,
             PULSE_AMPLITUDE_I => pulse_amplitude,
             ------------------------------------------------------------------------
             -- Outputs

@@ -82,13 +82,13 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable
-    constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5    := 2;  -- Margin bits given to the accumulator inside the moving average for the peak
-    constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5    := 2;  -- Margin bits given to the accumulator inside the moving average for the t_rise capture
-    constant C_T_RISE_WIDTH               : natural range 8 to 12   := 12; -- Width of rise time
-    constant C_T_RISE_TIMEOUT             : natural range 50 to 256 := 50; -- Timeout value in n samples for capture of rise time
+    constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5    := 2;   -- Margin bits given to the accumulator inside the moving average for the peak
+    constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5    := 2;   -- Margin bits given to the accumulator inside the moving average for the t_rise capture
+    constant C_T_RISE_WIDTH               : natural range 8 to 12   := 12;  -- Width of rise time
+    constant C_T_RISE_TIMEOUT             : natural range 50 to 256 := 100; -- Timeout in n samples for the wait from pulse detection to pulse being inside (10 - 90%) threshold 
 
     -- fixed
-    constant C_T_RISE_DELAY_MARGIN : natural := 8; -- Additional delay given to rise_capture for synchronization
+    constant C_T_RISE_DELAY_MARGIN : natural := 25; -- Additional delay given to rise_capture for synchronization
 
     ----------------------------------------------------------------------------
     -- LOGGER SUBSYSTEM PARAMETERS:

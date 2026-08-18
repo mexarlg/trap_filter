@@ -152,8 +152,8 @@ begin
     ----------------------------------------------------------------------------
 
     -- Assert maximum timeout arrives earlier than the pulse_valid signal
-    assert (C_T_RISE_TIMEOUT / 2 < C_T_RISE_DELAY_TRAP)
-    report "risetime_capture: C_T_RISE_TIMEOUT / 2 should be smaller than C_T_RISE_DELAY_TRAP. Rise time capture has not completed before the valid arrival" severity failure;
+    assert (C_T_RISE_TIMEOUT < C_T_RISE_DELAY_TRAP)
+    report "risetime_capture: C_T_RISE_TIMEOUT should be smaller than C_T_RISE_DELAY_TRAP. Rise time capture has not completed before trig_end_pulse" severity failure;
 
     ----------------------------------------------------------------------------
     -- Output assignments
@@ -300,9 +300,10 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            DATA_I          => DATA_I,
-            TRIG_TOP_MID_I  => trig_top_mid,
-            DATA_FILTERED_I => pulse_trapezoid,
+            DATA_I           => DATA_I,
+            TRIG_TOP_MID_I   => trig_top_mid,
+            TRIG_PULSE_END_I => trig_pulse_end,
+            DATA_FILTERED_I  => pulse_trapezoid,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------

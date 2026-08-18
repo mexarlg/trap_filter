@@ -39,6 +39,7 @@ entity risetime_capture is
         ------------------------------------------------------------------------
         DATA_I            : in std_logic_vector(G_DATA_WIDTH - 1 downto 0); -- Input raw data
         TRIG_TOP_MID_I    : in std_logic;                                   -- Trigger when measured amplitude is available
+        TRIG_PULSE_END_I  : in std_logic;                                   -- Trigger when trapezoid pulse has ended (timeout of rise time cnt)
         PULSE_AMPLITUDE_I : in std_logic_vector(G_DATA_WIDTH downto 0);     -- Amplitude measured at middle of flat
         ------------------------------------------------------------------------
         -- Outputs
@@ -107,7 +108,6 @@ architecture rtl of risetime_capture is
     signal is_above_10        : std_logic; -- flag of current input data being above the 10% threshold
     signal is_below_90        : std_logic; -- flag of current input data being below the 90% threshold
     signal timeout_waiting    : std_logic; -- flag of timeout while on waiting_rise state
-    signal timeout_counting   : std_logic; -- flag of timeout while on counting state
     signal thresholds_updated : std_logic; -- flag of thresholds updated
 
     -- fsm enable state signals
@@ -144,12 +144,8 @@ begin
     timeout_waiting <= '1' when (waiting_rise_cnt = C_TIMEOUT_VALUE) else
         '0';
 
-    -- rise time counter arrived to maximum timeout allowable
-    timeout_counting <= '1' when (t_rise_cnt = C_TIMEOUT_VALUE) else
-        '0';
-
     -- finite state machine of rise time capture
-    p_fsm : process (state, TRIG_TOP_MID_I, is_inside_th, timeout_waiting, timeout_counting, thresholds_updated)
+    p_fsm : process (state, TRIG_TOP_MID_I, is_inside_th, timeout_waiting, TRIG_PULSE_END_I, thresholds_updated)
     begin
         -- initialization
         waiting_pulse_en <= '0';
@@ -201,7 +197,7 @@ begin
                 -- new pulse > timeout > storing
                 if (TRIG_TOP_MID_I = '1') then
                     state_next <= S_UPDATING_TH;
-                elsif (timeout_counting = '1') then
+                elsif (TRIG_PULSE_END_I = '1') then
                     state_next <= S_WAITING_PULSE;
                 elsif (is_inside_th = '0') then
                     state_next <= S_STORING;
