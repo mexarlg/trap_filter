@@ -92,12 +92,12 @@ begin
             ------------------------------------------------------------------------
             -- Control Inputs / Outputs
             ------------------------------------------------------------------------
-            DATA_I           => tb_data_i,
-            PULSE_TRIGGERS_O => tb_trigger,
-            PULSE_CLEAN_O    => tb_pulse_valid,
-            PILEUP_EVENT_O   => tb_pileup_event,
-            PILEUP_CNT_O     => tb_pileup_cnt,
-            ERROR_OFLOW_O    => tb_error_oflow
+            DATA_I                  => tb_data_i,
+            PULSE_TRIGGERS_O        => tb_trigger,
+            PULSE_AMPLITUDE_CLEAN_O => tb_pulse_valid,
+            PILEUP_EVENT_O          => tb_pileup_event,
+            PILEUP_CNT_O            => tb_pileup_cnt,
+            ERROR_OFLOW_O           => tb_error_oflow
         );
 
     ----------------------------------------------------------------------------

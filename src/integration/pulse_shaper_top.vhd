@@ -61,7 +61,7 @@ entity pulse_shaper_top is
         PULSE_AMPLITUDE_O : out std_logic_vector(G_ADC_WIDTH downto 0);        -- Captured amplitude of trapezoidal data (signed)
         PULSE_T_RISE_O    : out std_logic_vector(C_T_RISE_WIDTH - 1 downto 0); -- Captured rise time of original pulse
         PULSE_TRIGGERS_O  : out std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers
-        PULSE_VALID_O     : out std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+        PULSE_STATE_O     : out std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
         ------------------------------------------------------------------------
         -- System Outputs
         ------------------------------------------------------------------------
@@ -111,7 +111,7 @@ architecture rtl of pulse_shaper_top is
     signal pulse_amplitude : std_logic_vector(C_DATA_FILTERED_WIDTH - 1 downto 0); -- Captured amplitude of trapezoidal data (signed)
     signal pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0);        -- Captured rise time of original pulse
     signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);              -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
-    signal pulse_valid     : std_logic;                                            -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal pulse_state     : std_logic_vector(2 downto 0);                         -- Pulse state (All data valid, amplitude valid, rise time valid)
 
     -- Top system output signals
     signal pileup_event  : std_logic;                                            -- pileup event pulse
@@ -134,9 +134,11 @@ architecture rtl of pulse_shaper_top is
     signal trig_top_start      : std_logic; -- trigger to start of flat top
     signal trig_top_mid        : std_logic; -- trigger to capture amplitude
     signal trig_pulse_end      : std_logic; -- trigger of pulse end
+    signal trig_log_event      : std_logic; -- trigger of pulse ended registered + 2 cycles
 
-    -- pileup information from trig_ss
-    signal pulse_clean : std_logic; -- Completed pulse with no pileups
+    -- amplitude and rise time clean signals from trig_ss and capture_ss
+    signal pulse_amplitude_clean : std_logic; -- Completed pulse with no pileups
+    signal pulse_t_rise_clean    : std_logic; -- pulse rise time clean
 
     -- individual overflow flags from each subsystem
     signal error_trap_ss_oflow    : std_logic_vector(3 downto 0); -- Overflow errors in trap_subsystem (b32 jord, b1 mov_avg, b0 baseline substraction)
@@ -158,7 +160,7 @@ begin
     PULSE_AMPLITUDE_O <= pulse_amplitude;
     PULSE_T_RISE_O    <= pulse_t_rise;
     PULSE_TRIGGERS_O  <= pulse_triggers;
-    PULSE_VALID_O     <= pulse_valid;
+    PULSE_STATE_O     <= pulse_state;
 
     -- System outputs
     PILEUP_EVENT_O  <= pileup_event;
@@ -180,12 +182,13 @@ begin
     error_oflow(1 downto 0) <= error_capture_ss_oflow;
 
     -- triggers demux
-    trig_pulse_detected <= pulse_triggers(5);
-    trig_baseline       <= pulse_triggers(4);
-    trig_pulse_start    <= pulse_triggers(3);
-    trig_top_start      <= pulse_triggers(2);
-    trig_top_mid        <= pulse_triggers(1);
-    trig_pulse_end      <= pulse_triggers(0);
+    trig_pulse_detected <= pulse_triggers(6);
+    trig_baseline       <= pulse_triggers(5);
+    trig_pulse_start    <= pulse_triggers(4);
+    trig_top_start      <= pulse_triggers(3);
+    trig_top_mid        <= pulse_triggers(2);
+    trig_pulse_end      <= pulse_triggers(1);
+    trig_log_event      <= pulse_triggers(0);
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -223,11 +226,11 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_TRIGGERS_O => pulse_triggers,
-            PILEUP_EVENT_O   => pileup_event,
-            PILEUP_CNT_O     => pileup_cnt,
-            PULSE_CLEAN_O    => pulse_clean,
-            ERROR_OFLOW_O    => error_trig_ss_oflow
+            PULSE_TRIGGERS_O        => pulse_triggers,
+            PILEUP_EVENT_O          => pileup_event,
+            PILEUP_CNT_O            => pileup_cnt,
+            PULSE_AMPLITUDE_CLEAN_O => pulse_amplitude_clean,
+            ERROR_OFLOW_O           => error_trig_ss_oflow
         );
 
     -- generates the filtered trapezoid signal
@@ -298,9 +301,10 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_AMPLITUDE_O => pulse_amplitude,
-            PULSE_T_RISE_O    => pulse_t_rise,
-            ERROR_OFLOW_O     => error_capture_ss_oflow
+            PULSE_AMPLITUDE_O    => pulse_amplitude,
+            PULSE_T_RISE_O       => pulse_t_rise,
+            PULSE_T_RISE_CLEAN_O => pulse_t_rise_clean,
+            ERROR_OFLOW_O        => error_capture_ss_oflow
         );
 
     -- asserts validity of a pulse if all conditions are met
@@ -324,12 +328,14 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            PULSE_CLEAN_I => pulse_clean,
-            ERROR_OFLOW_I => error_oflow,
+            TRIG_LOG_EVENT_I        => trig_log_event,
+            PULSE_AMPLITUDE_CLEAN_I => pulse_amplitude_clean,
+            PULSE_T_RISE_CLEAN_I    => pulse_t_rise_clean,
+            ERROR_OFLOW_I           => error_oflow,
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            VALID_O => pulse_valid
+            PULSE_STATE_O => pulse_state
         );
 
     -- logs the captured data of a pulse
@@ -354,9 +360,10 @@ begin
             ------------------------------------------------------------------------
             -- Pulse log inputs
             ------------------------------------------------------------------------
-            PULSE_VALID_I    => pulse_valid,
-            PULSE_CAPTURED_I => pulse_amplitude,
-            PULSE_T_RISE_I   => pulse_t_rise,
+            TRIG_LOG_EVENT_I  => trig_log_event,
+            PULSE_STATE_I     => pulse_state,
+            PULSE_AMPLITUDE_I => pulse_amplitude,
+            PULSE_T_RISE_I    => pulse_t_rise,
             ------------------------------------------------------------------------
             -- Bram Port B external read
             ------------------------------------------------------------------------

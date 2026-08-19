@@ -43,7 +43,8 @@ entity risetime_capture is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_T_RISE_O : out std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) -- Captured rise time
+        PULSE_T_RISE_O       : out std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Captured rise time
+        PULSE_T_RISE_CLEAN_O : out std_logic                                      -- Clean risetime (no interruptions)
     );
 end entity risetime_capture;
 
@@ -110,6 +111,11 @@ architecture rtl of risetime_capture is
     signal counting_en      : std_logic; -- current state on S_COUNTING
     signal storing_en       : std_logic; -- current state on S_STORING
 
+    -- rise time validity signals
+    signal capture_in_progress : std_logic; -- fsm is between amplitude trigger and rise time latch
+    signal t_rise_abort        : std_logic; -- capture interrupted before reaching S_STORING
+    signal pulse_t_rise_clean  : std_logic; -- latched validity of pulse_t_rise
+
 begin
 
     ----------------------------------------------------------------------------
@@ -120,11 +126,19 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    PULSE_T_RISE_O <= pulse_t_rise;
+    PULSE_T_RISE_O       <= pulse_t_rise;
+    PULSE_T_RISE_CLEAN_O <= pulse_t_rise_clean;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
     ----------------------------------------------------------------------------
+
+    -- a capture is pending from the amplitude trigger until the rise time is latched
+    capture_in_progress <= '1' when (state = S_UPDATING_TH or state = S_WAITING_RISE or state = S_COUNTING) else
+        '0';
+
+    -- pulse ended (timeout) or a new pulse arrived before the rise time could be latched
+    t_rise_abort <= capture_in_progress and (TRIG_TOP_MID_I or TRIG_PULSE_END_I);
 
     -- condition for inside of threshold
     is_inside_th <= is_above_10 and is_below_90;
@@ -288,6 +302,20 @@ begin
             end if;
         end if;
     end process p_t_rise_cnt;
+
+    -- latch the validity of the measured rise time
+    p_t_rise_valid : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            pulse_t_rise_clean <= '0';
+        elsif rising_edge(CLK_I) then
+            if (storing_en = '1') then
+                pulse_t_rise_clean <= '1';
+            elsif (t_rise_abort = '1') then
+                pulse_t_rise_clean <= '0';
+            end if;
+        end if;
+    end process p_t_rise_valid;
 
     -- latch the measured rise time plus the latency of fsm
     p_store : process (RST_N_I, CLK_I)

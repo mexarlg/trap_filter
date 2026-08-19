@@ -27,8 +27,8 @@ architecture tb of tb_pulse_shaper_top is
     -- Input data parameters from pulse_rom_pkg
     constant C_ADC_WIDTH : natural range 12 to 15 := ADC_WIDTH; -- Width of the incoming data stream from the adc
     -- Trapezoidal filter parameters
-    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 32;    -- Value of the delay for rising edge of filtered trapezoid
-    constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 64;    -- Value of the delay for flat top of filtered trapezoid
+    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
+    constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
     -- Moving average parameters
     constant C_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width average in baseline
@@ -70,7 +70,7 @@ architecture tb of tb_pulse_shaper_top is
     signal tb_pulse_amplitude : std_logic_vector(C_ADC_WIDTH downto 0);        -- Captured amplitude (signed)
     signal tb_pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0); -- Captured time rise
     signal tb_pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers (baseline, start, top, mid-top, end)
-    signal tb_pulse_valid     : std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal tb_pulse_state     : std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
 
     -- system outputs signals
     signal tb_pileup_event  : std_logic;                                            -- flag of pileup events
@@ -150,7 +150,7 @@ begin
             PULSE_AMPLITUDE_O => tb_pulse_amplitude,
             PULSE_T_RISE_O    => tb_pulse_t_rise,
             PULSE_TRIGGERS_O  => tb_pulse_triggers,
-            PULSE_VALID_O     => tb_pulse_valid,
+            PULSE_STATE_O     => tb_pulse_state,
             -- System outputs
             PILEUP_EVENT_O  => tb_pileup_event,
             PILEUP_CNT_O    => tb_pileup_cnt,

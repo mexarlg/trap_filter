@@ -40,9 +40,10 @@ entity pulse_logger is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        PULSE_VALID_I    : in std_logic;                                     -- Pulse is valid
-        PULSE_CAPTURED_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
-        PULSE_T_RISE_I   : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
+        TRIG_LOG_EVENT_I  : in std_logic;                                     -- Pulse log event
+        PULSE_STATE_I     : in std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
+        PULSE_AMPLITUDE_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
+        PULSE_T_RISE_I    : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
@@ -63,14 +64,17 @@ architecture rtl of pulse_logger is
 
     -- packs the modifiable data outputs into the preallocated pulse log
     function pack_log (
-        amp  : std_logic_vector(G_PULSE_WIDTH - 1 downto 0);
-        rise : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0)
+        state : std_logic_vector(2 downto 0);
+        amp   : std_logic_vector(G_PULSE_WIDTH - 1 downto 0);
+        rise  : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0)
     ) return std_logic_vector is
         variable v : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0) := (others => '0');
     begin
         -- From rangeable widths to preallocated ones (maximum of allowed range)
         v(C_LOG_AMP_HI downto C_LOG_AMP_LO)       := std_logic_vector(resize(signed(amp), C_LOG_MAX_AMP_WIDTH));
+        v(C_LOG_AMP_VALID)                        := state(1);
         v(C_LOG_T_RISE_HI downto C_LOG_T_RISE_LO) := std_logic_vector(resize(unsigned(rise), C_LOG_MAX_T_RISE_WIDTH));
+        v(C_LOG_T_RISE_VALID)                     := state(0);
         return v;
     end function pack_log;
 
@@ -100,6 +104,9 @@ architecture rtl of pulse_logger is
     signal bram_addr           : std_logic_vector(G_BRAM_ADDR_WIDTH - 1 downto 0); -- address to write
     signal bram_pulse_data     : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- pulse data written
     signal bram_timestamp_data : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- timestamp data written
+
+    -- delay of + 1 cycle
+    signal trig_log_event_i_q : std_logic;
 
     -- timestamp active since reset
     signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- timestamp written
@@ -137,6 +144,16 @@ begin
     -- Main Sequential process
     ----------------------------------------------------------------------------
 
+    -- delay of trig_end_pulse for 2 cycles
+    p_reg : process (RST_N_I, CLK_I)
+    begin
+        if RST_N_I = '0' then
+            trig_log_event_i_q <= '0';
+        elsif rising_edge(CLK_I) then
+            trig_log_event_i_q <= TRIG_LOG_EVENT_I;
+        end if;
+    end process p_reg;
+
     -- packs log and issues write
     p_log : process (RST_N_I, CLK_I) is
     begin
@@ -152,13 +169,13 @@ begin
             bram_rw <= '0';
 
             -- pulse is valid, issue log while there is space
-            if (PULSE_VALID_I = '1') and (bram_full = '0') then
+            if (trig_log_event_i_q = '1') and (bram_full = '0') then
                 -- issue write
                 bram_en   <= '1';
                 bram_rw   <= '1';
                 bram_addr <= std_logic_vector(bram_ptr);
                 -- data stored
-                bram_pulse_data     <= pack_log(PULSE_CAPTURED_I, PULSE_T_RISE_I);
+                bram_pulse_data     <= pack_log(PULSE_STATE_I, PULSE_AMPLITUDE_I, PULSE_T_RISE_I);
                 bram_timestamp_data <= timestamp_cnt(G_BRAM_DATA_WIDTH + C_TIMESTAMP_DIV - 1 downto C_TIMESTAMP_DIV);
                 -- ptr increase
                 bram_ptr <= bram_ptr + 1;

@@ -84,8 +84,8 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal pulse_trapezoid : std_logic_vector(G_ADC_WIDTH downto 0);        -- Filtered trapezoidal data output (signed)
     signal pulse_amplitude : std_logic_vector(G_ADC_WIDTH downto 0);        -- Captured amplitude of trapezoidal data (signed)
     signal pulse_t_rise    : std_logic_vector(C_T_RISE_WIDTH - 1 downto 0); -- Captured rise time of original pulse
-    signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end)
-    signal pulse_valid     : std_logic;                                     -- Trapezoidal pulse valid (no pileup, no delays empty, no overflows)
+    signal pulse_triggers  : std_logic_vector(C_TRIG_DEPTH downto 0);       -- Trapezoidal pulse stage triggers (pulse, baseline, start, top, mid-top, end, log)
+    signal pulse_state     : std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
 
     -- Top system output signals
     signal pileup_event  : std_logic;                                            -- Pileup event pulse
@@ -106,7 +106,7 @@ architecture rtl of pulse_shaper_test_wrapper is
     attribute mark_debug of pulse_amplitude : signal is "true";
     attribute mark_debug of pulse_t_rise    : signal is "true";
     attribute mark_debug of pulse_triggers  : signal is "true";
-    attribute mark_debug of pulse_valid     : signal is "true";
+    attribute mark_debug of pulse_state     : signal is "true";
 
     -- system data
     attribute mark_debug of pileup_event  : signal is "true";
@@ -213,7 +213,7 @@ begin
             PULSE_AMPLITUDE_O => pulse_amplitude,
             PULSE_T_RISE_O    => pulse_t_rise,
             PULSE_TRIGGERS_O  => pulse_triggers,
-            PULSE_VALID_O     => pulse_valid,
+            PULSE_STATE_O     => pulse_state,
             ------------------------------------------------------------------------
             -- System Outputs
             ------------------------------------------------------------------------

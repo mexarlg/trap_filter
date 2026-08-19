@@ -20,14 +20,11 @@ package trap_filter_pkg is
     -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant C_SYSTEM_VERSION : string := "1.8";
+    constant C_SYSTEM_VERSION : string := "1.9";
 
     ----------------------------------------------------------------------------
     -- TESTING PARAMETERS:
     ----------------------------------------------------------------------------
-
-    -- Configurable
-    constant C_PULSE_SAMPLE_DEPTH : natural range 255 to 65535 := 2048; -- Sample depth of the stored (rom) input pulse for testing
 
     ----------------------------------------------------------------------------
     -- GENERAL SYSTEM PARAMETERS:
@@ -35,7 +32,7 @@ package trap_filter_pkg is
 
     -- Fixed
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of overflow flags of the system
-    constant C_TRIG_DEPTH           : natural := 5; -- Amount of triggers describing the stages of a pulse
+    constant C_TRIG_DEPTH           : natural := 6; -- Amount of triggers describing the stages of a pulse
     constant C_JORDANOV_LATENCY     : natural := 9; -- latency in number of cycles of the jordanov filter
     constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the moving average filter
     constant C_CFD_LATENCY          : natural := 3; -- latency in number of cycles of the cfd module
@@ -99,14 +96,16 @@ package trap_filter_pkg is
     constant C_TIMESTAMP_CNT_WIDTH : natural range 40 to 48 := 48; -- Width of timestamp counter
     constant C_TIMESTAMP_DIV       : natural range 0 to 6   := 4;  -- N of bits shifted in the counter to achieve higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
 
-    -- Fixed
-    constant C_LOG_DATA_WIDTH       : natural := 32;                                     -- Width of a single pulse log
-    constant C_LOG_MAX_AMP_WIDTH    : natural := 16;                                     -- Maximum width of the amplitude for preallocation
-    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12;                                     -- Maximum width of the rise time for preallocation
-    constant C_LOG_AMP_HI           : natural := C_LOG_DATA_WIDTH - 1;                   -- Highest bit of amplitude in log
-    constant C_LOG_AMP_LO           : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH; -- Lowest bit of amplitude in log
-    constant C_LOG_T_RISE_HI        : natural := C_LOG_MAX_T_RISE_WIDTH - 1;             -- Highest bit of rise time in log
-    constant C_LOG_T_RISE_LO        : natural := 0;                                      -- Lowest bit of amplitude in log
+    -- Fixed (Amplitude(31 downto 16) - Amplitude_Valid(15) - DNT(14 downto 13) - T_RISE(12 downto 1) - T_RISE VALID (0))
+    constant C_LOG_DATA_WIDTH       : natural := 32;                                           -- Width of a single pulse log
+    constant C_LOG_MAX_AMP_WIDTH    : natural := 16;                                           -- Maximum width of the amplitude for preallocation
+    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12;                                           -- Maximum width of the rise time for preallocation
+    constant C_LOG_AMP_HI           : natural := C_LOG_DATA_WIDTH - 1;                         -- Highest bit of amplitude in log
+    constant C_LOG_AMP_LO           : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH;       -- Lowest bit of amplitude in log
+    constant C_LOG_AMP_VALID        : natural := C_LOG_AMP_LO - 1;                             -- Bit for amplitude valid state in log
+    constant C_LOG_T_RISE_VALID     : natural := 0;                                            -- Bit of t_rise valid in log
+    constant C_LOG_T_RISE_LO        : natural := C_LOG_T_RISE_VALID + 1;                       -- Lowest bit of amplitude in log
+    constant C_LOG_T_RISE_HI        : natural := C_LOG_T_RISE_LO + C_LOG_MAX_T_RISE_WIDTH - 1; -- Highest bit of rise time in log
 
     ----------------------------------------------------------------------------
     -- Types

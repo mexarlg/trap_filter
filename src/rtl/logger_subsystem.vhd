@@ -40,9 +40,10 @@ entity logger_subsystem is
         ------------------------------------------------------------------------
         -- Pulse inputs
         ------------------------------------------------------------------------
-        PULSE_VALID_I    : in std_logic;                                     -- Pulse is valid
-        PULSE_CAPTURED_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
-        PULSE_T_RISE_I   : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
+        TRIG_LOG_EVENT_I  : in std_logic;                                     -- Pulse event trigger
+        PULSE_STATE_I     : in std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
+        PULSE_AMPLITUDE_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
+        PULSE_T_RISE_I    : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
         ------------------------------------------------------------------------
         -- BRAM Port B
         ------------------------------------------------------------------------
@@ -141,9 +142,10 @@ begin
             ------------------------------------------------------------------------
             -- Inputs
             ------------------------------------------------------------------------
-            PULSE_VALID_I    => PULSE_VALID_I,
-            PULSE_CAPTURED_I => PULSE_CAPTURED_I,
-            PULSE_T_RISE_I   => PULSE_T_RISE_I,
+            TRIG_LOG_EVENT_I  => TRIG_LOG_EVENT_I,
+            PULSE_STATE_I     => PULSE_STATE_I,
+            PULSE_AMPLITUDE_I => PULSE_AMPLITUDE_I,
+            PULSE_T_RISE_I    => PULSE_T_RISE_I,
             ------------------------------------------------------------------------
             -- BRAM Port A (pulse_logger writes)
             ------------------------------------------------------------------------

@@ -39,12 +39,14 @@ entity valid_subsystem is
         ------------------------------------------------------------------------
         -- Inputs
         ------------------------------------------------------------------------
-        PULSE_CLEAN_I : in std_logic;                                         -- Pulse is valid regarding pileup
-        ERROR_OFLOW_I : in std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0); -- Overflow errors of trap/trig/peak subsystems
+        TRIG_LOG_EVENT_I        : in std_logic;                                         -- Trigger to log pulse event
+        PULSE_AMPLITUDE_CLEAN_I : in std_logic;                                         -- Trigger if pulse amplitude is clean
+        PULSE_T_RISE_CLEAN_I    : in std_logic;                                         -- Trigger if risetime is clean
+        ERROR_OFLOW_I           : in std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0); -- Overflow errors of trap/trig/peak subsystems
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        VALID_O : out std_logic -- Trigger that pulse is valid (pileup, delays, overflow)
+        PULSE_STATE_O : out std_logic_vector(2 downto 0) -- Pulse state (All data valid, amplitude valid, rise time valid)
     );
 end entity valid_subsystem;
 
@@ -81,7 +83,9 @@ architecture rtl of valid_subsystem is
     ----------------------------------------------------------------------------
 
     -- Output signals
-    signal valid : std_logic;
+    signal pulse_amplitude_valid : std_logic;
+    signal pulse_t_rise_valid    : std_logic;
+    signal pulse_state           : std_logic_vector(2 downto 0);
 
     -- intermidiate signals
     signal cnt_delay    : std_logic_vector(C_CNT_WIDTH - 1 downto 0); -- counter of maximum delay
@@ -98,7 +102,7 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    VALID_O <= valid;
+    PULSE_STATE_O <= pulse_state;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
@@ -108,8 +112,11 @@ begin
     overflow <= '0' when (ERROR_OFLOW_I = C_OFLOW_NO_ERROR) else
         '1';
 
-    -- valid if there is no pileup, delays are filled, and there is no overflow
-    valid <= PULSE_CLEAN_I and delays_ready and not overflow;
+    -- amplitude valid if there is no pileup, delays are filled, and there is no overflow
+    pulse_amplitude_valid <= PULSE_AMPLITUDE_CLEAN_I and delays_ready and not overflow;
+
+    -- valid if there is time rise count is unaffected by timeout and amplitude is clean
+    pulse_t_rise_valid <= PULSE_T_RISE_CLEAN_I and pulse_amplitude_valid;
 
     ----------------------------------------------------------------------------
     -- Main Sequential Processes
@@ -138,5 +145,19 @@ begin
             end if;
         end if;
     end process p_valid;
+
+    -- state of pulse
+    p_state : process (RST_N_I, CLK_I)
+    begin
+        if RST_N_I = '0' then
+            pulse_state <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            if (TRIG_LOG_EVENT_I = '1') then
+                pulse_state(2) <= pulse_amplitude_valid and pulse_t_rise_valid;
+                pulse_state(1) <= pulse_amplitude_valid;
+                pulse_state(0) <= pulse_t_rise_valid;
+            end if;
+        end if;
+    end process p_state;
 
 end architecture rtl;

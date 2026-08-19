@@ -36,7 +36,6 @@ add wave -color green -radix signed sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/slope_pos_flag
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/trig_ss_i/pulse_detect_i/cfd_i/pulse_incoming
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_triggers
-add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_clean
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/tb_pileup_event
 add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/tb_pileup_cnt
 
@@ -68,8 +67,10 @@ add wave -color green -radix unsigned sim:/tb_pulse_shaper_top/tb_pulse_t_rise
 #===========================================================================
 add wave -divider " VALID_SS "
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/valid_ss_i/delays_ready
-add wave -color white -radix binary sim:/tb_pulse_shaper_top/tb_pulse_valid
 add wave -color green -radix binary sim:/tb_pulse_shaper_top/tb_error_oflow
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_amplitude_clean
+add wave -color green -radix binary sim:/tb_pulse_shaper_top/dut/pulse_t_rise_clean
+add wave -color white -radix binary sim:/tb_pulse_shaper_top/tb_pulse_state
 
 #===========================================================================
 # LOGGER_SS

@@ -41,9 +41,9 @@ entity pileup_detection is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_CLEAN_O  : out std_logic;                                        -- Trigger of clean pulse without pileup effects
-        PILEUP_EVENT_O : out std_logic;                                        -- Trigger of a pileup event
-        PILEUP_CNT_O   : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0) -- Counter of pileup events
+        PULSE_AMPLITUDE_CLEAN_O : out std_logic;                                        -- Trigger of clean pulse without pileup effects
+        PILEUP_EVENT_O          : out std_logic;                                        -- Trigger of a pileup event
+        PILEUP_CNT_O            : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0) -- Counter of pileup events
     );
 end entity pileup_detection;
 
@@ -89,9 +89,9 @@ architecture rtl of pileup_detection is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal pulse_clean : std_logic;                                         -- pulse completed without pileup effects
-    signal pileup_cnt  : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
-    signal pileup_en   : std_logic;                                         -- pileup event (pulse arrival while processing current pulse)
+    signal pulse_amplitude_clean : std_logic;                                         -- pulse completed without pileup effects
+    signal pileup_cnt            : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- counter of pileup events
+    signal pileup_en             : std_logic;                                         -- pileup event (pulse arrival while processing current pulse)
 
     -- countdown of pulse decay time constant restarted after a new pulse event
     signal cnt_decay  : std_logic_vector(C_CNT_DECAY_WIDTH - 1 downto 0); -- decay counter
@@ -114,9 +114,9 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    PULSE_CLEAN_O  <= pulse_clean;
-    PILEUP_EVENT_O <= pileup_en;
-    PILEUP_CNT_O   <= pileup_cnt;
+    PULSE_AMPLITUDE_CLEAN_O <= pulse_amplitude_clean;
+    PILEUP_EVENT_O          <= pileup_en;
+    PILEUP_CNT_O            <= pileup_cnt;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
@@ -248,14 +248,14 @@ begin
     p_clean : process (RST_N_I, CLK_I)
     begin
         if (RST_N_I = '0') then
-            pulse_clean <= '0';
+            pulse_amplitude_clean <= '0';
         elsif rising_edge(CLK_I) then
-            pulse_clean <= '0';
+            pulse_amplitude_clean <= '0';
             -- pulse able to be measured
             if (classifying_en = '1') then
                 -- pulse clean trigger, not affected by current or previous pileup
                 if (pulse_dirty = '0') then
-                    pulse_clean <= '1';
+                    pulse_amplitude_clean <= '1';
                 end if;
             end if;
         end if;

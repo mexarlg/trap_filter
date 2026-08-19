@@ -51,9 +51,10 @@ entity capture_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_AMPLITUDE_O : out std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- Captured data amplitude at the middle of the top
-        PULSE_T_RISE_O    : out std_logic_vector(G_T_RISE_WIDTH - 1 downto 0);        -- Captured rise time
-        ERROR_OFLOW_O     : out std_logic_vector(1 downto 0)                          -- Overflow flag for accumulator of both moving average filters
+        PULSE_AMPLITUDE_O    : out std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- Captured data amplitude at the middle of the top
+        PULSE_T_RISE_O       : out std_logic_vector(G_T_RISE_WIDTH - 1 downto 0);        -- Captured rise time
+        PULSE_T_RISE_CLEAN_O : out std_logic;                                            -- Clean risetime (no interruptions)
+        ERROR_OFLOW_O        : out std_logic_vector(1 downto 0)                          -- Overflow flag for accumulator of both moving average filters
     );
 end entity capture_subsystem;
 
@@ -79,9 +80,10 @@ architecture rtl of capture_subsystem is
     ----------------------------------------------------------------------------
 
     -- output signals
-    signal pulse_amplitude : std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- pulse amplitude latched
-    signal pulse_t_rise    : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0);        -- pulse rise time
-    signal error_oflow     : std_logic_vector(1 downto 0);                         -- overflow error of peak subsystem
+    signal pulse_amplitude    : std_logic_vector(G_DATA_FILTERED_WIDTH - 1 downto 0); -- pulse amplitude latched
+    signal pulse_t_rise       : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0);        -- pulse rise time
+    signal pulse_t_rise_clean : std_logic;                                            -- pulse rise time clean
+    signal error_oflow        : std_logic_vector(1 downto 0);                         -- overflow error of peak subsystem
 
     -- intermidiate signals for amplitude capture
     signal error_oflow_peak_mov : std_logic;                                            -- overflow flag from peak moving average
@@ -104,9 +106,10 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    PULSE_AMPLITUDE_O <= pulse_amplitude;
-    PULSE_T_RISE_O    <= pulse_t_rise;
-    ERROR_OFLOW_O     <= error_oflow;
+    PULSE_AMPLITUDE_O    <= pulse_amplitude;
+    PULSE_T_RISE_O       <= pulse_t_rise;
+    PULSE_T_RISE_CLEAN_O <= pulse_t_rise_clean;
+    ERROR_OFLOW_O        <= error_oflow;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
@@ -274,7 +277,8 @@ begin
             ------------------------------------------------------------------------
             -- Outputs
             ------------------------------------------------------------------------
-            PULSE_T_RISE_O => pulse_t_rise
+            PULSE_T_RISE_O       => pulse_t_rise,
+            PULSE_T_RISE_CLEAN_O => pulse_t_rise_clean
         );
 
 end architecture rtl;

@@ -83,6 +83,10 @@ architecture rtl of trig_gen is
     signal trig_start_flat  : std_logic;
     signal trig_mid_flat    : std_logic;
     signal trig_end_pulse   : std_logic;
+    signal trig_log_event   : std_logic; -- trigger of pulse ended registered + 2 cycles
+
+    -- pulse finished, ready to log event
+    signal trig_pulse_end_q : std_logic; -- trigger of pulse ended registered + 1 cycles
 
     -- delay pipeline of triggers (longest stage)
     signal delay_line : std_logic_vector(0 to C_END_PULSE_DEPTH - 1);
@@ -105,11 +109,12 @@ begin
     -- Output Assignments
     ----------------------------------------------------------------------------
 
-    TRIGGER_O(4) <= trig_baseline;
-    TRIGGER_O(3) <= trig_start_pulse;
-    TRIGGER_O(2) <= trig_start_flat;
-    TRIGGER_O(1) <= trig_mid_flat;
-    TRIGGER_O(0) <= trig_end_pulse;
+    TRIGGER_O(5) <= trig_baseline;
+    TRIGGER_O(4) <= trig_start_pulse;
+    TRIGGER_O(3) <= trig_start_flat;
+    TRIGGER_O(2) <= trig_mid_flat;
+    TRIGGER_O(1) <= trig_end_pulse;
+    TRIGGER_O(0) <= trig_log_event;
 
     ----------------------------------------------------------------------------
     -- Main Combinatory Processes
@@ -136,5 +141,17 @@ begin
             delay_line(1 to delay_line'high) <= delay_line(0 to delay_line'high - 1);
         end if;
     end process p_delay;
+
+    -- delay of trig_end_pulse for 2 cycles
+    p_reg : process (RST_N_I, CLK_I)
+    begin
+        if RST_N_I = '0' then
+            trig_pulse_end_q <= '0';
+            trig_log_event   <= '0';
+        elsif rising_edge(CLK_I) then
+            trig_pulse_end_q <= trig_end_pulse;
+            trig_log_event   <= trig_pulse_end_q;
+        end if;
+    end process p_reg;
 
 end architecture rtl;
