@@ -35,7 +35,7 @@ architecture tb of tb_pulse_shaper_top is
     constant C_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width average in peak
     constant C_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
     -- Pulse detection parameters
-    constant C_CFD_NOISE_TH : natural range 10 to 4096 := 1650; -- Threshold level of the fast jordanov output to gate pulse detection
+    constant C_NOISE_THRESHOLD : natural range 10 to 4096 := 1650; -- Threshold level of the fast jordanov output to gate pulse detection
     -- Pileup discrimination parameters
     constant C_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
 
@@ -120,7 +120,7 @@ begin
             G_PEAK_MOV_DELAY_WIDTH   => C_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => C_T_RISE_MOV_DELAY_WIDTH,
             -- Pulse detection parameters
-            G_CFD_NOISE_TH => C_CFD_NOISE_TH,
+            G_NOISE_THRESHOLD => C_NOISE_THRESHOLD,
             -- Pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => C_PILEUP_DECAY_VALUE
         )

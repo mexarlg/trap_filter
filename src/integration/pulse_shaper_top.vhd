@@ -32,7 +32,7 @@ entity pulse_shaper_top is
         G_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Pulse detection parameters
-        G_CFD_NOISE_TH : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
+        G_NOISE_THRESHOLD : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
         -- Pileup discrimination parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
     );
@@ -209,7 +209,7 @@ begin
             G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
             G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             -- pulse detection tuning parameters
-            G_CFD_NOISE_TH => G_CFD_NOISE_TH,
+            G_NOISE_THRESHOLD => G_NOISE_THRESHOLD,
             -- pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
             G_PILEUP_CNT_WIDTH   => C_PILEUP_CNT_WIDTH
