@@ -30,8 +30,8 @@ entity pulse_detection is
         -- Slow jordanov parameters
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- thresholds and expected zero cross timeout for pulse detection
-        G_NOISE_THRESHOLD   : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
-        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10    := 7     -- timeout width after thresholds are overcomed for a zero crossing event
+        G_BASELINE_THRESHOLD : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
+        G_CFD_TIMEOUT_WIDTH  : natural range 5 to 10    := 7     -- timeout width after thresholds are overcomed for a zero crossing event
     );
     port (
         ------------------------------------------------------------------------
@@ -133,7 +133,7 @@ begin
             -- margins for internal cfd signal
             G_CFD_MARGIN_BITS => C_CFD_DIFF_MARGIN_BITS,
             -- thresholds and expected timeout after th activation
-            G_CFD_NOISE_TH      => G_NOISE_THRESHOLD,
+            G_CFD_BASELINE_TH   => G_BASELINE_THRESHOLD,
             G_CFD_TIMEOUT_WIDTH => G_CFD_TIMEOUT_WIDTH
         )
         port map(

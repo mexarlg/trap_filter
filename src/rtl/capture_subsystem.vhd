@@ -28,7 +28,6 @@ entity capture_subsystem is
         G_DATA_FILTERED_WIDTH : natural range 9 to 17 := 15; -- Width of filtered data
         -- Time rise parameters
         G_T_RISE_WIDTH               : natural range 8 to 12    := 12;  -- Width of rise time counter
-        G_T_RISE_TIMEOUT             : natural range 60 to 256  := 60;  -- Timeout for rise time in n samples
         G_T_RISE_DELAY               : natural range 64 to 1024 := 500; -- Delay of input data for rise time capture
         G_T_RISE_MOV_DELAY_WIDTH     : natural range 3 to 5     := 4;   -- Width of samples averaged for rise time mov avg
         G_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5     := 2;   -- Margin bits given to the accumulator inside the moving average for the t_rise
@@ -257,8 +256,7 @@ begin
             -- General parameters
             G_DATA_WIDTH => G_DATA_WIDTH,
             -- Rise time parameters
-            G_T_RISE_WIDTH   => G_T_RISE_WIDTH,
-            G_T_RISE_TIMEOUT => G_T_RISE_TIMEOUT
+            G_T_RISE_WIDTH => G_T_RISE_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

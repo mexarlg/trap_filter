@@ -30,7 +30,7 @@ entity trig_subsystem is
         G_SLOW_JORD_K_DELAY     : natural range 4 to 256   := 128;   -- Value of delay for rising edge of slow trapezoid for trigger timing
         G_SLOW_JORD_M_DELAY     : natural range 4 to 256   := 256;   -- Value of delay for flat top of slow trapezoid for trigger timing
         -- pulse detection tuning parameters
-        G_NOISE_THRESHOLD : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
+        G_BASELINE_THRESHOLD : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
         -- pulse and pileup parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
         G_PILEUP_CNT_WIDTH   : natural range 7 to 12      := 12    -- Width of counter for pileup events
@@ -122,8 +122,8 @@ begin
             -- Slow jordanov parameters
             G_SLOW_JORD_M_EXP_VALUE => G_SLOW_JORD_M_EXP_VALUE,
             -- Cfd tuning parameters for pulse detection
-            G_NOISE_THRESHOLD   => G_NOISE_THRESHOLD,
-            G_CFD_TIMEOUT_WIDTH => C_CFD_ZERO_TIMEOUT_WIDTH
+            G_BASELINE_THRESHOLD => G_BASELINE_THRESHOLD,
+            G_CFD_TIMEOUT_WIDTH  => C_CFD_ZERO_TIMEOUT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------

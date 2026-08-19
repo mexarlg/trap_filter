@@ -25,8 +25,7 @@ entity risetime_capture is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of raw input data
         -- Rise time parameters
-        G_T_RISE_WIDTH   : natural range 8 to 12   := 12; -- Width of rise time counter
-        G_T_RISE_TIMEOUT : natural range 60 to 512 := 60  -- Value of timeout in n samples for rise time capture
+        G_T_RISE_WIDTH : natural range 8 to 12 := 12 -- Width of rise time counter
     );
     port (
         ------------------------------------------------------------------------
@@ -68,9 +67,6 @@ architecture rtl of risetime_capture is
     constant C_T_RISE_CNT_ONE  : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_T_RISE_WIDTH)); -- unit value of counter in its width
     constant C_T_RISE_CNT_ZERO : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := (others => '0');                                  -- zero value of counter in its width
 
-    -- timeout value of counter
-    constant C_TIMEOUT_VALUE : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(G_T_RISE_TIMEOUT, G_T_RISE_WIDTH)); -- timeout counter limit
-
     ----------------------------------------------------------------------------
     -- Fsm
     ----------------------------------------------------------------------------
@@ -99,20 +95,17 @@ architecture rtl of risetime_capture is
     signal amplitude_th_90 : std_logic_vector(G_DATA_WIDTH downto 0); -- 90% high amplitude threshold
     signal amplitude_th_10 : std_logic_vector(G_DATA_WIDTH downto 0); -- 10% low amplitude threshold
 
-    -- counter signal
-    signal t_rise_cnt       : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- rise time counter
-    signal waiting_rise_cnt : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- waiting rise time counter
+    -- rise time counter signal
+    signal t_rise_cnt : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- rise time counter
 
     -- threshold flag signals
     signal is_inside_th       : std_logic; -- flag of current input data being inside both thresholds
     signal is_above_10        : std_logic; -- flag of current input data being above the 10% threshold
     signal is_below_90        : std_logic; -- flag of current input data being below the 90% threshold
-    signal timeout_waiting    : std_logic; -- flag of timeout while on waiting_rise state
     signal thresholds_updated : std_logic; -- flag of thresholds updated
 
     -- fsm enable state signals
     signal waiting_pulse_en : std_logic; -- current state on S_WAITING_PULSE
-    signal waiting_rise_en  : std_logic; -- current state on S_WAITING_RISE
     signal updating_en      : std_logic; -- current state on S_UPDATING
     signal counting_en      : std_logic; -- current state on S_COUNTING
     signal storing_en       : std_logic; -- current state on S_STORING
@@ -140,16 +133,11 @@ begin
     amplitude <= unsigned(PULSE_AMPLITUDE_I) when (signed(PULSE_AMPLITUDE_I) > 0) else
         (others => '0');
 
-    -- waiting_rise counter arrived to maximum timeout allowable
-    timeout_waiting <= '1' when (waiting_rise_cnt = C_TIMEOUT_VALUE) else
-        '0';
-
     -- finite state machine of rise time capture
-    p_fsm : process (state, TRIG_TOP_MID_I, is_inside_th, timeout_waiting, TRIG_PULSE_END_I, thresholds_updated)
+    p_fsm : process (state, TRIG_TOP_MID_I, TRIG_PULSE_END_I, is_inside_th, thresholds_updated)
     begin
         -- initialization
         waiting_pulse_en <= '0';
-        waiting_rise_en  <= '0';
         updating_en      <= '0';
         counting_en      <= '0';
         storing_en       <= '0';
@@ -179,11 +167,10 @@ begin
 
                 -- Wait until being inside pulse threshold
             when S_WAITING_RISE =>
-                waiting_rise_en <= '1';
                 -- new pulse > timeout > measuring
                 if (TRIG_TOP_MID_I = '1') then
                     state_next <= S_UPDATING_TH;
-                elsif (timeout_waiting = '1') then
+                elsif (TRIG_PULSE_END_I = '1') then
                     state_next <= S_WAITING_PULSE;
                 elsif (is_inside_th = '1') then
                     state_next <= S_COUNTING;
@@ -287,20 +274,6 @@ begin
             end if;
         end if;
     end process p_th_90;
-
-    -- timeout for waiting rise
-    p_wait_cnt : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            waiting_rise_cnt <= C_T_RISE_CNT_ZERO;
-        elsif rising_edge(CLK_I) then
-            if (waiting_pulse_en = '1') then
-                waiting_rise_cnt <= C_T_RISE_CNT_ZERO;
-            elsif (waiting_rise_en = '1') then
-                waiting_rise_cnt <= std_logic_vector(unsigned(waiting_rise_cnt) + unsigned(C_T_RISE_CNT_ONE));
-            end if;
-        end if;
-    end process p_wait_cnt;
 
     -- rise time counter
     p_t_rise_cnt : process (RST_N_I, CLK_I)
