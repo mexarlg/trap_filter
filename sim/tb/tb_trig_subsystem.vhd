@@ -81,8 +81,7 @@ begin
     dut : entity trap_filter.trig_subsystem
         generic map(
             G_DATA_WIDTH   => C_ADC_WIDTH,
-            G_CFD_VAL_TH   => 2048,
-            G_CFD_SLOPE_TH => 100
+            G_CFD_NOISE_TH => 2048
         )
         port map(
             ------------------------------------------------------------------------

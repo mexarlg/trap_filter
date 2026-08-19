@@ -26,14 +26,13 @@ entity cfd is
         -- Data parameters
         G_DATA_WIDTH : natural range 8 to 16 := 15; -- Width of incoming data stream (ADC Magnitude resolution)
         -- Cfd parameters
-        G_CFD_F_WIDTH     : natural range 1 to 3   := 2;  -- scalar factor f (1 = 0.5; 2 = 0.25; 3 = 0.125)
+        G_CFD_F_WIDTH     : natural range 1 to 3   := 1;  -- scalar factor f (1 = 0.5; 2 = 0.25; 3 = 0.125)
         G_CFD_DELAY       : natural range 16 to 64 := 32; -- cfd delay (16 for fast, 64 for slow pulses)
         G_CFD_SLOPE_DELAY : natural range 8 to 16  := 8;  -- slope delay used to compute slope of data for gating on rising edges
         G_CFD_MARGIN_BITS : natural range 1 to 3   := 1;  -- Number of bits of margin to internal difference signal
         -- thresholds and expected pulse timeout
-        G_CFD_VAL_TH        : natural range 10 to 4096 := 100; -- threshold to gate value of DATA_I
-        G_CFD_SLOPE_TH      : natural range 10 to 500  := 10;  -- threshold to gate slope of DATA_I
-        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10    := 7    -- timeout width after thresholds are overcomed for a zero crossing event
+        G_CFD_NOISE_TH      : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
+        G_CFD_TIMEOUT_WIDTH : natural range 5 to 10    := 7     -- timeout width after thresholds are overcomed for a zero crossing event
     );
     port (
         ------------------------------------------------------------------------
@@ -63,6 +62,9 @@ architecture rtl of cfd is
     ----------------------------------------------------------------------------
     -- Constants
     ----------------------------------------------------------------------------
+
+    -- threshold for increasing slope
+    constant C_CFD_SLOPE_TH : natural := 100; -- threshold to gate slope of DATA_I
 
     -- delay values (-1 due REG_INPUT generic asserted on shift_register)
     constant C_CFD_D_DELAY : natural := G_CFD_DELAY - 1;
@@ -217,13 +219,13 @@ begin
             slope_pos_flag <= '0';
         elsif rising_edge(CLK_I) then
             -- runs at + 2 cycles
-            if (signed(data_i_q0) > G_CFD_VAL_TH) then
+            if (signed(data_i_q0) > G_CFD_NOISE_TH) then
                 above_th_flag <= '1';
             else
                 above_th_flag <= '0';
             end if;
             -- runs at + 2 cycles
-            if (signed(data_slope) > G_CFD_SLOPE_TH) then
+            if (signed(data_slope) > C_CFD_SLOPE_TH) then
                 slope_pos_flag <= '1';
             else
                 slope_pos_flag <= '0';

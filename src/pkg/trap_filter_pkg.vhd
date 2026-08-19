@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant C_SYSTEM_VERSION : string := "1.7";
+    constant C_SYSTEM_VERSION : string := "1.8";
 
     ----------------------------------------------------------------------------
     -- TESTING PARAMETERS:
@@ -71,11 +71,11 @@ package trap_filter_pkg is
     constant C_FAST_JORD_ACC2_MARGIN_BITS : natural := 1;  -- Bits of margin given to the 2nd accumulator
 
     -- Fixed
-    constant C_CFD_F_WIDTH            : natural := 2;  -- Bit width of the value that scales the input data
+    constant C_CFD_F_WIDTH            : natural := 1;  -- Bit width of the value that scales the input data
     constant C_CFD_DELAY              : natural := 32; -- Value of the delay d inside the cfd algorithm
     constant C_CFD_SLOPE_DELAY        : natural := 8;  -- Value of the delay m needed for the slope of the data to ensure pulse detection allowable if rising edge
     constant C_CFD_DIFF_MARGIN_BITS   : natural := 1;  -- Bits of margin given to the difference signal in the cfd algorithm
-    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7;  -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed
+    constant C_CFD_ZERO_TIMEOUT_WIDTH : natural := 7;  -- Bit width of samples expected by cfd algorithm for a zero crossing event once thresholds are overcomed (due delay of zero crossing)
 
     ----------------------------------------------------------------------------
     -- CAPTURE SUBSYSTEM PARAMETERS:
@@ -85,10 +85,10 @@ package trap_filter_pkg is
     constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5    := 2;   -- Margin bits given to the accumulator inside the moving average for the peak
     constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5    := 2;   -- Margin bits given to the accumulator inside the moving average for the t_rise capture
     constant C_T_RISE_WIDTH               : natural range 8 to 12   := 12;  -- Width of rise time
-    constant C_T_RISE_TIMEOUT             : natural range 50 to 256 := 100; -- Timeout in n samples for the wait from pulse detection to pulse being inside (10 - 90%) threshold 
+    constant C_T_RISE_TIMEOUT             : natural range 60 to 256 := 100; -- Timeout in n samples for the wait from pulse detection to pulse being inside (10 - 90%) threshold 
 
     -- fixed
-    constant C_T_RISE_DELAY_MARGIN : natural := 25; -- Additional delay given to rise_capture for synchronization
+    constant C_T_RISE_DELAY_MARGIN : natural := 60; -- Additional delay given to rise_capture for synchronization
 
     ----------------------------------------------------------------------------
     -- LOGGER SUBSYSTEM PARAMETERS:

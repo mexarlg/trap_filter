@@ -24,7 +24,7 @@ entity pulse_shaper_top is
         -- Input data parameters
         G_ADC_WIDTH : natural range 12 to 15 := 14; -- Width of the incoming data stream from the adc
         -- Trapezoidal filter parameters
-        G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for rising edge of filtered trapezoid
+        G_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
         G_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Moving average parameters
@@ -33,10 +33,9 @@ entity pulse_shaper_top is
         G_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Pulse detection parameters
-        G_CFD_VAL_TH   : natural range 10 to 4096 := 100; -- Threshold level of the fast jordanov output to gate pulse detection
-        G_CFD_SLOPE_TH : natural range 10 to 500  := 10;  -- Threshold slope of the fast jordanov output to gate pulse detection
+        G_CFD_NOISE_TH : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
         -- Pileup discrimination parameters
-        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
     );
     port (
         ------------------------------------------------------------------------
@@ -211,8 +210,7 @@ begin
             G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
             G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             -- pulse detection tuning parameters
-            G_CFD_VAL_TH   => G_CFD_VAL_TH,
-            G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
+            G_CFD_NOISE_TH => G_CFD_NOISE_TH,
             -- pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
             G_PILEUP_CNT_WIDTH   => C_PILEUP_CNT_WIDTH

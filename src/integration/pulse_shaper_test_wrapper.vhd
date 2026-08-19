@@ -34,10 +34,9 @@ entity pulse_shaper_test_wrapper is
         G_PEAK_MOV_DELAY_WIDTH   : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Pulse detection parameters
-        G_CFD_VAL_TH   : natural range 10 to 4096 := 100; -- Threshold level of the fast jordanov output to gate pulse detection
-        G_CFD_SLOPE_TH : natural range 10 to 500  := 10;  -- Threshold slope of the fast jordanov output to gate pulse detection
+        G_CFD_NOISE_TH : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
         -- Pileup discrimination parameters
-        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
     );
     port (
         ------------------------------------------------------------------------
@@ -187,8 +186,7 @@ begin
             G_PEAK_MOV_DELAY_WIDTH   => G_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => G_T_RISE_MOV_DELAY_WIDTH,
             -- Pulse detection parameters
-            G_CFD_VAL_TH   => G_CFD_VAL_TH,
-            G_CFD_SLOPE_TH => G_CFD_SLOPE_TH,
+            G_CFD_NOISE_TH => G_CFD_NOISE_TH,
             -- Pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE
         )

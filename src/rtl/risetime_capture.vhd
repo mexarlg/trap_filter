@@ -26,7 +26,7 @@ entity risetime_capture is
         G_DATA_WIDTH : natural range 8 to 16 := 14; -- Width of raw input data
         -- Rise time parameters
         G_T_RISE_WIDTH   : natural range 8 to 12   := 12; -- Width of rise time counter
-        G_T_RISE_TIMEOUT : natural range 50 to 512 := 50  -- Value of timeout in n samples for rise time capture
+        G_T_RISE_TIMEOUT : natural range 60 to 512 := 60  -- Value of timeout in n samples for rise time capture
     );
     port (
         ------------------------------------------------------------------------
@@ -61,8 +61,8 @@ architecture rtl of risetime_capture is
     -- multiplication constants for amplitude thresholds
     constant C_FRAC_BITS : natural                        := 10;                                                                      -- number of fractional bits (1024 depth)
     constant C_ROUND     : natural                        := 50;                                                                      -- value to round off (50/1024)
-    constant C_MUL_10    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((10 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 10%
-    constant C_MUL_90    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((90 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 90%
+    constant C_MUL_10    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((8 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1);  -- scaling for 10%
+    constant C_MUL_90    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((88 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 90%
 
     -- time rise counter constants
     constant C_T_RISE_CNT_ONE  : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_T_RISE_WIDTH)); -- unit value of counter in its width
