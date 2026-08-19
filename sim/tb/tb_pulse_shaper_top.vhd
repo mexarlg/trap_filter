@@ -27,13 +27,12 @@ architecture tb of tb_pulse_shaper_top is
     -- Input data parameters from pulse_rom_pkg
     constant C_ADC_WIDTH : natural range 12 to 15 := ADC_WIDTH; -- Width of the incoming data stream from the adc
     -- Trapezoidal filter parameters
-    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 64;    -- Value of the delay for rising edge of filtered trapezoid
-    constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for flat top of filtered trapezoid
+    constant C_SLOW_JORD_K_DELAY     : natural range 16 to 256  := 128;   -- Value of the delay for rising edge of filtered trapezoid
+    constant C_SLOW_JORD_M_DELAY     : natural range 16 to 256  := 256;   -- Value of the delay for flat top of filtered trapezoid
     constant C_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
     -- Moving average parameters
     constant C_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width average in baseline
     constant C_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width average in peak
-    constant C_PEAK_MOV_EN            : natural range 0 to 1 := 1; -- Width average in peak
     constant C_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
     -- Pulse detection parameters
     constant C_CFD_NOISE_TH : natural range 10 to 4096 := 1650; -- Threshold level of the fast jordanov output to gate pulse detection
@@ -118,7 +117,6 @@ begin
             G_SLOW_JORD_M_EXP_VALUE => C_SLOW_JORD_M_EXP_VALUE,
             -- Moving average parameters
             G_BASE_MOV_DELAY_WIDTH   => C_BASE_MOV_DELAY_WIDTH,
-            G_PEAK_MOV_EN            => C_PEAK_MOV_EN,
             G_PEAK_MOV_DELAY_WIDTH   => C_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => C_T_RISE_MOV_DELAY_WIDTH,
             -- Pulse detection parameters

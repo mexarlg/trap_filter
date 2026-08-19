@@ -29,7 +29,6 @@ entity pulse_shaper_top is
         G_SLOW_JORD_M_EXP_VALUE : natural range 0 to 65535 := 39992; -- Value of the decay exp coefficient (12 bits mag + 4 bits fraction)
         -- Moving average parameters
         G_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width of samples averaged in moving average for the baseline
-        G_PEAK_MOV_EN            : natural range 0 to 1 := 1; -- Moving average enable for the peak
         G_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Pulse detection parameters
@@ -285,7 +284,6 @@ begin
             G_T_RISE_MOV_DELAY_WIDTH     => G_T_RISE_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_ACC_MARGIN_BITS => C_T_RISE_MOV_ACC_MARGIN_BITS,
             -- Peak moving average parameters
-            G_PEAK_MOV_ENABLE          => G_PEAK_MOV_EN,
             G_PEAK_MOV_DELAY_WIDTH     => G_PEAK_MOV_DELAY_WIDTH,
             G_PEAK_MOV_ACC_MARGIN_BITS => C_PEAK_MOV_ACC_MARGIN_BITS
         )

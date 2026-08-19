@@ -33,7 +33,6 @@ entity capture_subsystem is
         G_T_RISE_MOV_DELAY_WIDTH     : natural range 3 to 5     := 4;   -- Width of samples averaged for rise time mov avg
         G_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5     := 2;   -- Margin bits given to the accumulator inside the moving average for the t_rise
         -- Peak moving average params
-        G_PEAK_MOV_ENABLE          : natural range 0 to 1 := 1; -- Enable the moving average prefilter of the peak
         G_PEAK_MOV_DELAY_WIDTH     : natural range 3 to 5 := 3; -- Width of samples averaged in the moving average for the peak
         G_PEAK_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2  -- Margin bits given to the accumulator inside the moving average for the peak
     );
@@ -128,104 +127,69 @@ begin
     -- Amplitude capture
     ------------------------------------------------------------------------
 
-    -- prefiltering enabled
-    g_enable : if G_PEAK_MOV_ENABLE = 1 generate
+    -- delay for moving average
+    sr_d_i : entity trap_filter.shift_register
+        generic map(
+            G_DATA_WIDTH  => G_DATA_FILTERED_WIDTH,
+            G_DELAY_VALUE => C_PEAK_MOV_DELAY,
+            G_REG_INPUT   => 1
+        )
+        port map(
+            CLK_I    => CLK_I,
+            RST_N_I  => RST_N_I,
+            DATA_I   => DATA_FILTERED_I,
+            DATA_D_O => data_mov_d
+        );
 
-        -- delay for moving average
-        sr_d_i : entity trap_filter.shift_register
-            generic map(
-                G_DATA_WIDTH  => G_DATA_FILTERED_WIDTH,
-                G_DELAY_VALUE => C_PEAK_MOV_DELAY,
-                G_REG_INPUT   => 1
-            )
-            port map(
-                CLK_I    => CLK_I,
-                RST_N_I  => RST_N_I,
-                DATA_I   => DATA_FILTERED_I,
-                DATA_D_O => data_mov_d
-            );
+    -- moving average for amplitude capture at top
+    mov_avg_i : entity trap_filter.mov_avg_filter
+        generic map(
+            -- General parameters
+            G_DATA_WIDTH => G_DATA_WIDTH,
+            -- Rise time parameters
+            G_DELAY_WIDTH     => G_PEAK_MOV_DELAY_WIDTH,
+            G_ACC_MARGIN_BITS => G_PEAK_MOV_ACC_MARGIN_BITS,
+            G_DATA_I_SIGNED   => 1
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            DATA_N_I => DATA_FILTERED_I,
+            DATA_D_I => data_mov_d,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            DATA_FILTERED_O => data_mov_filt,
+            ERROR_OFLOW_O   => error_oflow_peak_mov
+        );
 
-        -- moving average for amplitude capture at top
-        mov_avg_i : entity trap_filter.mov_avg_filter
-            generic map(
-                -- General parameters
-                G_DATA_WIDTH => G_DATA_WIDTH,
-                -- Rise time parameters
-                G_DELAY_WIDTH     => G_PEAK_MOV_DELAY_WIDTH,
-                G_ACC_MARGIN_BITS => G_PEAK_MOV_ACC_MARGIN_BITS,
-                G_DATA_I_SIGNED   => 1
-            )
-            port map(
-                ------------------------------------------------------------------------
-                -- Clock / Reset
-                ------------------------------------------------------------------------
-                CLK_I   => CLK_I,
-                RST_N_I => RST_N_I,
-                ------------------------------------------------------------------------
-                -- Inputs
-                ------------------------------------------------------------------------
-                DATA_N_I => DATA_FILTERED_I,
-                DATA_D_I => data_mov_d,
-                ------------------------------------------------------------------------
-                -- Outputs
-                ------------------------------------------------------------------------
-                DATA_FILTERED_O => data_mov_filt,
-                ERROR_OFLOW_O   => error_oflow_peak_mov
-            );
-
-        -- amplitude capture of filtered pulse
-        capture_i : entity trap_filter.pulse_capture
-            generic map(
-                G_DATA_WIDTH => G_DATA_FILTERED_WIDTH
-            )
-            port map(
-                ------------------------------------------------------------------------
-                -- Clock / Reset
-                ------------------------------------------------------------------------
-                CLK_I   => CLK_I,
-                RST_N_I => RST_N_I,
-                ------------------------------------------------------------------------
-                -- Inputs
-                ------------------------------------------------------------------------
-                TRIG_CAPTURE_I => TRIG_TOP_MID_I,
-                DATA_I         => data_mov_filt,
-                ------------------------------------------------------------------------
-                -- Outputs
-                ------------------------------------------------------------------------
-                DATA_O => pulse_amplitude
-            );
-
-    end generate g_enable;
-
-    -- prefiltering disabled
-    g_disable : if G_PEAK_MOV_ENABLE = 0 generate
-
-        -- prefiltering disabled, no overflow
-        error_oflow_peak_mov <= '0';
-
-        -- amplitude capture of filtered pulse
-        capture_i : entity trap_filter.pulse_capture
-            generic map(
-                G_DATA_WIDTH => G_DATA_FILTERED_WIDTH
-            )
-            port map(
-                ------------------------------------------------------------------------
-                -- Clock / Reset
-                ------------------------------------------------------------------------
-                CLK_I   => CLK_I,
-                RST_N_I => RST_N_I,
-                ------------------------------------------------------------------------
-                -- Inputs
-                ------------------------------------------------------------------------
-                TRIG_CAPTURE_I => TRIG_TOP_MID_I,
-                DATA_I         => DATA_FILTERED_I,
-                ------------------------------------------------------------------------
-                -- Outputs
-                ------------------------------------------------------------------------
-                DATA_O => pulse_amplitude
-            );
-
-    end generate g_disable;
+    -- amplitude capture of filtered pulse
+    capture_i : entity trap_filter.pulse_capture
+        generic map(
+            G_DATA_WIDTH => G_DATA_FILTERED_WIDTH
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I   => CLK_I,
+            RST_N_I => RST_N_I,
+            ------------------------------------------------------------------------
+            -- Inputs
+            ------------------------------------------------------------------------
+            TRIG_CAPTURE_I => TRIG_TOP_MID_I,
+            DATA_I         => data_mov_filt,
+            ------------------------------------------------------------------------
+            -- Outputs
+            ------------------------------------------------------------------------
+            DATA_O => pulse_amplitude
+        );
 
     ------------------------------------------------------------------------
     -- Rise time capture
