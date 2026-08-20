@@ -33,11 +33,11 @@ entity pulse_shaper_test_wrapper is
         G_PEAK_MOV_DELAY_WIDTH   : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Physical parameters
-        G_BASELINE_THRESHOLD : natural range 10 to 4096   := 1650; -- Threshold level of noise to gate a pulse detection event
+        G_NOISE_THRESHOLD    : natural range 10 to 4096   := 100;  -- Threshold level of noise to gate a pulse detection event
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
         -- Logger parameters
         G_LOG_ADDR_WIDTH   : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
-        G_PILEUP_CNT_WIDTH : natural range 7 to 16  := 12; -- Counter width of pileup events since RST_N deassertion
+        G_PILEUP_CNT_WIDTH : natural range 7 to 16  := 16; -- Counter width of pileup events since RST_N deassertion
         G_TIMESTAMP_DIV    : natural range 0 to 6   := 4   -- Bits shifted in timestamp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
     );
     port (
@@ -199,7 +199,7 @@ begin
             G_PEAK_MOV_DELAY_WIDTH   => G_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => G_T_RISE_MOV_DELAY_WIDTH,
             -- Physical parameters
-            G_BASELINE_THRESHOLD => G_BASELINE_THRESHOLD,
+            G_NOISE_THRESHOLD    => G_NOISE_THRESHOLD,
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
             -- Logger parameters
             G_LOG_ADDR_WIDTH   => G_LOG_ADDR_WIDTH,

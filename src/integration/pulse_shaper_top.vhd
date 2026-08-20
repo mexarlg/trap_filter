@@ -32,7 +32,7 @@ entity pulse_shaper_top is
         G_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
         -- Physical parameters
-        G_BASELINE_THRESHOLD : natural range 10 to 4096   := 1650; -- Threshold level of noise to gate a pulse detection event
+        G_NOISE_THRESHOLD    : natural range 10 to 4096   := 100;  -- Threshold level of noise to gate a pulse detection event
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
         -- Logger parameters
         G_LOG_ADDR_WIDTH   : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
@@ -211,7 +211,7 @@ begin
             G_SLOW_JORD_K_DELAY     => G_SLOW_JORD_K_DELAY,
             G_SLOW_JORD_M_DELAY     => G_SLOW_JORD_M_DELAY,
             -- pulse detection tuning parameters
-            G_BASELINE_THRESHOLD => G_BASELINE_THRESHOLD,
+            G_NOISE_THRESHOLD => G_NOISE_THRESHOLD,
             -- pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
             G_PILEUP_CNT_WIDTH   => G_PILEUP_CNT_WIDTH
