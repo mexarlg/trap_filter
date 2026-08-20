@@ -17,7 +17,7 @@
 #------------------------------------------------------------------------------
 
 set PROJECT_NAME    "trap_filter"
-set TOP_MODULE      "top_trap_zedboard_test"
+set TOP_MODULE      "pulse_shaper_test_wrapper"
 set VHDL_LIBRARY    "trap_filter"
 
 set SCRIPT_PATH [info script]

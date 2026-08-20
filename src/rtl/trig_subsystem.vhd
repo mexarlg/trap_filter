@@ -33,7 +33,7 @@ entity trig_subsystem is
         G_BASELINE_THRESHOLD : natural range 10 to 4096 := 1400; -- Threshold level of noise to gate a pulse detection event
         -- pulse and pileup parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
-        G_PILEUP_CNT_WIDTH   : natural range 7 to 12      := 12    -- Width of counter for pileup events
+        G_PILEUP_CNT_WIDTH   : natural range 7 to 16      := 12    -- Width of counter for pileup events
     );
     port (
         ------------------------------------------------------------------------
@@ -48,8 +48,8 @@ entity trig_subsystem is
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
-        PULSE_TRIGGERS_O        : out std_logic_vector(C_TRIG_DEPTH downto 0);           -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end)
-        PULSE_AMPLITUDE_CLEAN_O : out std_logic;                                         -- Filtered pulse is valid (no pilepus, asserted after end of pulse)
+        PULSE_TRIGGERS_O        : out std_logic_vector(C_TRIG_DEPTH downto 0);           -- Triggers of filtered pulse at each stage (baseline, start, top, mid-top, end, log)
+        PULSE_AMPLITUDE_CLEAN_O : out std_logic;                                         -- Filtered pulse is clean (no pilepus, asserted after end of pulse)
         PILEUP_EVENT_O          : out std_logic;                                         -- Pileup event flag
         PILEUP_CNT_O            : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0); -- Pileup event counter
         ERROR_OFLOW_O           : out std_logic_vector(3 downto 0)                       -- Overflow error status of trig_subsystem

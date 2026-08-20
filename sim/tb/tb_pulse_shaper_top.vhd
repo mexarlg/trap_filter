@@ -34,10 +34,13 @@ architecture tb of tb_pulse_shaper_top is
     constant C_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width average in baseline
     constant C_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width average in peak
     constant C_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width average in peak
-    -- Pulse detection parameters
-    constant C_BASELINE_THRESHOLD : natural range 10 to 4096 := 1650; -- Threshold level of the fast jordanov output to gate pulse detection
-    -- Pileup discrimination parameters
+    -- Physical parameters
+    constant C_BASELINE_THRESHOLD : natural range 10 to 4096   := 1650; -- Threshold level of the fast jordanov output to gate pulse detection
     constant C_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+    -- Logger parameters
+    constant C_LOG_ADDR_WIDTH   : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
+    constant C_PILEUP_CNT_WIDTH : natural range 7 to 16  := 12; -- Counter width of pileup events since RST_N deassertion
+    constant C_TIMESTAMP_DIV    : natural range 0 to 6   := 4;  -- Bits shifted in timestamp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
 
     -- time to wait for simulation
     constant C_WINDOW_TIME : time := ROM_DEPTH * CLK_PERIOD;
@@ -119,10 +122,13 @@ begin
             G_BASE_MOV_DELAY_WIDTH   => C_BASE_MOV_DELAY_WIDTH,
             G_PEAK_MOV_DELAY_WIDTH   => C_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => C_T_RISE_MOV_DELAY_WIDTH,
-            -- Pulse detection parameters
+            -- Physical parameters
             G_BASELINE_THRESHOLD => C_BASELINE_THRESHOLD,
-            -- Pileup discrimination parameters
-            G_PILEUP_DECAY_VALUE => C_PILEUP_DECAY_VALUE
+            G_PILEUP_DECAY_VALUE => C_PILEUP_DECAY_VALUE,
+            -- Logger parameters
+            G_LOG_ADDR_WIDTH   => C_LOG_ADDR_WIDTH,
+            G_PILEUP_CNT_WIDTH => C_PILEUP_CNT_WIDTH,
+            G_TIMESTAMP_DIV    => C_TIMESTAMP_DIV
         )
         port map(
             ------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 --  Last Modified: 
 --
 --  Description:
---  Stores and formats the data regarding each valid pulse into a dual port bram.
+--  Stores and formats the data of an incoming event into a dual port bram.
 --
 --  Dependencies:
 --  trap_filter_pkg
@@ -28,8 +28,8 @@ entity pulse_logger is
         G_PULSE_WIDTH  : natural range 9 to 16 := 15; -- Width of the signed captured pulse amplitude
         G_T_RISE_WIDTH : natural range 8 to 12 := 12; -- Width of the unsigned captured pulse rise time
         -- Timestamp parameters
-        G_TIMESTAMP_EN    : natural range 0 to 1   := 1; -- Enable of timestamp
-        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48 -- Width of timestamp counter
+        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48; -- Width of wide timestamp counter
+        G_TIMESTAMP_DIV   : natural range 0 to 6   := 4   -- Bits shifted in timestramp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
     );
     port (
         ------------------------------------------------------------------------
@@ -105,15 +105,15 @@ architecture rtl of pulse_logger is
     signal bram_pulse_data     : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- pulse data written
     signal bram_timestamp_data : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- timestamp data written
 
-    -- delay of + 1 cycle
+    -- delay of + 1 cycle so data is available from capture_system
     signal trig_log_event_i_q : std_logic;
 
     -- timestamp active since reset
-    signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- timestamp written
+    signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- wide timestamp counter
 
     -- logic signals
     signal bram_ptr  : unsigned(G_BRAM_ADDR_WIDTH - 1 downto 0); -- pointer of bram
-    signal bram_full : std_logic;                                -- bram fullfilled 
+    signal bram_full : std_logic;                                -- bram filled 
 
 begin
 
@@ -168,7 +168,7 @@ begin
             bram_en <= '0';
             bram_rw <= '0';
 
-            -- pulse is valid, issue log while there is space
+            -- event to be logged, issue bram enable if not full
             if (trig_log_event_i_q = '1') and (bram_full = '0') then
                 -- issue write
                 bram_en   <= '1';
@@ -176,33 +176,23 @@ begin
                 bram_addr <= std_logic_vector(bram_ptr);
                 -- data stored
                 bram_pulse_data     <= pack_log(PULSE_STATE_I, PULSE_AMPLITUDE_I, PULSE_T_RISE_I);
-                bram_timestamp_data <= timestamp_cnt(G_BRAM_DATA_WIDTH + C_TIMESTAMP_DIV - 1 downto C_TIMESTAMP_DIV);
+                bram_timestamp_data <= timestamp_cnt(G_BRAM_DATA_WIDTH + G_TIMESTAMP_DIV - 1 downto G_TIMESTAMP_DIV);
                 -- ptr increase
                 bram_ptr <= bram_ptr + 1;
             end if;
         end if;
     end process p_log;
 
-    -- timestamp enabled
-    g_time_en : if G_TIMESTAMP_EN = 1 generate
-
-        -- timestamp counter that latches at maximum
-        p_timestamp : process (RST_N_I, CLK_I)
-        begin
-            if (RST_N_I = '0') then
-                timestamp_cnt <= C_TIMESTAMP_CNT_ZERO;
-            elsif rising_edge(CLK_I) then
-                if (unsigned(timestamp_cnt) < unsigned(C_TIMESTAMP_CNT_MAX)) then
-                    timestamp_cnt <= std_logic_vector(unsigned(timestamp_cnt) + unsigned(C_TIMESTAMP_CNT_ONE));
-                end if;
+    -- timestamp counter that latches at maximum
+    p_timestamp : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            timestamp_cnt <= C_TIMESTAMP_CNT_ZERO;
+        elsif rising_edge(CLK_I) then
+            if (unsigned(timestamp_cnt) < unsigned(C_TIMESTAMP_CNT_MAX)) then
+                timestamp_cnt <= std_logic_vector(unsigned(timestamp_cnt) + unsigned(C_TIMESTAMP_CNT_ONE));
             end if;
-        end process p_timestamp;
-
-    end generate g_time_en;
-
-    -- timestamp disabled
-    g_time_dis : if G_TIMESTAMP_EN = 0 generate
-        timestamp_cnt <= C_TIMESTAMP_CNT_ZERO;
-    end generate g_time_dis;
+        end if;
+    end process p_timestamp;
 
 end architecture rtl;

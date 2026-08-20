@@ -32,10 +32,13 @@ entity pulse_shaper_test_wrapper is
         G_BASE_MOV_DELAY_WIDTH   : natural range 2 to 5 := 4; -- Width of samples averaged in moving average for the baseline
         G_PEAK_MOV_DELAY_WIDTH   : natural range 2 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
-        -- Pulse detection parameters
-        G_BASELINE_THRESHOLD : natural range 10 to 4096 := 1650; -- Threshold level of noise to gate a pulse detection event
-        -- Pileup discrimination parameters
-        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        -- Physical parameters
+        G_BASELINE_THRESHOLD : natural range 10 to 4096   := 1650; -- Threshold level of noise to gate a pulse detection event
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        -- Logger parameters
+        G_LOG_ADDR_WIDTH   : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
+        G_PILEUP_CNT_WIDTH : natural range 7 to 16  := 12; -- Counter width of pileup events since RST_N deassertion
+        G_TIMESTAMP_DIV    : natural range 0 to 6   := 4   -- Bits shifted in timestamp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
     );
     port (
         ------------------------------------------------------------------------
@@ -51,6 +54,18 @@ architecture rtl of pulse_shaper_test_wrapper is
     ----------------------------------------------------------------------------
     -- Functions
     ----------------------------------------------------------------------------
+
+    ----------------------------------------------------------------------------
+    -- Components
+    ----------------------------------------------------------------------------
+
+    -- VIO in top wrapper to assert internal CE
+    component vio_trap is
+        port (
+            clk        : in std_logic;
+            probe_out0 : out std_logic_vector(0 downto 0)
+        );
+    end component vio_trap;
 
     ----------------------------------------------------------------------------
     -- Constants
@@ -76,7 +91,7 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal data_i          : std_logic_vector(G_ADC_WIDTH - 1 downto 0);
     signal bram_en         : std_logic;                                       -- Enable required
     signal bram_rw         : std_logic;                                       -- Write or read required operation
-    signal bram_addr       : std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0); -- Required address to read
+    signal bram_addr       : std_logic_vector(G_LOG_ADDR_WIDTH - 1 downto 0); -- Required address to read
     signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from pulse log
     signal bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
 
@@ -89,7 +104,7 @@ architecture rtl of pulse_shaper_test_wrapper is
 
     -- Top system output signals
     signal pileup_event  : std_logic;                                            -- Pileup event pulse
-    signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
+    signal pileup_cnt    : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
     signal timestamp_cnt : std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
 
@@ -183,10 +198,13 @@ begin
             G_BASE_MOV_DELAY_WIDTH   => G_BASE_MOV_DELAY_WIDTH,
             G_PEAK_MOV_DELAY_WIDTH   => G_PEAK_MOV_DELAY_WIDTH,
             G_T_RISE_MOV_DELAY_WIDTH => G_T_RISE_MOV_DELAY_WIDTH,
-            -- Pulse detection parameters
+            -- Physical parameters
             G_BASELINE_THRESHOLD => G_BASELINE_THRESHOLD,
-            -- Pileup discrimination parameters
-            G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE
+            G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
+            -- Logger parameters
+            G_LOG_ADDR_WIDTH   => G_LOG_ADDR_WIDTH,
+            G_PILEUP_CNT_WIDTH => G_PILEUP_CNT_WIDTH,
+            G_TIMESTAMP_DIV    => G_TIMESTAMP_DIV
         )
         port map(
             ------------------------------------------------------------------------

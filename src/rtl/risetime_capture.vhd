@@ -61,8 +61,8 @@ architecture rtl of risetime_capture is
     -- multiplication constants for amplitude thresholds
     constant C_FRAC_BITS : natural                        := 10;                                                                      -- number of fractional bits (1024 depth)
     constant C_ROUND     : natural                        := 50;                                                                      -- value to round off (50/1024)
-    constant C_MUL_10    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((8 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1);  -- scaling for 10%
-    constant C_MUL_90    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((88 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 90%
+    constant C_MUL_10    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((8 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1);  -- scaling for 10% (2% offeset to avoid overshoot of real height)
+    constant C_MUL_90    : unsigned(C_FRAC_BITS downto 0) := to_unsigned((88 * (2 ** C_FRAC_BITS) + C_ROUND) / 100, C_FRAC_BITS + 1); -- scaling for 90% (2% offeset to avoid overshoot of real height)
 
     -- time rise counter constants
     constant C_T_RISE_CNT_ONE  : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(1, G_T_RISE_WIDTH)); -- unit value of counter in its width
@@ -80,8 +80,8 @@ architecture rtl of risetime_capture is
     -- S_IDLE: State in RST_N.
     -- S_WAITING_PULSE: State to wait for incoming pulse.
     -- S_UPDATING_TH: Measured amplitude available, update thresholds.
-    -- S_WAITING_RISE: State to wait until pulse land on thresholds, unless new pulse or timeout.
-    -- S_COUNTING: State to measure the rise time with a counter while inside thresholds unless new pulse or timeout.
+    -- S_WAITING_RISE: State to wait until pulse land on thresholds, unless new pulse or pulse finishes (timeout).
+    -- S_COUNTING: State to measure the rise time with a counter while inside thresholds unless new pulse or pulse finishes (timeout).
     -- S_STORING: Outside of upper threshold, latch rise time counter and return to waiting.
 
     ----------------------------------------------------------------------------
@@ -112,9 +112,9 @@ architecture rtl of risetime_capture is
     signal storing_en       : std_logic; -- current state on S_STORING
 
     -- rise time validity signals
-    signal capture_in_progress : std_logic; -- fsm is between amplitude trigger and rise time latch
-    signal t_rise_abort        : std_logic; -- capture interrupted before reaching S_STORING
-    signal pulse_t_rise_clean  : std_logic; -- latched validity of pulse_t_rise
+    signal capture_in_progress : std_logic; -- fsm is between the amplitude trigger and the output of the rise time
+    signal t_rise_abort        : std_logic; -- capture interrupted (due timeout or new pulse)
+    signal pulse_t_rise_clean  : std_logic; -- latched validity of pulse_t_rise if we arrived to S_STORING without an abort
 
 begin
 

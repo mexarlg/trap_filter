@@ -31,10 +31,13 @@ entity pulse_shaper_top is
         G_BASE_MOV_DELAY_WIDTH   : natural range 3 to 5 := 4; -- Width of samples averaged in moving average for the baseline
         G_PEAK_MOV_DELAY_WIDTH   : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the peak
         G_T_RISE_MOV_DELAY_WIDTH : natural range 3 to 5 := 3; -- Width of samples averaged in moving average for the rise time
-        -- Pulse detection parameters
-        G_BASELINE_THRESHOLD : natural range 10 to 4096 := 1650; -- Threshold level of noise to gate a pulse detection event
-        -- Pileup discrimination parameters
-        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        -- Physical parameters
+        G_BASELINE_THRESHOLD : natural range 10 to 4096   := 1650; -- Threshold level of noise to gate a pulse detection event
+        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 2500; -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        -- Logger parameters
+        G_LOG_ADDR_WIDTH   : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
+        G_PILEUP_CNT_WIDTH : natural range 7 to 16  := 12; -- Counter width of pileup events since RST_N deassertion
+        G_TIMESTAMP_DIV    : natural range 0 to 6   := 4   -- Bits shifted in timestamp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
     );
     port (
         ------------------------------------------------------------------------
@@ -51,7 +54,7 @@ entity pulse_shaper_top is
         ------------------------------------------------------------------------
         BRAM_B_EN_I         : in std_logic;                                        -- Port B enable
         BRAM_B_RW_I         : in std_logic;                                        -- Port B read/write
-        BRAM_B_ADDR_I       : in std_logic_vector(C_LOG_ADDR_WIDTH - 1 downto 0);  -- Port B address
+        BRAM_B_ADDR_I       : in std_logic_vector(G_LOG_ADDR_WIDTH - 1 downto 0);  -- Port B address
         BRAM_B_PULSE_DATA_O : out std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Pulse Bram port B read data
         BRAM_B_TIME_DATA_O  : out std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port B read data
         ------------------------------------------------------------------------
@@ -66,7 +69,7 @@ entity pulse_shaper_top is
         -- System Outputs
         ------------------------------------------------------------------------
         PILEUP_EVENT_O  : out std_logic;                                            -- Pileup event flag
-        PILEUP_CNT_O    : out std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
+        PILEUP_CNT_O    : out std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
         TIMESTAMP_CNT_O : out std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Counter of timestamp from rst_n
         ERROR_OFLOW_O   : out std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/capture subsystems
         ------------------------------------------------------------------------
@@ -87,14 +90,14 @@ architecture rtl of pulse_shaper_top is
     -- Constants
     ----------------------------------------------------------------------------
 
-    -- width of data after trap_subsystem filter
+    -- Width of data after trap_subsystem filter
     constant C_DATA_FILTERED_WIDTH : natural := G_ADC_WIDTH + 1;
 
-    -- delay given to trap_ss due pulse detection
+    -- Delay given to trap_ss due pulse detection
     constant C_FAST_JORD_KL_DELAY : natural := C_FAST_JORD_K_DELAY + C_FAST_JORD_M_DELAY;                               -- delay from fast jordanov
     constant C_DETECTION_DELAY    : natural := C_FAST_JORD_KL_DELAY + C_CFD_DELAY + C_JORDANOV_LATENCY + C_CFD_LATENCY; -- total delay in N of samples
 
-    -- delay given to t_rise_capture to synchronize input data with top_mid trigger 
+    -- Delay given to t_rise_capture to synchronize input data with top_mid trigger 
     constant C_T_RISE_DELAY_TRAP : natural := G_SLOW_JORD_K_DELAY + G_SLOW_JORD_M_DELAY / 2;
     constant C_T_RISE_DELAY      : natural := C_DETECTION_DELAY + C_T_RISE_DELAY_MARGIN + C_MOVING_AVG_LATENCY + C_T_RISE_DELAY_TRAP;
 
@@ -115,7 +118,7 @@ architecture rtl of pulse_shaper_top is
 
     -- Top system output signals
     signal pileup_event  : std_logic;                                            -- pileup event pulse
-    signal pileup_cnt    : std_logic_vector(C_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
+    signal pileup_cnt    : std_logic_vector(G_PILEUP_CNT_WIDTH - 1 downto 0);    -- Counter of pileup events
     signal timestamp_cnt : std_logic_vector(C_TIMESTAMP_CNT_WIDTH - 1 downto 0); -- Current timestamp counter from rst_n
     signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
 
@@ -133,8 +136,8 @@ architecture rtl of pulse_shaper_top is
     signal trig_pulse_start    : std_logic; -- trigger to start of rising_edge
     signal trig_top_start      : std_logic; -- trigger to start of flat top
     signal trig_top_mid        : std_logic; -- trigger to capture amplitude
-    signal trig_pulse_end      : std_logic; -- trigger of pulse end
-    signal trig_log_event      : std_logic; -- trigger of pulse ended registered + 2 cycles
+    signal trig_pulse_end      : std_logic; -- trigger of pulse ended
+    signal trig_log_event      : std_logic; -- trigger of log event (+2 cycles after event ended)
 
     -- amplitude and rise time clean signals from trig_ss and capture_ss
     signal pulse_amplitude_clean : std_logic; -- Completed pulse with no pileups
@@ -211,7 +214,7 @@ begin
             G_BASELINE_THRESHOLD => G_BASELINE_THRESHOLD,
             -- pileup discrimination parameters
             G_PILEUP_DECAY_VALUE => G_PILEUP_DECAY_VALUE,
-            G_PILEUP_CNT_WIDTH   => C_PILEUP_CNT_WIDTH
+            G_PILEUP_CNT_WIDTH   => G_PILEUP_CNT_WIDTH
         )
         port map(
             ------------------------------------------------------------------------
@@ -270,7 +273,7 @@ begin
             error_oflow_o   => error_trap_ss_oflow
         );
 
-    -- captures and validates the pulse amplitude and its rise time
+    -- captures the pulse's amplitude and its rise time
     capture_ss_i : entity trap_filter.capture_subsystem
         generic map(
             -- Data width paramaters
@@ -338,18 +341,18 @@ begin
             PULSE_STATE_O => pulse_state
         );
 
-    -- logs the captured data of a pulse
+    -- logs the captured data of an event
     logger_ss_i : entity trap_filter.logger_subsystem
         generic map(
             -- Memory parameters
-            G_BRAM_ADDR_WIDTH => C_LOG_ADDR_WIDTH,
+            G_BRAM_ADDR_WIDTH => G_LOG_ADDR_WIDTH,
             G_BRAM_DATA_WIDTH => C_LOG_DATA_WIDTH,
             -- Pulse parameters
             G_PULSE_WIDTH  => C_DATA_FILTERED_WIDTH,
             G_T_RISE_WIDTH => C_T_RISE_WIDTH,
             -- Timestamp parameters
-            G_TIMESTAMP_EN    => C_LOG_TIMESTAMP_EN,
-            G_TIMESTAMP_WIDTH => C_TIMESTAMP_CNT_WIDTH
+            G_TIMESTAMP_WIDTH => C_TIMESTAMP_CNT_WIDTH,
+            G_TIMESTAMP_DIV   => G_TIMESTAMP_DIV
         )
         port map(
             ------------------------------------------------------------------------

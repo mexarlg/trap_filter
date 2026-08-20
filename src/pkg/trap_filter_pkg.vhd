@@ -20,11 +20,7 @@ package trap_filter_pkg is
     -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant C_SYSTEM_VERSION : string := "1.9";
-
-    ----------------------------------------------------------------------------
-    -- TESTING PARAMETERS:
-    ----------------------------------------------------------------------------
+    constant C_SYSTEM_VERSION : string := "2.0";
 
     ----------------------------------------------------------------------------
     -- GENERAL SYSTEM PARAMETERS:
@@ -32,10 +28,10 @@ package trap_filter_pkg is
 
     -- Fixed
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of overflow flags of the system
-    constant C_TRIG_DEPTH           : natural := 6; -- Amount of triggers describing the stages of a pulse
-    constant C_JORDANOV_LATENCY     : natural := 9; -- latency in number of cycles of the jordanov filter
-    constant C_MOVING_AVG_LATENCY   : natural := 2; -- latency in number of cycles of the moving average filter
-    constant C_CFD_LATENCY          : natural := 3; -- latency in number of cycles of the cfd module
+    constant C_TRIG_DEPTH           : natural := 6; -- Amount of triggers describing the stages of a pulse (baseline, start, start top, mid top, end, log)
+    constant C_JORDANOV_LATENCY     : natural := 9; -- Latency in number of cycles of the jordanov filter
+    constant C_MOVING_AVG_LATENCY   : natural := 2; -- Latency in number of cycles of the moving average filter
+    constant C_CFD_LATENCY          : natural := 3; -- Latency in number of cycles of the cfd module
 
     ----------------------------------------------------------------------------
     -- TRAP SUBSYSTEM PARAMETERS:
@@ -45,16 +41,11 @@ package trap_filter_pkg is
     constant C_SLOW_JORD_DIFF_MARGIN_BITS : natural range 1 to 3 := 3; -- Bits of margin given to the delayed difference of the slow jordanov
     constant C_SLOW_JORD_ACC1_MARGIN_BITS : natural range 1 to 2 := 2; -- Bits of margin given to the 1st accumulator of the slow jordanov
     constant C_SLOW_JORD_ACC2_MARGIN_BITS : natural range 0 to 1 := 1; -- Bits of margin given to the 2nd accumulator of the slow jordanov
-
-    -- Configurable
-    constant C_BASE_MOV_ACC_MARGIN_BITS : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
+    constant C_BASE_MOV_ACC_MARGIN_BITS   : natural range 2 to 5 := 2; -- Margin bits given to the accumulator inside the moving average for the baseline
 
     ----------------------------------------------------------------------------
     -- TRIG SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
-
-    -- Configurable
-    constant C_PILEUP_CNT_WIDTH : natural range 7 to 12 := 12; -- Counter width of pileup events since RST_N deassertion
 
     -- Fixed
     constant C_TRIG_DELAY_BASELINE : natural := 4;  -- N of samples from a pulse detected trigger to the baseline capture of the filtered pulse
@@ -79,33 +70,32 @@ package trap_filter_pkg is
     ----------------------------------------------------------------------------
 
     -- Configurable
-    constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5  := 2;  -- Margin bits given to the accumulator inside the moving average for the peak
-    constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Margin bits given to the accumulator inside the moving average for the t_rise capture
-    constant C_T_RISE_WIDTH               : natural range 8 to 12 := 12; -- Width of rise time
+    constant C_PEAK_MOV_ACC_MARGIN_BITS   : natural range 2 to 5  := 2;  -- Margin bits given to the accumulator inside the moving average for the amplitude
+    constant C_T_RISE_MOV_ACC_MARGIN_BITS : natural range 2 to 5  := 2;  -- Margin bits given to the accumulator inside the moving average for the rise time capture
+    constant C_T_RISE_WIDTH               : natural range 8 to 12 := 12; -- Width of rise time counter signal
 
-    -- fixed
-    constant C_T_RISE_DELAY_MARGIN : natural := 60; -- Additional delay given to rise_capture for synchronization
+    -- Fixed
+    constant C_T_RISE_DELAY_MARGIN : natural := 60; -- Additional margin delay given to the input pulse for rise time calculation
 
     ----------------------------------------------------------------------------
     -- LOGGER SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
-    -- Configurable
-    constant C_LOG_ADDR_WIDTH      : natural range 10 to 16 := 10; -- Width of pulse log memory address (N logged pulses = 2^ADDR_WIDTH)
-    constant C_LOG_TIMESTAMP_EN    : natural range 0 to 1   := 1;  -- Enable of timestamp
-    constant C_TIMESTAMP_CNT_WIDTH : natural range 40 to 48 := 48; -- Width of timestamp counter
-    constant C_TIMESTAMP_DIV       : natural range 0 to 6   := 4;  -- N of bits shifted in the counter to achieve higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
+    -- Format: [AMP (31 downto 16) - AMP VALID (15) - DNT(14 downto 13) - T_RISE(12 downto 1) - T_RISE VALID (0)]
 
-    -- Fixed (Amplitude(31 downto 16) - Amplitude_Valid(15) - DNT(14 downto 13) - T_RISE(12 downto 1) - T_RISE VALID (0))
-    constant C_LOG_DATA_WIDTH       : natural := 32;                                           -- Width of a single pulse log
-    constant C_LOG_MAX_AMP_WIDTH    : natural := 16;                                           -- Maximum width of the amplitude for preallocation
-    constant C_LOG_MAX_T_RISE_WIDTH : natural := 12;                                           -- Maximum width of the rise time for preallocation
-    constant C_LOG_AMP_HI           : natural := C_LOG_DATA_WIDTH - 1;                         -- Highest bit of amplitude in log
-    constant C_LOG_AMP_LO           : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH;       -- Lowest bit of amplitude in log
-    constant C_LOG_AMP_VALID        : natural := C_LOG_AMP_LO - 1;                             -- Bit for amplitude valid state in log
-    constant C_LOG_T_RISE_VALID     : natural := 0;                                            -- Bit of t_rise valid in log
-    constant C_LOG_T_RISE_LO        : natural := C_LOG_T_RISE_VALID + 1;                       -- Lowest bit of amplitude in log
-    constant C_LOG_T_RISE_HI        : natural := C_LOG_T_RISE_LO + C_LOG_MAX_T_RISE_WIDTH - 1; -- Highest bit of rise time in log
+    -- Fixed
+    constant C_TIMESTAMP_CNT_WIDTH  : natural range 40 to 48 := 48; -- Width of the internal wide timestamp counter
+    constant C_LOG_DATA_WIDTH       : natural                := 32; -- Width of a single pulse log data (BRAM)
+    constant C_LOG_MAX_AMP_WIDTH    : natural                := 16; -- Maximum width of the amplitude for preallocation
+    constant C_LOG_MAX_T_RISE_WIDTH : natural                := 12; -- Maximum width of the rise time for preallocation
+
+    -- Fixed
+    constant C_LOG_AMP_HI       : natural := C_LOG_DATA_WIDTH - 1;                         -- Highest bit of amplitude in log (31)
+    constant C_LOG_AMP_LO       : natural := C_LOG_DATA_WIDTH - C_LOG_MAX_AMP_WIDTH;       -- Lowest bit of amplitude in log (16)
+    constant C_LOG_AMP_VALID    : natural := C_LOG_AMP_LO - 1;                             -- Bit for amplitude valid state in log (15)
+    constant C_LOG_T_RISE_VALID : natural := 0;                                            -- Bit of t_rise valid state in log (0)
+    constant C_LOG_T_RISE_LO    : natural := C_LOG_T_RISE_VALID + 1;                       -- Lowest bit of rise time in log (1)
+    constant C_LOG_T_RISE_HI    : natural := C_LOG_T_RISE_LO + C_LOG_MAX_T_RISE_WIDTH - 1; -- Highest bit of rise time in log (12)
 
     ----------------------------------------------------------------------------
     -- Types
@@ -119,33 +109,21 @@ package trap_filter_pkg is
     -- Functions
     ----------------------------------------------------------------------------
 
-    -- helpers to get required width
+    -- helper function to get required width
     function f_value_to_width (v : natural) return positive;
     function f_depth_to_width (n : positive) return positive;
 
-    -- helpers for jordanov
+    -- helper functions for jordanov
     function f_log2_floor (arg : real) return natural;
     function f_max (a : integer; b : integer) return integer;
     function f_sat_resize (arg : signed; new_width : natural) return signed;
-
-    ----------------------------------------------------------------------------
-    -- Component Declaration
-    ----------------------------------------------------------------------------
-
-    -- VIO in top wrapper to assert internal CE
-    component vio_trap is
-        port (
-            clk        : in std_logic;
-            probe_out0 : out std_logic_vector(0 downto 0)
-        );
-    end component vio_trap;
 
 end package trap_filter_pkg;
 
 package body trap_filter_pkg is
 
     ----------------------------------------------------------------------------
-    -- Package Body (functions if needed)
+    -- Package Body
     ----------------------------------------------------------------------------
 
     -- Computes width needed to store value

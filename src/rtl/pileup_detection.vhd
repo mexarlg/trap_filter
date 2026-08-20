@@ -25,7 +25,7 @@ entity pileup_detection is
     generic (
         -- Pulse and pileup parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
-        G_PILEUP_CNT_WIDTH   : natural range 7 to 12      := 12    -- Width of counter for N of pileup events
+        G_PILEUP_CNT_WIDTH   : natural range 7 to 16      := 12    -- Width of counter for N of pileup events
     );
     port (
         ------------------------------------------------------------------------

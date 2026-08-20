@@ -28,8 +28,8 @@ entity logger_subsystem is
         G_PULSE_WIDTH  : natural range 9 to 16 := 15; -- Width of the signed captured pulse amplitude
         G_T_RISE_WIDTH : natural range 8 to 12 := 12; -- Width of the unsigned captured pulse rise time
         -- Timestamp parameters
-        G_TIMESTAMP_EN    : natural range 0 to 1   := 1; -- Enable of timestamp
-        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48 -- Width of timestamp counter
+        G_TIMESTAMP_WIDTH : natural range 40 to 48 := 48; -- Width of timestamp counter
+        G_TIMESTAMP_DIV   : natural range 0 to 6   := 4   -- Bits shifted in timestramp for higher range at lower precision (at 4, LSB = 128 ns at 125MHz)
     );
     port (
         ------------------------------------------------------------------------
@@ -130,8 +130,8 @@ begin
             G_PULSE_WIDTH  => G_PULSE_WIDTH,
             G_T_RISE_WIDTH => G_T_RISE_WIDTH,
             -- Timestamp parameters
-            G_TIMESTAMP_EN    => G_TIMESTAMP_EN,
-            G_TIMESTAMP_WIDTH => G_TIMESTAMP_WIDTH
+            G_TIMESTAMP_WIDTH => G_TIMESTAMP_WIDTH,
+            G_TIMESTAMP_DIV   => G_TIMESTAMP_DIV
         )
         port map(
             ------------------------------------------------------------------------
@@ -191,40 +191,35 @@ begin
             DATA_B_O => bram_b_pulse_data_rd
         );
 
-    -- timestamp enabled
-    g_time_en : if G_TIMESTAMP_EN = 1 generate
-
-        -- Timestamp log Dual Port BRAM
-        time_bram_i : entity trap_filter.bram_dp
-            generic map(
-                -- Memory parameters
-                G_ADDR_WIDTH    => G_BRAM_ADDR_WIDTH,
-                G_DATA_WIDTH    => G_BRAM_DATA_WIDTH,
-                G_OUTREG_ENABLE => True
-            )
-            port map(
-                ------------------------------------------------------------------------
-                -- Clock / Reset
-                ------------------------------------------------------------------------
-                CLK_I => CLK_I,
-                ------------------------------------------------------------------------
-                -- Port A (pulse_logger writes)
-                ------------------------------------------------------------------------
-                EN_A_I   => bram_a_en,
-                RW_A_I   => bram_a_rw,
-                ADDR_A_I => bram_a_addr,
-                DATA_A_I => bram_a_timestamp_data_wr,
-                DATA_A_O => bram_a_timestamp_data_open,
-                ------------------------------------------------------------------------
-                -- Port B (external reads)
-                ------------------------------------------------------------------------
-                EN_B_I   => BRAM_B_EN_I,
-                RW_B_I   => BRAM_B_RW_I,
-                ADDR_B_I => BRAM_B_ADDR_I,
-                DATA_B_I => bram_b_data_open,
-                DATA_B_O => bram_b_timestamp_data_rd
-            );
-
-    end generate g_time_en;
+    -- Timestamp log Dual Port BRAM
+    time_bram_i : entity trap_filter.bram_dp
+        generic map(
+            -- Memory parameters
+            G_ADDR_WIDTH    => G_BRAM_ADDR_WIDTH,
+            G_DATA_WIDTH    => G_BRAM_DATA_WIDTH,
+            G_OUTREG_ENABLE => True
+        )
+        port map(
+            ------------------------------------------------------------------------
+            -- Clock / Reset
+            ------------------------------------------------------------------------
+            CLK_I => CLK_I,
+            ------------------------------------------------------------------------
+            -- Port A (pulse_logger writes)
+            ------------------------------------------------------------------------
+            EN_A_I   => bram_a_en,
+            RW_A_I   => bram_a_rw,
+            ADDR_A_I => bram_a_addr,
+            DATA_A_I => bram_a_timestamp_data_wr,
+            DATA_A_O => bram_a_timestamp_data_open,
+            ------------------------------------------------------------------------
+            -- Port B (external reads)
+            ------------------------------------------------------------------------
+            EN_B_I   => BRAM_B_EN_I,
+            RW_B_I   => BRAM_B_RW_I,
+            ADDR_B_I => BRAM_B_ADDR_I,
+            DATA_B_I => bram_b_data_open,
+            DATA_B_O => bram_b_timestamp_data_rd
+        );
 
 end architecture rtl;
