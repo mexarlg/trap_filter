@@ -26,9 +26,8 @@ entity valid_subsystem is
         -- Slow jordanov delay
         G_SLOW_JORD_K_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid rising edge
         G_SLOW_JORD_M_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid flat top
-        G_SLOW_JORD_LATENCY : natural range 9 to 10   := 9;   -- Latency of jordanov filter
-        -- Pileup discrimination parameters
-        G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095 -- Amount of samples after pulse ended to ensure discrimination of pileups in pulse_valid signal
+        G_SLOW_JORD_LATENCY : natural range 9 to 10   := 9    -- Latency of jordanov filter
+
     );
     port (
         ------------------------------------------------------------------------
@@ -68,7 +67,7 @@ architecture rtl of valid_subsystem is
     constant C_MARGIN_DELAY : natural := 30;
 
     -- Total delay until a pulse is valid (Filling of slow jordanov shift regs + delay of detection system + 1 trapezoid of valid signal latency + 1 pileup decay for sudden offset pulse)
-    constant C_TOTAL_DELAY : natural := 2 * C_SLOW_JORD_KL_DELAY + G_DETECTION_DELAY + G_SLOW_JORD_LATENCY + C_MARGIN_DELAY + G_PILEUP_DECAY_VALUE;
+    constant C_TOTAL_DELAY : natural := 2 * C_SLOW_JORD_KL_DELAY + G_DETECTION_DELAY + G_SLOW_JORD_LATENCY + C_MARGIN_DELAY;
 
     -- Counter limits
     constant C_CNT_WIDTH : natural                                    := f_value_to_width(C_TOTAL_DELAY);                           -- maximum possible width assumming both k and m as 8 bits width
