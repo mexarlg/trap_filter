@@ -26,7 +26,7 @@ entity valid_subsystem is
         -- Slow jordanov delay
         G_SLOW_JORD_K_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid rising edge
         G_SLOW_JORD_M_DELAY : natural range 16 to 256 := 256; -- Value of slow filtered trapezoid flat top
-        G_SLOW_JORD_LATENCY : natural range 9 to 10   := 9    -- Latency of jordanov filter
+        G_SLOW_JORD_LATENCY : natural range 8 to 9    := 8    -- Latency of jordanov filter
 
     );
     port (

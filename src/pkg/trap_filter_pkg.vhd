@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant C_SYSTEM_VERSION : string := "2.0";
+    constant C_SYSTEM_VERSION : string := "2.1";
 
     ----------------------------------------------------------------------------
     -- GENERAL SYSTEM PARAMETERS:
@@ -29,7 +29,7 @@ package trap_filter_pkg is
     -- Fixed
     constant C_OVERFLOW_FLAGS_DEPTH : natural := 9; -- Amount of overflow flags of the system
     constant C_TRIG_DEPTH           : natural := 6; -- Amount of triggers describing the stages of a pulse (baseline, start, start top, mid top, end, log)
-    constant C_JORDANOV_LATENCY     : natural := 9; -- Latency in number of cycles of the jordanov filter
+    constant C_JORDANOV_LATENCY     : natural := 8; -- Latency in number of cycles of the jordanov filter
     constant C_MOVING_AVG_LATENCY   : natural := 2; -- Latency in number of cycles of the moving average filter
     constant C_CFD_LATENCY          : natural := 3; -- Latency in number of cycles of the cfd module
 
@@ -81,7 +81,7 @@ package trap_filter_pkg is
     -- LOGGER SUBSYSTEM PARAMETERS:
     ----------------------------------------------------------------------------
 
-    -- Format: [AMP (31 downto 16) - AMP VALID (15) - DNT(14 downto 13) - T_RISE(12 downto 1) - T_RISE VALID (0)]
+    -- Format: [AMP (31 downto 16) - AMP VALID (15) - DNC(14 downto 13) - T_RISE(12 downto 1) - T_RISE VALID (0)]
 
     -- Fixed
     constant C_TIMESTAMP_CNT_WIDTH  : natural range 40 to 48 := 48; -- Width of the internal wide timestamp counter

@@ -33,7 +33,7 @@ entity trig_subsystem is
         G_NOISE_THRESHOLD : natural range 10 to 4096 := 100; -- Threshold level of noise to gate a pulse detection event
         -- pulse and pileup parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
-        G_PILEUP_CNT_WIDTH   : natural range 7 to 16      := 12    -- Width of counter for pileup events
+        G_PILEUP_CNT_WIDTH   : natural range 12 to 24     := 24    -- Width of counter for pileup events
     );
     port (
         ------------------------------------------------------------------------

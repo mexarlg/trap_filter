@@ -98,7 +98,9 @@ begin
     -- shift register inferred for delay
     p_sr : process (CLK_I)
     begin
-        if rising_edge(CLK_I) then
+        if (RST_N_I = '0') then
+            sr <= (others => (others => '0'));
+        elsif rising_edge(CLK_I) then
             sr <= data_n & sr(0 to G_DELAY_VALUE - 2);
         end if;
     end process p_sr;

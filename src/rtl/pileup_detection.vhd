@@ -25,7 +25,7 @@ entity pileup_detection is
     generic (
         -- Pulse and pileup parameters
         G_PILEUP_DECAY_VALUE : natural range 255 to 65535 := 4095; -- Value in N samples of the pulse decay time constant
-        G_PILEUP_CNT_WIDTH   : natural range 7 to 16      := 12    -- Width of counter for N of pileup events
+        G_PILEUP_CNT_WIDTH   : natural range 12 to 24     := 24    -- Width of counter for N of pileup events
     );
     port (
         ------------------------------------------------------------------------
@@ -229,7 +229,7 @@ begin
     end process p_decay_cnt;
 
     -- increases the pileup event and its counter
-    p_decay : process (RST_N_I, CLK_I)
+    p_pileup_cnt : process (RST_N_I, CLK_I)
     begin
         if (RST_N_I = '0') then
             pileup_cnt <= C_CNT_PILEUP_ZERO;
@@ -242,7 +242,7 @@ begin
                 end if;
             end if;
         end if;
-    end process p_decay;
+    end process p_pileup_cnt;
 
     -- checks if the pulse is clean (valid) or dirty (pileup)
     p_clean : process (RST_N_I, CLK_I)
