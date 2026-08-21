@@ -6,7 +6,7 @@ Implemented in VHDL for Lattice Radiant FPGAs.
 
 System block diagram:
 
-![Trapezoidal filter block diagram](docs/trap_bd.png)
+![Trapezoidal filter block diagram](docs/pulse_shaper_bd.png)
 
 ---
 
