@@ -31,6 +31,7 @@ set RTL_DIR     [file normalize "$SCRIPT_DIR/../src/rtl"]
 set INTEG_DIR     [file normalize "$SCRIPT_DIR/../src/integration"]
 set PKG_DIR     [file normalize "$SCRIPT_DIR/../src/pkg"]
 set CONST_DIR   [file normalize "$SCRIPT_DIR/../constraints"]
+set IP_REPO_DIR [file normalize "$SCRIPT_DIR/../ip"]
 
 #------------------------------------------------------------------------------
 # FPGA Selection: ZedBoard Zynq-7000
@@ -131,6 +132,22 @@ if {![file exists $XDC_FILE]} {
 
 add_files -fileset constrs_1 -norecurse $XDC_FILE
 
+#------------------------------------------------------------------------------
+# User IP Repository
+#------------------------------------------------------------------------------
+
+if {[file exists $IP_REPO_DIR]} {
+    set repos [get_property ip_repo_paths [current_project]]
+    if {[lsearch -exact $repos $IP_REPO_DIR] < 0} {
+        lappend repos $IP_REPO_DIR
+        set_property ip_repo_paths $repos [current_project]
+    }
+    update_ip_catalog -rebuild
+    puts "INFO: User IP repository registered from $IP_REPO_DIR"
+} else {
+    puts "INFO: No user IP repository at $IP_REPO_DIR"
+    puts "INFO: Run scripts/generate_pulse_shaper_ip.tcl to create it"
+}
 
 #------------------------------------------------------------------------------
 # VIO
