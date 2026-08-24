@@ -94,6 +94,7 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal bram_addr       : std_logic_vector(G_LOG_ADDR_WIDTH - 1 downto 0); -- Required address to read
     signal bram_pulse_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from pulse log
     signal bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
+    signal log_clear       : std_logic;                                       -- bram filled flag 
 
     -- Top pulse output signals
     signal pulse_trapezoid : std_logic_vector(G_ADC_WIDTH downto 0);        -- Filtered trapezoidal data output (signed)
@@ -109,6 +110,7 @@ architecture rtl of pulse_shaper_test_wrapper is
     signal error_oflow   : std_logic_vector(C_OVERFLOW_FLAGS_DEPTH downto 0);    -- Overflow errors in trap/trig/peak subsystems
 
     -- Top logger output signals
+    signal log_full           : std_logic;                                       -- bram filled flag 
     signal log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Written pulse data from pulse_logger
     signal log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Written timestamp data from pulse_logger
 
@@ -130,6 +132,7 @@ architecture rtl of pulse_shaper_test_wrapper is
     attribute mark_debug of error_oflow   : signal is "true";
 
     -- logger data
+    attribute mark_debug of log_full           : signal is "true";
     attribute mark_debug of log_pulse_data     : signal is "true";
     attribute mark_debug of log_timestamp_data : signal is "true";
 
@@ -242,6 +245,8 @@ begin
             ------------------------------------------------------------------------
             -- Logger Outputs
             ------------------------------------------------------------------------
+            LOG_CLEAR_I          => log_clear,
+            LOG_FULL_O           => log_full,
             LOG_PULSE_DATA_O     => log_pulse_data,
             LOG_TIMESTAMP_DATA_O => log_timestamp_data
         );

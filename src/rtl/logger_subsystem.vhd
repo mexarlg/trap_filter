@@ -55,6 +55,8 @@ entity logger_subsystem is
         ------------------------------------------------------------------------
         -- Memory Outputs
         ------------------------------------------------------------------------
+        LOG_CLEAR_I          : in std_logic;                                         -- Log Bram restart of pointer
+        LOG_FULL_O           : out std_logic;                                        -- Log Bram full flag
         LOG_PULSE_DATA_O     : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Pulse Bram port A write data
         LOG_TIMESTAMP_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Timestamp Bram port A write data
         TIMESTAMP_CNT_O      : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp stream
@@ -89,7 +91,8 @@ architecture rtl of logger_subsystem is
     signal bram_b_pulse_data_rd     : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- data read from port B of pulse bram
     signal bram_b_timestamp_data_rd : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- data read from port B of time bram
 
-    -- output timestamp
+    -- output
+    signal log_full      : std_logic;                                        -- bram filled flag 
     signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- stream of timestamp counter
 
 begin
@@ -104,6 +107,7 @@ begin
 
     BRAM_B_PULSE_DATA_O  <= bram_b_pulse_data_rd;
     BRAM_B_TIME_DATA_O   <= bram_b_timestamp_data_rd;
+    LOG_FULL_O           <= log_full;
     LOG_TIMESTAMP_DATA_O <= bram_a_timestamp_data_wr;
     LOG_PULSE_DATA_O     <= bram_a_pulse_data_wr;
     TIMESTAMP_CNT_O      <= timestamp_cnt;
@@ -146,6 +150,7 @@ begin
             PULSE_STATE_I     => PULSE_STATE_I,
             PULSE_AMPLITUDE_I => PULSE_AMPLITUDE_I,
             PULSE_T_RISE_I    => PULSE_T_RISE_I,
+            LOG_CLEAR_I       => LOG_CLEAR_I,
             ------------------------------------------------------------------------
             -- BRAM Port A (pulse_logger writes)
             ------------------------------------------------------------------------
@@ -154,6 +159,7 @@ begin
             BRAM_ADDR_O           => bram_a_addr,
             BRAM_PULSE_DATA_O     => bram_a_pulse_data_wr,
             BRAM_TIMESTAMP_DATA_O => bram_a_timestamp_data_wr,
+            BRAM_FULL_O           => log_full,
             ------------------------------------------------------------------------
             -- Timestamp stream
             ------------------------------------------------------------------------

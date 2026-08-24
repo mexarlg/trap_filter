@@ -65,6 +65,8 @@ architecture tb of tb_pulse_shaper_top is
     signal tb_bram_time_data  : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Read data from timestamp log
 
     -- logger bram outputs
+    signal tb_log_clear          : std_logic;                                       -- flush and reset ointer on log bram
+    signal tb_log_full           : std_logic;                                       -- logger is full flag
     signal tb_log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
     signal tb_log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
 
@@ -163,6 +165,8 @@ begin
             TIMESTAMP_CNT_O => tb_timestamp_cnt,
             ERROR_OFLOW_O   => tb_error_oflow,
             -- Logger outputs
+            LOG_CLEAR_I          => tb_log_clear,
+            LOG_FULL_O           => tb_log_full,
             LOG_PULSE_DATA_O     => tb_log_pulse_data,
             LOG_TIMESTAMP_DATA_O => tb_log_timestamp_data
 

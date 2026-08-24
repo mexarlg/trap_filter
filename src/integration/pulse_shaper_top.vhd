@@ -75,6 +75,8 @@ entity pulse_shaper_top is
         ------------------------------------------------------------------------
         -- Logger Outputs
         ------------------------------------------------------------------------
+        LOG_CLEAR_I          : in std_logic;                                        -- Log Bram restart of pointer
+        LOG_FULL_O           : out std_logic;                                       -- Log Bram full flag
         LOG_PULSE_DATA_O     : out std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- Pulse Bram port A write data
         LOG_TIMESTAMP_DATA_O : out std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0)  -- Timestamp Bram port A write data
     );
@@ -125,6 +127,7 @@ architecture rtl of pulse_shaper_top is
     -- Top logger output signals
     signal log_pulse_data     : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written pulse data from pulse_logger
     signal log_timestamp_data : std_logic_vector(C_LOG_DATA_WIDTH - 1 downto 0); -- written timestamp data from pulse_logger
+    signal log_full           : std_logic;                                       -- bram filled flag 
 
     ----------------------------------------------------------------------------
     -- Internal Signals
@@ -172,6 +175,7 @@ begin
     ERROR_OFLOW_O   <= error_oflow;
 
     -- Logger outputs
+    LOG_FULL_O           <= log_full;
     LOG_PULSE_DATA_O     <= log_pulse_data;
     LOG_TIMESTAMP_DATA_O <= log_timestamp_data;
 
@@ -376,6 +380,8 @@ begin
             ------------------------------------------------------------------------
             -- Bram Port A Outputs / Timestamp Stream
             ------------------------------------------------------------------------
+            LOG_CLEAR_I          => LOG_CLEAR_I,
+            LOG_FULL_O           => log_full,
             LOG_PULSE_DATA_O     => log_pulse_data,
             LOG_TIMESTAMP_DATA_O => log_timestamp_data,
             TIMESTAMP_CNT_O      => timestamp_cnt

@@ -44,6 +44,7 @@ entity pulse_logger is
         PULSE_STATE_I     : in std_logic_vector(2 downto 0);                  -- Pulse state (All data valid, amplitude valid, rise time valid)
         PULSE_AMPLITUDE_I : in std_logic_vector(G_PULSE_WIDTH - 1 downto 0);  -- Pulse amplitude
         PULSE_T_RISE_I    : in std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- Pulse rise time
+        LOG_CLEAR_I       : in std_logic;                                     -- Log Bram restart of pointer
         ------------------------------------------------------------------------
         -- Outputs
         ------------------------------------------------------------------------
@@ -52,6 +53,7 @@ entity pulse_logger is
         BRAM_ADDR_O           : out std_logic_vector(G_BRAM_ADDR_WIDTH - 1 downto 0); -- Address
         BRAM_PULSE_DATA_O     : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Write data
         BRAM_TIMESTAMP_DATA_O : out std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- Write data
+        BRAM_FULL_O           : out std_logic;                                        -- BRAM full flag
         TIMESTAMP_CNT_O       : out std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0)  -- Timestamp
     );
 end entity pulse_logger;
@@ -103,6 +105,7 @@ architecture rtl of pulse_logger is
     signal bram_rw             : std_logic;                                        -- write (1) / read (0)
     signal bram_addr           : std_logic_vector(G_BRAM_ADDR_WIDTH - 1 downto 0); -- address to write
     signal bram_pulse_data     : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- pulse data written
+    signal bram_full           : std_logic;                                        -- bram fulled flag 
     signal bram_timestamp_data : std_logic_vector(G_BRAM_DATA_WIDTH - 1 downto 0); -- timestamp data written
 
     -- delay of + 1 cycle so data is available from capture_system
@@ -111,9 +114,8 @@ architecture rtl of pulse_logger is
     -- timestamp active since reset
     signal timestamp_cnt : std_logic_vector(G_TIMESTAMP_WIDTH - 1 downto 0); -- wide timestamp counter
 
-    -- logic signals
-    signal bram_ptr  : unsigned(G_BRAM_ADDR_WIDTH - 1 downto 0); -- pointer of bram
-    signal bram_full : std_logic;                                -- bram filled 
+    -- pointer inside bram
+    signal bram_ptr : unsigned(G_BRAM_ADDR_WIDTH - 1 downto 0); -- pointer of bram
 
 begin
 
@@ -130,6 +132,7 @@ begin
     BRAM_ADDR_O           <= bram_addr;
     BRAM_PULSE_DATA_O     <= bram_pulse_data;
     BRAM_TIMESTAMP_DATA_O <= bram_timestamp_data;
+    BRAM_FULL_O           <= bram_full;
     TIMESTAMP_CNT_O       <= timestamp_cnt;
 
     ----------------------------------------------------------------------------
@@ -168,8 +171,12 @@ begin
             bram_en <= '0';
             bram_rw <= '0';
 
-            -- event to be logged, issue bram enable if not full
-            if (trig_log_event_i_q = '1') and (bram_full = '0') then
+            -- priority to restart ptr, potential pulse event lost
+            if (LOG_CLEAR_I = '1') then
+                bram_ptr <= (others => '0');
+
+                -- event to be logged, issue bram enable if not full
+            elsif (trig_log_event_i_q = '1') and (bram_full = '0') then
                 -- issue write
                 bram_en   <= '1';
                 bram_rw   <= '1';
