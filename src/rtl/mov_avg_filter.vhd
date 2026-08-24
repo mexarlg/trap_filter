@@ -66,7 +66,7 @@ architecture rtl of mov_avg_filter is
     constant C_OFLOW_TOP_BIT : natural                            := G_DATA_WIDTH + G_DELAY_WIDTH + G_ACC_MARGIN_BITS - 1;
     constant C_OFLOW_PLIM_U  : unsigned(C_ACC_WIDTH - 1 downto 0) := to_unsigned(2 ** C_OFLOW_TOP_BIT, C_ACC_WIDTH);
     constant C_OFLOW_PLIM_S  : signed(C_ACC_WIDTH - 1 downto 0)   := to_signed(2 ** C_OFLOW_TOP_BIT, C_ACC_WIDTH);
-    constant C_OFLOW_NLIM_S  : signed(C_ACC_WIDTH - 1 downto 0)   := to_signed( - (2 ** C_OFLOW_TOP_BIT), C_ACC_WIDTH);
+    constant C_OFLOW_NLIM_S  : signed(C_ACC_WIDTH - 1 downto 0)   := to_signed(-2 ** C_OFLOW_TOP_BIT, C_ACC_WIDTH);
 
     ----------------------------------------------------------------------------
     -- Types
@@ -163,7 +163,7 @@ begin
                     error_oflow                                                <= '1';
                 end if;
             else
-                if unsigned(acc_reg) >= C_OFLOW_PLIM_U then
+                if (unsigned(acc_reg) >= C_OFLOW_PLIM_U) then
                     error_oflow <= '1';
                 end if;
             end if;

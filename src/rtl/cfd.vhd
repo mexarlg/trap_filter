@@ -73,6 +73,11 @@ architecture rtl of cfd is
     -- internal arithmetic width (data + margin)
     constant C_CFD_WIDTH : natural := G_DATA_WIDTH + G_CFD_MARGIN_BITS;
 
+    -- Overflow limits for difference and multiplication
+    constant C_CFD_OFLOW_TOP_BIT : natural                          := G_DATA_WIDTH - 1;
+    constant C_CFD_OFLOW_PLIM_S  : signed(C_CFD_WIDTH - 1 downto 0) := to_signed(2 ** C_CFD_OFLOW_TOP_BIT, C_CFD_WIDTH);
+    constant C_CFD_OFLOW_NLIM_S  : signed(C_CFD_WIDTH - 1 downto 0) := to_signed( - (2 ** C_CFD_OFLOW_TOP_BIT), C_CFD_WIDTH);
+
     ----------------------------------------------------------------------------
     -- Types
     ----------------------------------------------------------------------------
@@ -132,8 +137,7 @@ begin
     -- Main Combinatory process
     ----------------------------------------------------------------------------
 
-    cfd_error_oflow <= (others => '0');
-    cfd_signal      <= cfd_diff;
+    cfd_signal <= cfd_diff;
 
     ----------------------------------------------------------------------------
     -- Main sequential process
@@ -294,5 +298,29 @@ begin
             DATA_I   => DATA_I,
             DATA_D_O => data_del_m
         );
+
+    ----------------------------------------------------------------------------
+    -- Overflow error
+    ----------------------------------------------------------------------------
+
+    -- latch overflow
+    p_oflow : process (CLK_I, RST_N_I)
+    begin
+        if (RST_N_I = '0') then
+            cfd_error_oflow <= (others => '0');
+        elsif rising_edge(CLK_I) then
+            -- multiplication check
+            if (signed(cfd_fx) >= C_CFD_OFLOW_PLIM_S) or
+                (signed(cfd_fx)    <= C_CFD_OFLOW_NLIM_S) then
+                cfd_error_oflow(0) <= '1';
+            end if;
+
+            -- difference check
+            if (signed(cfd_diff) >= C_CFD_OFLOW_PLIM_S) or
+                (signed(cfd_diff)  <= C_CFD_OFLOW_NLIM_S) then
+                cfd_error_oflow(1) <= '1';
+            end if;
+        end if;
+    end process p_oflow;
 
 end architecture rtl;

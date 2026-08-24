@@ -325,18 +325,24 @@ begin
 
     -- raise overflow flag when any of accumulators are to be overflowed (margin bits used)
     p_oflow : process (CLK_I, RST_N_I)
+        variable v_error_oflow : std_logic_vector(error_oflow'range);
     begin
         if RST_N_I = '0' then
             error_oflow <= C_ERROR_OFLOW_CORRECT;
         elsif rising_edge(CLK_I) then
+            v_error_oflow := error_oflow;
             -- Accumulator 1
-            if (signed(acc1) >= C_OFLOW1_PLIM_S) or (signed(acc1) <= C_OFLOW1_NLIM_S) then
-                error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC1;
+            if (signed(acc1) > C_OFLOW1_PLIM_S) or
+                (signed(acc1) < C_OFLOW1_NLIM_S) then
+                v_error_oflow := v_error_oflow or C_ERROR_OFLOW_ACC1;
             end if;
+
             -- Accumulator 2
-            if (signed(acc2) >= C_OFLOW2_PLIM_S) or (signed(acc2) <= C_OFLOW2_NLIM_S) then
-                error_oflow                                           <= error_oflow or C_ERROR_OFLOW_ACC2;
+            if (signed(acc2) > C_OFLOW2_PLIM_S) or
+                (signed(acc2) < C_OFLOW2_NLIM_S) then
+                v_error_oflow := v_error_oflow or C_ERROR_OFLOW_ACC2;
             end if;
+            error_oflow <= v_error_oflow;
         end if;
     end process p_oflow;
 
