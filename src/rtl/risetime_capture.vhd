@@ -96,6 +96,13 @@ architecture rtl of risetime_capture is
     signal amplitude_th_90 : std_logic_vector(G_DATA_WIDTH downto 0); -- 90% high amplitude threshold
     signal amplitude_th_10 : std_logic_vector(G_DATA_WIDTH downto 0); -- 10% low amplitude threshold
 
+    -- thresholds divided in multiple stages
+    signal mul_th_10 : unsigned(amplitude'length + C_MUL_10'length - 1 downto 0); -- multiplied 10%
+    signal mul_th_90 : unsigned(amplitude'length + C_MUL_90'length - 1 downto 0); -- multiplied 90%
+    signal data_q    : std_logic_vector(DATA_I'range);                            -- registered input data 10%
+
+    -- pipeline stage 1: valid flag
+
     -- rise time counter signal
     signal t_rise_cnt : std_logic_vector(G_T_RISE_WIDTH - 1 downto 0); -- rise time counter
 
@@ -108,6 +115,7 @@ architecture rtl of risetime_capture is
     -- fsm enable state signals
     signal waiting_pulse_en : std_logic; -- current state on S_WAITING_PULSE
     signal updating_en      : std_logic; -- current state on S_UPDATING
+    signal updating_en_q    : std_logic; -- delay of current state on S_UPDATING
     signal counting_en      : std_logic; -- current state on S_COUNTING
     signal storing_en       : std_logic; -- current state on S_STORING
 
@@ -259,35 +267,41 @@ begin
         end if;
     end process p_is_above_10;
 
-    -- computation of 10% threshold (multiplication + shift)
-    p_th_10 : process (RST_N_I, CLK_I)
+    -- computation of the thresholds, stage 1 (multiplication)
+    p_th_mul : process (RST_N_I, CLK_I)
+    begin
+        if (RST_N_I = '0') then
+            mul_th_10     <= (others => '0');
+            mul_th_90     <= (others => '0');
+            data_q        <= (others => '0');
+            updating_en_q <= '0';
+        elsif rising_edge(CLK_I) then
+            updating_en_q <= updating_en;
+            if (updating_en = '1') then
+                mul_th_10 <= amplitude * C_MUL_10;
+                mul_th_90 <= amplitude * C_MUL_90;
+                data_q    <= DATA_I;
+            end if;
+        end if;
+    end process p_th_mul;
+
+    -- computation of the thresholds, stage 2 (shift + baseline offset)
+    p_th_add : process (RST_N_I, CLK_I)
     begin
         if (RST_N_I = '0') then
             amplitude_th_10    <= (others => '0');
+            amplitude_th_90    <= (others => '0');
             thresholds_updated <= '0';
         elsif rising_edge(CLK_I) then
-            if (updating_en = '1') then
-                thresholds_updated <= '1';
-                amplitude_th_10    <= std_logic_vector(resize(unsigned(DATA_I), amplitude_th_10'length)
-                    + resize(shift_right(amplitude * C_MUL_10, C_FRAC_BITS), amplitude_th_10'length));
-            else
-                thresholds_updated <= '0';
+            thresholds_updated <= updating_en_q;
+            if (updating_en_q = '1' and thresholds_updated = '0') then
+                amplitude_th_10 <= std_logic_vector(resize(unsigned(data_q), amplitude_th_10'length)
+                    + resize(shift_right(mul_th_10, C_FRAC_BITS), amplitude_th_10'length));
+                amplitude_th_90 <= std_logic_vector(resize(unsigned(data_q), amplitude_th_90'length)
+                    + resize(shift_right(mul_th_90, C_FRAC_BITS), amplitude_th_90'length));
             end if;
         end if;
-    end process p_th_10;
-
-    -- computation of 90% threshold (multiplication + shift)
-    p_th_90 : process (RST_N_I, CLK_I)
-    begin
-        if (RST_N_I = '0') then
-            amplitude_th_90 <= (others => '0');
-        elsif rising_edge(CLK_I) then
-            if (updating_en = '1') then
-                amplitude_th_90 <= std_logic_vector(resize(unsigned(DATA_I), amplitude_th_90'length)
-                    + resize(shift_right(amplitude * C_MUL_90, C_FRAC_BITS), amplitude_th_90'length));
-            end if;
-        end if;
-    end process p_th_90;
+    end process p_th_add;
 
     -- rise time counter
     p_t_rise_cnt : process (RST_N_I, CLK_I)
