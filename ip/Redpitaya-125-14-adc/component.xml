@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spirit:component xmlns:xilinx="http://www.xilinx.com" xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <spirit:vendor>DSPsandbox</spirit:vendor>
+  <spirit:library>FPGA-Notes-for-Scientists</spirit:library>
+  <spirit:name>adc</spirit:name>
+  <spirit:version>1.0</spirit:version>
+  <spirit:busInterfaces>
+    <spirit:busInterface>
+      <spirit:name>adc_data_1</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TDATA</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>adc_data_1_tdata</spirit:name>
+            <spirit:vector>
+              <spirit:left spirit:format="long">15</spirit:left>
+              <spirit:right spirit:format="long">0</spirit:right>
+            </spirit:vector>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>adc_data_1_tvalid</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+      <spirit:parameters>
+        <spirit:parameter>
+          <spirit:name>TDATA_NUM_BYTES</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.TDATA_NUM_BYTES">2</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TDEST_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.TDEST_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TID_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.TID_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TUSER_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.TUSER_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TREADY</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TREADY">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TSTRB</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TSTRB">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TKEEP</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TKEEP">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TLAST</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TLAST">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>LAYERED_METADATA</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_1.LAYERED_METADATA">undef</spirit:value>
+        </spirit:parameter>
+      </spirit:parameters>
+      <spirit:vendorExtensions>
+        <xilinx:busInterfaceInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="BUSIF_ENABLEMENT.adc_data_1" xilinx:dependency="$Ch1_Enabled = true">true</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:busInterfaceInfo>
+      </spirit:vendorExtensions>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>adc_data_2</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TDATA</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>adc_data_2_tdata</spirit:name>
+            <spirit:vector>
+              <spirit:left spirit:format="long">15</spirit:left>
+              <spirit:right spirit:format="long">0</spirit:right>
+            </spirit:vector>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>adc_data_2_tvalid</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+      <spirit:parameters>
+        <spirit:parameter>
+          <spirit:name>TDATA_NUM_BYTES</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.TDATA_NUM_BYTES">2</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TDEST_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.TDEST_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TID_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.TID_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>TUSER_WIDTH</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.TUSER_WIDTH">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TREADY</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TREADY">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TSTRB</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TSTRB">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TKEEP</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TKEEP">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>HAS_TLAST</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TLAST">0</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>LAYERED_METADATA</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.ADC_DATA_2.LAYERED_METADATA">undef</spirit:value>
+        </spirit:parameter>
+      </spirit:parameters>
+      <spirit:vendorExtensions>
+        <xilinx:busInterfaceInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="BUSIF_ENABLEMENT.adc_data_2" xilinx:dependency="$Ch2_Enabled = true">true</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:busInterfaceInfo>
+      </spirit:vendorExtensions>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>RST.RESETN</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="reset" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="reset_rtl" spirit:version="1.0"/>
+      <spirit:slave/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>RST</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>resetn</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+      <spirit:parameters>
+        <spirit:parameter>
+          <spirit:name>POLARITY</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.RST.RESETN.POLARITY">ACTIVE_LOW</spirit:value>
+        </spirit:parameter>
+      </spirit:parameters>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>CLK.CLK_125</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
+      <spirit:slave/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>clk_125</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+      <spirit:parameters>
+        <spirit:parameter>
+          <spirit:name>FREQ_HZ</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.CLK.CLK_125.FREQ_HZ">125000000</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>PHASE</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.CLK.CLK_125.PHASE">0.000</spirit:value>
+        </spirit:parameter>
+        <spirit:parameter>
+          <spirit:name>ASSOCIATED_BUSIF</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.CLK.CLK_125.ASSOCIATED_BUSIF">adc_data_1:adc_data_2</spirit:value>
+        </spirit:parameter>
+      </spirit:parameters>
+    </spirit:busInterface>
+  </spirit:busInterfaces>
+  <spirit:model>
+    <spirit:views>
+      <spirit:view>
+        <spirit:name>xilinx_anylanguagesynthesis</spirit:name>
+        <spirit:displayName>Synthesis</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:synthesis</spirit:envIdentifier>
+        <spirit:language>VHDL</spirit:language>
+        <spirit:modelName>adc_bd</spirit:modelName>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_anylanguagesynthesis_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>87a2e93e</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
+      <spirit:view>
+        <spirit:name>xilinx_anylanguagebehavioralsimulation</spirit:name>
+        <spirit:displayName>Simulation</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:simulation</spirit:envIdentifier>
+        <spirit:language>VHDL</spirit:language>
+        <spirit:modelName>adc_bd</spirit:modelName>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_anylanguagebehavioralsimulation_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>146c48be</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
+      <spirit:view>
+        <spirit:name>xilinx_xpgui</spirit:name>
+        <spirit:displayName>UI Layout</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:xgui.ui</spirit:envIdentifier>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_xpgui_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>c06896db</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
+    </spirit:views>
+    <spirit:ports>
+      <spirit:port>
+        <spirit:name>adc_data_1_i</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">13</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC_VECTOR</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>adc_data_1_tdata</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">15</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC_VECTOR</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>adc_data_1_tvalid</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>adc_data_2_i</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">13</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC_VECTOR</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>adc_data_2_tdata</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">15</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC_VECTOR</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>adc_data_2_tvalid</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>clk_125</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>resetn</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+    </spirit:ports>
+  </spirit:model>
+  <spirit:fileSets>
+    <spirit:fileSet>
+      <spirit:name>xilinx_anylanguagesynthesis_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>src/adc_bd_ADC_0_1.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>src/ADC.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>src/adc_bd_ooc.xdc</spirit:name>
+        <spirit:userFileType>xdc</spirit:userFileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+        <spirit:userFileType>SCOPED_TO_REF_adc_bd</spirit:userFileType>
+        <spirit:userFileType>USED_IN_out_of_context</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>src/adc_bd.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>CHECKSUM_81b010ef</spirit:userFileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+    </spirit:fileSet>
+    <spirit:fileSet>
+      <spirit:name>xilinx_anylanguagebehavioralsimulation_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>sim/adc_bd_ADC_0_1.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>src/ADC.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>sim/adc_bd.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>IMPORTED_FILE</spirit:userFileType>
+      </spirit:file>
+    </spirit:fileSet>
+    <spirit:fileSet>
+      <spirit:name>xilinx_xpgui_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>xgui/adc_v1_0.tcl</spirit:name>
+        <spirit:fileType>tclSource</spirit:fileType>
+        <spirit:userFileType>CHECKSUM_c06896db</spirit:userFileType>
+        <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
+      </spirit:file>
+    </spirit:fileSet>
+  </spirit:fileSets>
+  <spirit:description>Analog-to-digital converter management for Redpitaya-125-14</spirit:description>
+  <spirit:parameters>
+    <spirit:parameter>
+      <spirit:name>Component_Name</spirit:name>
+      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Component_Name" spirit:order="1">adc_bd_v1_0</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>Ch1_Enabled</spirit:name>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.Ch1_Enabled">true</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>Ch2_Enabled</spirit:name>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.Ch2_Enabled">true</spirit:value>
+    </spirit:parameter>
+  </spirit:parameters>
+  <spirit:vendorExtensions>
+    <xilinx:coreExtensions>
+      <xilinx:supportedFamilies>
+        <xilinx:family xilinx:lifeCycle="Production">zynq</xilinx:family>
+      </xilinx:supportedFamilies>
+      <xilinx:taxonomies>
+        <xilinx:taxonomy>/FPGA-Notes-for-Scientists</xilinx:taxonomy>
+      </xilinx:taxonomies>
+      <xilinx:displayName>Redpitaya-125-14-adc</xilinx:displayName>
+      <xilinx:definitionSource>IPI</xilinx:definitionSource>
+      <xilinx:coreRevision>8</xilinx:coreRevision>
+      <xilinx:upgrades>
+        <xilinx:canUpgradeFrom>DSPsandbox:FPGA-Notes-for-Scientist:adc:1.0</xilinx:canUpgradeFrom>
+      </xilinx:upgrades>
+      <xilinx:coreCreationDateTime>2022-05-30T16:59:12Z</xilinx:coreCreationDateTime>
+      <xilinx:tags>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@46a8735_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@38a9eb2d_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@71f12ecf_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4818b364_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b2ae19c_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50a62ef3_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7d57eeb7_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@db7770d_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3df9a91f_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4dd51fa3_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2c102b36_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ef8f57b_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5c35a689_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@122a79ad_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3cb6be03_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@512c6cb1_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@33d3e622_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4dad36cd_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6346c8eb_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@df96217_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7e03124d_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4aed00c1_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4b6f07eb_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3fbe1b89_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e93386b_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4587df4f_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4c71ac95_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31881025_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f43b3ad_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@54d83f15_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@25d04954_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@73137824_ARCHIVE_LOCATION">c:/Users/Pau/Documents/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@229e45f4_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@34206380_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@583fdeaa_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@25451557_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31d243b5_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@a156d3_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6193da58_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6f21b9fd_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ad70418_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5f407fe0_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5b2a81a2_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@739419b1_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e87fd7c_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2b4b618c_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@550f803d_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5a1fa241_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@23a2b6d7_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c4fde1c_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@68e74d99_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7c76da17_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b86f4ff_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50c55b38_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@88b9203_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@56781368_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@147728b9_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45c7f_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2a91371a_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3fb16e2c_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@52d2b4e9_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@693e4d5f_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@13ed7a04_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6f6f4e7d_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3554bc2a_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@23e6f372_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@ebabf3a_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50449f1d_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e5b6caa_ARCHIVE_LOCATION">c:/Users/paugo/Documents/Pau/FPGA-Notes-for-Scientists/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@72ac2404_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@72bd0480_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@49c4804c_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@56585304_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@360d0911_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@63ae933e_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@33337804_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7beb5068_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4f251914_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2de80344_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3121903f_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@68cfa133_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f080880_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6c42a270_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e8f595e_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5342e51e_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e2e287d_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1ba6029_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4d699a5_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@60580ca5_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4be2baa1_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4230ea73_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5dd616c6_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@58589b06_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@645335df_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@417b874_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@566bcadb_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@63bddc92_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1744bd24_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@14a927d0_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4386f0bf_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5b29a548_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@9c4e7fe_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5c51234b_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@367643b1_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@42bf86e8_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2361d843_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@bb49ad_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@528979e8_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@a39bbff_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@541ed164_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@575a0169_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1c87077b_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@46c9778_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@61cdfb2a_ARCHIVE_LOCATION">c:/Users/Fabrice/Desktop/a_supprimer/wiki_gomez/FPGA-Notes-for-Scientists-main/ip/Redpitaya-125-14-adc</xilinx:tag>
+      </xilinx:tags>
+      <xilinx:configElementInfos>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TKEEP" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TLAST" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TREADY" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.HAS_TSTRB" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.LAYERED_METADATA" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.TDATA_NUM_BYTES" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.TDEST_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.TID_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_1.TUSER_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TKEEP" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TLAST" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TREADY" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.HAS_TSTRB" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.LAYERED_METADATA" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.TDATA_NUM_BYTES" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.TDEST_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.TID_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.ADC_DATA_2.TUSER_WIDTH" xilinx:valueSource="constant_prop" xilinx:valuePermission="bd"/>
+        <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.CLK.CLK_125.FREQ_HZ" xilinx:valueSource="user"/>
+      </xilinx:configElementInfos>
+    </xilinx:coreExtensions>
+    <xilinx:packagingInfo>
+      <xilinx:xilinxVersion>2019.1</xilinx:xilinxVersion>
+      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="e19ef226"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="80160cee"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="40dec393"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="43385de2"/>
+    </xilinx:packagingInfo>
+  </spirit:vendorExtensions>
+</spirit:component>

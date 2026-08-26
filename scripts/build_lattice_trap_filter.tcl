@@ -18,7 +18,7 @@
 # Project Configuration
 #------------------------------------------------------------------------------
 
-set PROJECT_NAME    "trap_filter"
+set PROJECT_NAME    "lattice_trap_filter"
 
 set SCRIPT_PATH [info script]
 if {$SCRIPT_PATH eq ""} {
@@ -28,6 +28,7 @@ if {$SCRIPT_PATH eq ""} {
 set SCRIPT_DIR  [file dirname [file normalize $SCRIPT_PATH]]
 set PROJECT_DIR [file normalize "$SCRIPT_DIR/../build/radiant"]
 set RTL_DIR     [file normalize "$SCRIPT_DIR/../src/rtl"]
+set INTEG_DIR     [file normalize "$SCRIPT_DIR/../src/integration"]
 set PKG_DIR     [file normalize "$SCRIPT_DIR/../src/pkg"]
 set CONST_DIR   [file normalize "$SCRIPT_DIR/../constraints"]
 
@@ -90,10 +91,8 @@ prj_set_impl_opt -impl "impl1" {lib} {trap_filter}
 
 # Packages
 prj_add_source [file join $PKG_DIR "trap_filter_pkg.vhd"]
-prj_add_source [file join $PKG_DIR "pulse_rom_pkg.vhd"]
 
 # RTL
-prj_add_source [file join $RTL_DIR "pulse_feed.vhd"]
 prj_add_source [file join $RTL_DIR "shift_register.vhd"]
 prj_add_source [file join $RTL_DIR "delay_module.vhd"]
 prj_add_source [file join $RTL_DIR "mov_avg_filter.vhd"]
@@ -109,10 +108,10 @@ prj_add_source [file join $RTL_DIR "pulse_capture.vhd"]
 prj_add_source [file join $RTL_DIR "risetime_capture.vhd"]
 prj_add_source [file join $RTL_DIR "capture_subsystem.vhd"]
 prj_add_source [file join $RTL_DIR "valid_subsystem.vhd"]
-prj_add_source [file join $RTL_DIR "bram_pd.vhd"]
+prj_add_source [file join $RTL_DIR "bram_dp.vhd"]
 prj_add_source [file join $RTL_DIR "pulse_logger.vhd"]
 prj_add_source [file join $RTL_DIR "logger_subsystem.vhd"]
-prj_add_source [file join $RTL_DIR "pulse_shaper_top.vhd"]
+prj_add_source [file join $INTEG_DIR "pulse_shaper_top.vhd"]
 
 #------------------------------------------------------------------------------
 # Add RTL Top Wrapper

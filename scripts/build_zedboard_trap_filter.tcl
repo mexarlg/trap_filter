@@ -16,7 +16,7 @@
 # Project Configuration
 #------------------------------------------------------------------------------
 
-set PROJECT_NAME    "trap_filter"
+set PROJECT_NAME    "zedboard_trap_filter"
 set TOP_MODULE      "pulse_shaper_test_wrapper"
 set VHDL_LIBRARY    "trap_filter"
 
@@ -26,7 +26,7 @@ if {$SCRIPT_PATH eq ""} {
 }
 
 set SCRIPT_DIR  [file dirname [file normalize $SCRIPT_PATH]]
-set PROJECT_DIR [file normalize "$SCRIPT_DIR/../build/vivado"]
+set PROJECT_DIR [file normalize "$SCRIPT_DIR/../build/zedboard"]
 set RTL_DIR     [file normalize "$SCRIPT_DIR/../src/rtl"]
 set INTEG_DIR     [file normalize "$SCRIPT_DIR/../src/integration"]
 set PKG_DIR     [file normalize "$SCRIPT_DIR/../src/pkg"]

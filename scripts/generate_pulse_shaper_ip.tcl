@@ -54,8 +54,10 @@ set PKG_DIR    [file normalize "$SCRIPT_DIR/../src/pkg"]
 set IP_REPO_DIR  [file normalize "$SCRIPT_DIR/../ip"]
 set IP_DIR       [file normalize "$IP_REPO_DIR/$IP_NAME"]
 set TMP_PROJ     [file normalize "$SCRIPT_DIR/../build/gen_ip_temp"]
-set MAIN_PROJECT [file normalize "$SCRIPT_DIR/../build/vivado/trap_filter.xpr"]
-
+set CANDIDATE_PROJECTS [list \
+   [file normalize "$SCRIPT_DIR/../build/zedboard/zedboard_trap_filter.xpr"] \
+   [file normalize "$SCRIPT_DIR/../build/redpitaya/redpitaya_trap_filter.xpr"] \
+]
 set DEV_PART "xc7z020clg484-1"
 
 #------------------------------------------------------------------------------
@@ -271,33 +273,39 @@ puts "INFO: IP packaged at ${IP_DIR}/component.xml"
 # Register the repository in the catalog
 #------------------------------------------------------------------------------
 
-set TARGET_PROJECT ""
+set TARGET_PROJECTS [list]
 
 if {$INITIAL_PROJECT ne "" && [file exists $INITIAL_PROJECT]} {
-    set TARGET_PROJECT $INITIAL_PROJECT
-} elseif {[file exists $MAIN_PROJECT]} {
-    set TARGET_PROJECT $MAIN_PROJECT
+    lappend TARGET_PROJECTS $INITIAL_PROJECT
+} else {
+    foreach proj $CANDIDATE_PROJECTS {
+        if {[file exists $proj]} {
+            lappend TARGET_PROJECTS $proj
+        }
+    }
 }
 
-if {$TARGET_PROJECT eq ""} {
+if {[llength $TARGET_PROJECTS] == 0} {
     puts "INFO: No project found, nothing to register"
     puts "INFO: Add the repository manually with:"
     puts "INFO:   set_property ip_repo_paths $IP_REPO_DIR \[current_project\]"
     puts "INFO:   update_ip_catalog -rebuild"
 } else {
-    puts "INFO: Registering repository in [file tail $TARGET_PROJECT]"
-    open_project $TARGET_PROJECT
+    foreach proj $TARGET_PROJECTS {
+        puts "INFO: Registering repository in [file tail [file dirname $proj]]"
+        open_project $proj
 
-    set repos [get_property ip_repo_paths [current_project]]
-    if {[lsearch -exact $repos $IP_REPO_DIR] < 0} {
-        lappend repos $IP_REPO_DIR
-        set_property ip_repo_paths $repos [current_project]
-    }
+        set repos [get_property ip_repo_paths [current_project]]
+        if {[lsearch -exact $repos $IP_REPO_DIR] < 0} {
+            lappend repos $IP_REPO_DIR
+            set_property ip_repo_paths $repos [current_project]
+        }
 
-    update_ip_catalog -rebuild
+        update_ip_catalog -rebuild
 
-    if {$INITIAL_PROJECT eq ""} {
-        close_project
+        if {$proj ne $INITIAL_PROJECT} {
+            close_project
+        }
     }
 }
 
