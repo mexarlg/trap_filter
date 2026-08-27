@@ -20,7 +20,7 @@ package trap_filter_pkg is
     -- SYSTEM VERSION
     ----------------------------------------------------------------------------
 
-    constant C_SYSTEM_VERSION : string := "2.3";
+    constant C_SYSTEM_VERSION : string := "2.4";
 
     ----------------------------------------------------------------------------
     -- GENERAL SYSTEM PARAMETERS:
