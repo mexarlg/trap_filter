@@ -4,6 +4,8 @@ Real time trapezoidal pulse shaping filter based on the Jordanov recursive algor
 
 Written in plain VHDL. Validated on AMD ZedBoard, Red Pitaya 125-14 and Lattice CertusPro-NX.
 
+![Trapezoidal IP Core Top](docs/ip_logo.png)
+
 ---
 
 ## Overview
