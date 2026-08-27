@@ -47,7 +47,7 @@ architecture tb of tb_trig_subsystem is
     signal tb_trigger      : std_logic_vector(C_TRIG_DEPTH downto 0) := (others => '0');
     signal tb_pulse_valid  : std_logic;
     signal tb_pileup_event : std_logic;
-    signal tb_pileup_cnt   : std_logic_vector(11 downto 0);
+    signal tb_pileup_cnt   : std_logic_vector(23 downto 0);
 
 begin
 

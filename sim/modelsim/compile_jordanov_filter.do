@@ -53,7 +53,6 @@ vcom -2008 -work trap_filter ../../src/rtl/jordanov_filter.vhd
 
 echo "Compiling Testbench..."
 
-vcom -2008 -work trap_filter ../tb/tb_jordanov_filter_pkg.vhd
 vcom -2008 -work trap_filter ../tb/tb_jordanov_filter.vhd
 
 

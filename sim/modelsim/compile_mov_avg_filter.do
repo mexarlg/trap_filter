@@ -52,7 +52,6 @@ vcom -2008 -work trap_filter ../../src/rtl/mov_avg_filter.vhd
 
 echo "Compiling Testbench..."
 
-vcom -2008 -work trap_filter ../tb/tb_mov_avg_filter_pkg.vhd
 vcom -2008 -work trap_filter ../tb/tb_mov_avg_filter.vhd
 
 

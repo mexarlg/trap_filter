@@ -24,7 +24,6 @@ add wave -color green  -radix binary sim:/tb_pulse_feed/tb_rst_n
 add wave -divider " PULSE_FEED"
 add wave -color green  -radix binary sim:/tb_pulse_feed/tb_ce
 add wave -color white -format Analog-Step -radix unsigned sim:/tb_pulse_feed/tb_data
-add wave -color green -radix binary sim:/tb_pulse_feed/tb_data_valid
 
 #==============================================================================
 # GENERAL WAVEFORM VIEWER SETTINGS

@@ -25,7 +25,7 @@ architecture tb of tb_mov_avg_filter is
     constant CLK_PERIOD : time := 8 ns;
 
     -- Moving average configuration
-    constant C_DELAY_WIDTH     : natural := 6;                  -- Bit width of delay
+    constant C_DELAY_WIDTH     : natural := 5;                  -- Bit width of delay
     constant C_DELAY_VALUE     : natural := 2 ** C_DELAY_WIDTH; -- Value of delay
     constant C_ADC_WIDTH       : natural := 14;                 -- Bit width of adc (magnitude)
     constant C_ACC_MARGIN_BITS : natural := 2;                  -- Margin bits for accumulator signal (at worst case, 1MB holds 7 extra cycles, 2 MB holds 15 extra cycles)

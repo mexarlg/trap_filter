@@ -40,12 +40,15 @@ add wave -color green  -radix signed sim:/tb_jordanov_filter/tb_data_d
 #===========================================================================
 add wave -divider "JORDANOV_FILTER"
 add wave -color green -radix signed sim:/tb_jordanov_filter/dut/diff
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc1_q1
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc1
 add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff
-add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff_scaled
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/Mdiff_q0
 add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc2
-add wave -color green -radix binary sim:/tb_jordanov_filter/dut/error_oflow
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/acc2_shift
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/norm_prod
+add wave -color green -radix signed sim:/tb_jordanov_filter/dut/norm_prod_round
 add wave -color white -format Analog-Step -radix signed sim:/tb_jordanov_filter/tb_data_filtered
+add wave -color green -radix binary sim:/tb_jordanov_filter/dut/error_oflow
 
 
 #==============================================================================
