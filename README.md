@@ -37,6 +37,8 @@ Everything is built by TCL scripts in `scripts/`.
 
 Creates a complete project with the RTL, a virtual pulse generator and the test wrapper, ready to simulate and program.
 
+ > It needs the board file already downloaded from the Vivado store.
+
 ```bash
 vivado -mode batch -source scripts/build_zedboard_trap_filter.tcl
 ```
@@ -64,7 +66,9 @@ The core then appears under **IP Catalog → User Repository → UserIP**.
 vivado -mode batch -source scripts/build_redpitaya_trap_filter.tcl
 ```
 
- It needs the IP to be already generated. Creates the project, builds the block design and adds the top wrapper.
+ > It needs the IP to be already generated in the /Ip folder and the board file. The script creates the project, builds the block design and the top.
+ > If an error appears regarding the Vivado Version, delete the block of the error condition or change the Vivado version variable in the own tcl script.
+ > If error regarding board not found, go to project settings, board repositories and add the /boards folder of this repository to find the red pitaya. 
 
 ### Lattice Radiant
 
