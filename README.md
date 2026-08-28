@@ -67,7 +67,7 @@ vivado -mode batch -source scripts/build_redpitaya_trap_filter.tcl
 ```
 
  > It needs the IP to be already generated in the /Ip folder and the board file. The script creates the project, builds the block design and the top.
- > If an error appears regarding the Vivado Version, delete the block of the error condition or change the Vivado version variable in the own tcl script.
+ > If an error appears regarding the Vivado Version, delete the block of the error condition in the own tcl script.
  > If error regarding board not found, go to project settings, board repositories and add the /boards folder of this repository to find the red pitaya. 
 
 ### Lattice Radiant
